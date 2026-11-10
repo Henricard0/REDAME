@@ -1109,6 +1109,7 @@
       this.jogador.x = s.cx * TILE + 8;
       this.jogador.y = s.cy * TILE + 8;
       this.jogador.dir = s.dir;
+      this.desencalhar(this.jogador);
       this.ultimoTile = this.tileDe(this.jogador);
     }
     tileDe(a) {
@@ -1152,6 +1153,24 @@
       a.y = oy;
       return ok;
     }
+    // Se o ator ficou sobreposto a algo solido (barreira que surgiu, NPC, save antigo),
+    // empurra para o espaco livre mais proximo, de preferencia para a frente.
+    desencalhar(a, ign) {
+      const ig = ign ?? a;
+      if (!this.colide(a.caixa(), ig)) return false;
+      const frente = VETOR[a.dir] || [0, 1];
+      const dirs = [frente, [0, 1], [0, -1], [1, 0], [-1, 0], [R, R], [-R, R], [R, -R], [-R, -R]];
+      for (let r = 1; r <= 28; r++) {
+        for (const [dx, dy] of dirs) {
+          if (this.livre(a, a.x + dx * r, a.y + dy * r, ig)) {
+            a.x += dx * r;
+            a.y += dy * r;
+            return true;
+          }
+        }
+      }
+      return false;
+    }
     // Move um eixo por vez; se bater numa quina, desliza um pouco para contorna-la.
     mover(a, dx, dy, ignorar) {
       const ign = ignorar ?? a;
@@ -1182,6 +1201,7 @@
     // ---------------------------------------------------------------- jogador
     atualizarJogador(dt, ent) {
       const j = this.jogador;
+      this.desencalhar(j);
       let dx = 0;
       let dy = 0;
       if (ent.segurando("esq")) dx -= 1;
@@ -1206,7 +1226,8 @@
         j.anim += dt * (ent.segurando("correr") ? 1.4 : 1);
       } else j.anim = 0;
       this.alvo = this.procurarAlvo();
-      if (ent.apertou("acao") && this.alvo) {
+      const prioriza = this.alvo && !(cb && cb.emCombate() && !["npc", "item", "coleta"].includes(this.alvo.tipo));
+      if (ent.apertou("acao") && prioriza) {
         ent.consumir("acao");
         this.interagir(this.alvo);
         return;
@@ -3169,6 +3190,14 @@
     ativo() {
       return this.estado.v("arma_chave") > 0 || this.estado.v("arma_pulso") > 0;
     }
+    // luta com o chefe ou inimigo colado na protagonista: o botao de acao vira golpe
+    // (fora disso, Espaco continua usando bancada, valvulas, portas e placas)
+    emCombate() {
+      if (!this.ativo()) return false;
+      if (this.chefeAtual()) return true;
+      const j = this.mundo.jogador;
+      return this.inimigos.some((i) => Math.hypot(i.x - j.x, i.y - j.y) < 34);
+    }
     leve() {
       return this.estado.v("dificuldade_leve") > 0;
     }
@@ -3309,6 +3338,12 @@
       if (q.energia && Math.random() < q.energia) this.soltar(i.x + 5, i.y, "energia");
       for (const [m, chance] of Object.entries(q.mat || {})) if (Math.random() < chance) this.soltar(i.x + (Math.random() - 0.5) * 12, i.y + 2, "mat", m);
       if (i.def.flag) this.estado.definir(i.def.flag, 1);
+      if (i.chefe) {
+        for (const f of this.inimigos.filter((x) => x.invocado)) {
+          for (let k = 0; k < 6; k++) this.particula(f.x, f.y, (Math.random() - 0.5) * 60, -Math.random() * 40, "#ffd98a", 0.4, 6);
+        }
+        this.inimigos = this.inimigos.filter((x) => !x.invocado);
+      }
       if (i.def.roteiro_derrota) setTimeout(() => this.jogo.rodarRoteiro(i.def.roteiro_derrota), 900);
       this.inimigos = this.inimigos.filter((x) => x !== i);
     }
@@ -3577,7 +3612,11 @@
       const quarto = i.vida <= t.vida / 4;
       if (metade && !i.invocou) {
         i.invocou = true;
-        for (const [ox, oy] of [[-40, 10], [40, 10]]) this.inimigos.push(new Inimigo(this, "faisca", {}, i.x + ox, i.y + oy));
+        for (const [ox, oy] of [[-40, 10], [40, 10]]) {
+          const f = new Inimigo(this, "faisca", {}, i.x + ox, i.y + oy);
+          f.invocado = true;
+          this.inimigos.push(f);
+        }
         this.jogo.som.efeito("tremor");
         this.texto(i.x, i.y, "Sobrecarga!", "#ffb04a", 60);
       }
@@ -3895,14 +3934,28 @@
     }
     continuar(dados) {
       this.estado.restaurar(dados);
+      this.migrarSave();
       this.carregarMapa(dados.mapa, null);
       const j = this.mundo.jogador;
       j.x = dados.x;
       j.y = dados.y;
       j.dir = dados.dir || "baixo";
+      this.mundo.desencalhar(j);
+      if (this.mundo.colide(j.caixa(), j)) this.mundo.posicionar(this.mundo.def.renascer || Object.keys(this.mundo.spawns)[0]);
       this.mundo.ultimoTile = this.mundo.tileDe(j);
       this.mundo.camera();
       this.combate.energia = 5;
+    }
+    // Saves de versoes antigas: entrega as armas que a historia ja teria entregado
+    // e desliga uma arena de chefe que tenha ficado ativa.
+    migrarSave() {
+      const e = this.estado;
+      if (e.v("chegou_curitiba")) e.definir("arma_pulso", 1);
+      if (e.v("apoio_ze")) {
+        e.definir("arma_chave", 1);
+        if (!e.tem("chave")) e.dar("chave");
+      }
+      e.definir("chefe_ativo", 0);
     }
     async abrirMinigame(id) {
       const def = this.rec.dados.minigames[id];

@@ -158,14 +158,30 @@ class Jogo {
 
   continuar(dados) {
     this.estado.restaurar(dados);
+    this.migrarSave();
     this.carregarMapa(dados.mapa, null);
     const j = this.mundo.jogador;
     j.x = dados.x;
     j.y = dados.y;
     j.dir = dados.dir || "baixo";
+    this.mundo.desencalhar(j);
+    // se o save caiu longe de qualquer espaco livre, volta para o ponto de chegada do mapa
+    if (this.mundo.colide(j.caixa(), j)) this.mundo.posicionar(this.mundo.def.renascer || Object.keys(this.mundo.spawns)[0]);
     this.mundo.ultimoTile = this.mundo.tileDe(j);
     this.mundo.camera();
     this.combate.energia = 5;
+  }
+
+  // Saves de versoes antigas: entrega as armas que a historia ja teria entregado
+  // e desliga uma arena de chefe que tenha ficado ativa.
+  migrarSave() {
+    const e = this.estado;
+    if (e.v("chegou_curitiba")) e.definir("arma_pulso", 1);
+    if (e.v("apoio_ze")) {
+      e.definir("arma_chave", 1);
+      if (!e.tem("chave")) e.dar("chave");
+    }
+    e.definir("chefe_ativo", 0);
   }
 
   async abrirMinigame(id) {

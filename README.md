@@ -35,6 +35,8 @@ Roda em qualquer navegador (computador ou celular), sem instalar nada.
 | Falar, pegar, confirmar, golpear | Espaço, Enter, Z ou E | A |
 | Pulso do Revisor (disparo), voltar | X ou K | B |
 | Esquiva (tocar) e correr (segurar) | Shift ou L | Esquiva |
+
+Durante a luta com um chefe, ou com um inimigo colado na protagonista, o Espaço sempre golpeia. Fora disso, ele também serve para usar objetos (bancada, válvulas, portas, placas).
 | Menu (Caderneta, itens, som, salvar) | Esc | Menu |
 | Girar cano ao contrário (minigame) | Q | — |
 | Dica (minigame) | H | Botão "Dica" |

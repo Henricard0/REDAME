@@ -411,6 +411,7 @@ export class Mundo {
     this.jogador.x = s.cx * TILE + 8;
     this.jogador.y = s.cy * TILE + 8;
     this.jogador.dir = s.dir;
+    this.desencalhar(this.jogador);
     this.ultimoTile = this.tileDe(this.jogador);
   }
 
@@ -461,6 +462,25 @@ export class Mundo {
     return ok;
   }
 
+  // Se o ator ficou sobreposto a algo solido (barreira que surgiu, NPC, save antigo),
+  // empurra para o espaco livre mais proximo, de preferencia para a frente.
+  desencalhar(a, ign) {
+    const ig = ign ?? a;
+    if (!this.colide(a.caixa(), ig)) return false;
+    const frente = VETOR[a.dir] || [0, 1];
+    const dirs = [frente, [0, 1], [0, -1], [1, 0], [-1, 0], [R, R], [-R, R], [R, -R], [-R, -R]];
+    for (let r = 1; r <= 28; r++) {
+      for (const [dx, dy] of dirs) {
+        if (this.livre(a, a.x + dx * r, a.y + dy * r, ig)) {
+          a.x += dx * r;
+          a.y += dy * r;
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   // Move um eixo por vez; se bater numa quina, desliza um pouco para contorna-la.
   mover(a, dx, dy, ignorar) {
     const ign = ignorar ?? a;
@@ -492,6 +512,7 @@ export class Mundo {
   // ---------------------------------------------------------------- jogador
   atualizarJogador(dt, ent) {
     const j = this.jogador;
+    this.desencalhar(j);
     let dx = 0;
     let dy = 0;
     if (ent.segurando("esq")) dx -= 1;
@@ -517,7 +538,9 @@ export class Mundo {
     } else j.anim = 0;
 
     this.alvo = this.procurarAlvo();
-    if (ent.apertou("acao") && this.alvo) {
+    // em combate, Espaco golpeia; so pessoas, itens e materiais continuam tendo prioridade
+    const prioriza = this.alvo && !(cb && cb.emCombate() && !["npc", "item", "coleta"].includes(this.alvo.tipo));
+    if (ent.apertou("acao") && prioriza) {
       ent.consumir("acao");
       this.interagir(this.alvo);
       return;

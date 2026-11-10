@@ -107,6 +107,15 @@ export class Combate {
     return this.estado.v("arma_chave") > 0 || this.estado.v("arma_pulso") > 0;
   }
 
+  // luta com o chefe ou inimigo colado na protagonista: o botao de acao vira golpe
+  // (fora disso, Espaco continua usando bancada, valvulas, portas e placas)
+  emCombate() {
+    if (!this.ativo()) return false;
+    if (this.chefeAtual()) return true;
+    const j = this.mundo.jogador;
+    return this.inimigos.some((i) => Math.hypot(i.x - j.x, i.y - j.y) < 34);
+  }
+
   leve() {
     return this.estado.v("dificuldade_leve") > 0;
   }
@@ -259,6 +268,13 @@ export class Combate {
     if (q.energia && Math.random() < q.energia) this.soltar(i.x + 5, i.y, "energia");
     for (const [m, chance] of Object.entries(q.mat || {})) if (Math.random() < chance) this.soltar(i.x + (Math.random() - 0.5) * 12, i.y + 2, "mat", m);
     if (i.def.flag) this.estado.definir(i.def.flag, 1);
+    // as faiscas invocadas pelo chefe somem junto com ele
+    if (i.chefe) {
+      for (const f of this.inimigos.filter((x) => x.invocado)) {
+        for (let k = 0; k < 6; k++) this.particula(f.x, f.y, (Math.random() - 0.5) * 60, -Math.random() * 40, "#ffd98a", 0.4, 6);
+      }
+      this.inimigos = this.inimigos.filter((x) => !x.invocado);
+    }
     if (i.def.roteiro_derrota) setTimeout(() => this.jogo.rodarRoteiro(i.def.roteiro_derrota), 900);
     this.inimigos = this.inimigos.filter((x) => x !== i);
   }
@@ -535,7 +551,11 @@ export class Combate {
     const quarto = i.vida <= t.vida / 4;
     if (metade && !i.invocou) {
       i.invocou = true;
-      for (const [ox, oy] of [[-40, 10], [40, 10]]) this.inimigos.push(new Inimigo(this, "faisca", {}, i.x + ox, i.y + oy));
+      for (const [ox, oy] of [[-40, 10], [40, 10]]) {
+        const f = new Inimigo(this, "faisca", {}, i.x + ox, i.y + oy);
+        f.invocado = true;
+        this.inimigos.push(f);
+      }
       this.jogo.som.efeito("tremor");
       this.texto(i.x, i.y, "Sobrecarga!", "#ffb04a", 60);
     }
