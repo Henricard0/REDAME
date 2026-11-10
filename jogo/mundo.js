@@ -513,40 +513,56 @@ export class Mundo {
   atualizarJogador(dt, ent) {
     const j = this.jogador;
     this.desencalhar(j);
-    let dx = 0;
-    let dy = 0;
-    if (ent.segurando("esq")) dx -= 1;
-    if (ent.segurando("dir")) dx += 1;
-    if (ent.segurando("cima")) dy -= 1;
-    if (ent.segurando("baixo")) dy += 1;
     const cb = this.jogo.combate;
+    // direcao na grade: joystick (relativo a tela, analogico) ou setas (ao longo da grade)
+    let gx = 0;
+    let gy = 0;
+    let forca = 1;
+    let correr = ent.segurando("correr");
+    const ex = ent.eixo;
+    const mag = Math.hypot(ex.x, ex.y);
+    if (ex.ativo && mag > 0.18) {
+      const [tx, ty] = telaParaGrade(ex.x, ex.y);
+      const n = Math.hypot(tx, ty) || 1;
+      gx = tx / n;
+      gy = ty / n;
+      forca = clamp(mag / 0.75, 0.45, 1);
+      correr = correr || mag > 0.95;
+    } else if (!ex.ativo) {
+      if (ent.segurando("esq")) gx -= 1;
+      if (ent.segurando("dir")) gx += 1;
+      if (ent.segurando("cima")) gy -= 1;
+      if (ent.segurando("baixo")) gy += 1;
+      if (gx && gy) {
+        gx *= R;
+        gy *= R;
+      }
+    }
     if (cb && cb.moverJogadora(dt)) {
       j.movendo = true;
       j.anim += dt * 2;
       return;
     }
-    if (cb && ent.apertou("correr") && cb.ativo() && cb.esquivar(dx, dy)) return;
-    j.movendo = dx !== 0 || dy !== 0;
+    if (cb && (ent.apertou("correr") || ent.apertou("esquiva")) && cb.ativo() && cb.esquivar(gx, gy)) return;
+    j.movendo = gx !== 0 || gy !== 0;
     if (j.movendo) {
-      if (dx && !dy) j.dir = dx < 0 ? "esq" : "dir";
-      else if (dy && !dx) j.dir = dy < 0 ? "cima" : "baixo";
-      else if (!(TELA_DIR[j.dir][0] === dx || TELA_DIR[j.dir][1] === dy)) j.dir = dy < 0 ? "cima" : "baixo";
-      const vel = (ent.segurando("correr") ? 100 : 64) * (cb && cb.golpe ? 0.45 : 1) * dt;
-      const n = dx && dy ? R : 1;
-      this.mover(j, dx * vel * n, dy * vel * n);
-      j.anim += dt * (ent.segurando("correr") ? 1.4 : 1);
+      j.dir = direcaoDe(gx, gy);
+      const vel = (correr ? 100 : 64) * forca * (cb && cb.golpe ? 0.45 : 1) * dt;
+      this.mover(j, gx * vel, gy * vel);
+      j.anim += dt * (correr ? 1.4 : 1) * Math.max(forca, 0.7);
     } else j.anim = 0;
 
     this.alvo = this.procurarAlvo();
     // em combate, Espaco golpeia; so pessoas, itens e materiais continuam tendo prioridade
     const prioriza = this.alvo && !(cb && cb.emCombate() && !["npc", "item", "coleta"].includes(this.alvo.tipo));
-    if (ent.apertou("acao") && prioriza) {
+    // no celular, "interagir" e "golpe" sao botoes separados; no teclado, Espaco decide pelo contexto
+    if (this.alvo && (ent.apertou("interagir") || (ent.apertou("acao") && prioriza))) {
       ent.consumir("acao");
       this.interagir(this.alvo);
       return;
     }
-    if (cb && ent.apertou("acao")) cb.atacar();
-    if (cb && ent.apertou("voltar")) cb.disparar();
+    if (cb && (ent.apertou("acao") || ent.apertou("golpe"))) cb.atacar();
+    if (cb && (ent.apertou("voltar") || ent.apertou("pulso"))) cb.disparar();
     const tile = this.tileDe(j);
     if (tile !== this.ultimoTile) {
       this.ultimoTile = tile;
@@ -729,6 +745,15 @@ export class Mundo {
     const maxY = (this.w + this.h) * 8 + 8;
     this.camX = maxX - minX <= LARG ? Math.floor((minX + maxX - LARG) / 2) : Math.round(clamp(p.x - LARG / 2, minX, maxX - LARG));
     this.camY = maxY - minY <= ALT ? Math.floor((minY + maxY - ALT) / 2) : Math.round(clamp(p.y - 16 - ALT / 2, minY, maxY - ALT));
+  }
+
+  // a largura da tela mudou (celular girou): refaz as camadas de desenho
+  redimensionar() {
+    this.camada.width = LARG;
+    this.camada.height = ALT;
+    this.camadaCtx.imageSmoothingEnabled = false;
+    this.vinheta = null;
+    if (this.def) this.camera();
   }
 
   // posicao de tela (ja sem a camera) de um ponto logico a uma certa altura

@@ -1,12 +1,14 @@
 // REDAME: O Resgate do Legado - nucleo do jogo.
-import { LARG, ALT, Recursos, Desenho, Entrada } from "./base.js";
+import { LARG, ALT, Recursos, Desenho, Entrada, definirLargura } from "./base.js";
 import { Som } from "./som.js";
 import { Estado } from "./estado.js";
 import { Mundo } from "./mundo.js";
 import { Roteirista } from "./roteiro.js";
 import { Dialogo, Escolha, Menu, Hud, Titulo, EntradaNome, Inventario, Caderneta, Gravacao, Seletor, FimDemo, Bancada } from "./ui.js";
+void Inventario;
 import { MiniCanos } from "./canos.js";
 import { Combate } from "./combate.js";
+import { Toque, rotuloDe } from "./toque.js";
 
 class Jogo {
   constructor(canvas) {
@@ -54,6 +56,81 @@ class Jogo {
       banner: (t) => this.hud.banner(t),
       novoObjetivo: () => this.hud.novoObjetivo(),
     };
+  }
+
+  // ---------------------------------------------------------------- celular
+  redimensionar() {
+    this.canvas.width = LARG;
+    this.canvas.height = ALT;
+    this.ctx.imageSmoothingEnabled = false;
+    if (this.mundo) this.mundo.redimensionar();
+  }
+
+  vibrar(padrao) {
+    if (!this.ent.usouToque || !navigator.vibrate) return;
+    try {
+      navigator.vibrate(padrao);
+    } catch (e) { /* ignora */ }
+  }
+
+  // tenta tela cheia e paisagem no primeiro toque (nem todo navegador deixa)
+  telaCheiaMovel() {
+    if (this.tentouTelaCheia || document.fullscreenElement) return;
+    this.tentouTelaCheia = true;
+    const el = document.documentElement;
+    if (!el.requestFullscreen) return;
+    el.requestFullscreen({ navigationUI: "hide" })
+      .then(() => screen.orientation?.lock?.("landscape"))
+      .catch(() => {});
+  }
+
+  // o que os botoes de toque devem mostrar agora
+  contextoToque() {
+    const topo = this.camadas[this.camadas.length - 1];
+    const c = { modo: "mundo", rotulo: null, combate: false, golpe: false, pulso: false, ok: "OK", voltar: false };
+    if (topo) {
+      if (topo instanceof Titulo) c.modo = "titulo";
+      else if (topo instanceof EntradaNome) c.modo = "nome";
+      else if (topo instanceof MiniCanos) {
+        c.modo = "minigame";
+        c.ok = "Girar";
+      } else if (topo instanceof Dialogo) {
+        c.modo = "dialogo";
+        c.ok = "Avançar";
+      } else if (topo instanceof Gravacao || topo instanceof FimDemo) {
+        c.modo = "dialogo";
+        c.ok = "Continuar";
+      } else {
+        c.modo = "menu";
+        c.voltar = !(topo instanceof Escolha) && topo.podeVoltar !== false;
+        if (topo instanceof Bancada) c.ok = "Montar";
+        if (topo instanceof Caderneta) c.ok = "Virar";
+        if (topo instanceof Escolha) c.ok = "Escolher";
+      }
+      return c;
+    }
+    if (!this.mundo.def) {
+      c.modo = "nada";
+      return c;
+    }
+    if (this.ocupado > 0 || this.fadeA > 0.5) {
+      c.modo = "ocupado";
+      return c;
+    }
+    c.rotulo = rotuloDe(this.mundo.alvo);
+    const cb = this.combate;
+    if (cb.ativo()) {
+      const j = this.mundo.jogador;
+      const perto = !!cb.chefeAtual() || cb.inimigos.some((i) => Math.hypot(i.x - j.x, i.y - j.y) < 130);
+      c.combate = perto;
+      c.golpe = perto && this.estado.v("arma_chave") > 0;
+      c.pulso = perto && this.estado.v("arma_pulso") > 0;
+    }
+    return c;
+  }
+
+  deslocamento(cam) {
+    return cam.largura ? Math.floor((LARG - cam.largura) / 2) : 0;
   }
 
   // ---------------------------------------------------------------- camadas
@@ -317,7 +394,11 @@ class Jogo {
 
     const topo = this.camadas[this.camadas.length - 1];
     const cobre = this.camadas.some((c) => c.cobreTudo);
-    if (topo) topo.atualizar(dt, this.ent);
+    if (topo) {
+      const off = this.deslocamento(topo);
+      if (off) this.ent.cliques = this.ent.cliques.map((k) => ({ x: k.x - off, y: k.y }));
+      topo.atualizar(dt, this.ent);
+    }
     else if (this.mundo.def && this.ocupado === 0 && this.fadeA < 0.5) {
       if (this.ent.apertou("menu")) this.abrirPausa();
       else this.mundo.atualizarJogador(dt, this.ent);
@@ -354,7 +435,16 @@ class Jogo {
       const dy = mostrar ? this.combate.desenharHud(d, this.t) : 0;
       this.hud.desenharObjetivo(d, this.t, mostrar, dy);
     }
-    for (let i = inicio; i < this.camadas.length; i++) this.camadas[i].desenhar(d, this.t);
+    for (let i = inicio; i < this.camadas.length; i++) {
+      const cam = this.camadas[i];
+      const off = this.deslocamento(cam);
+      if (off) {
+        c.save();
+        c.translate(off, 0);
+        cam.desenhar(d, this.t);
+        c.restore();
+      } else cam.desenhar(d, this.t);
+    }
     this.hud.desenharAvisos(d, this.t);
     if (this.fadeA > 0) {
       c.fillStyle = `rgba(8,6,14,${this.fadeA})`;
@@ -374,6 +464,7 @@ class Jogo {
       try {
         this.atualizar(dt);
         this.desenhar();
+        if (this.toque) this.toque.atualizar();
       } catch (e) {
         console.error(e);
       }
@@ -384,12 +475,30 @@ class Jogo {
 }
 
 // ------------------------------------------------------------------ tela e escala
-function ajustarTela(canvas) {
+// Computador: tela de 320x180 ampliada em passos inteiros.
+// Celular deitado: a largura logica cresce para a tela ficar cheia, sem faixas pretas.
+// Celular em pe: o jogo fica em cima, na largura toda, e os controles embaixo.
+function ajustarTela(canvas, jogo) {
+  const toque = matchMedia("(pointer: coarse)").matches;
+  const paisagem = toque && innerWidth > innerHeight;
+  const b = document.body;
+  b.classList.toggle("toque", toque);
+  b.classList.toggle("paisagem", paisagem);
+  b.classList.toggle("retrato", toque && !paisagem);
   const area = document.getElementById("area-jogo");
   const w = area.clientWidth;
   const h = area.clientHeight;
-  let esc = Math.min(w / LARG, h / ALT);
-  if (esc >= 2) esc = Math.floor(esc);
+  const larg = paisagem ? Math.max(320, Math.min(440, Math.round((ALT * w) / Math.max(1, h)))) : 320;
+  if (larg !== LARG) {
+    definirLargura(larg);
+    if (jogo) jogo.redimensionar();
+    else {
+      canvas.width = larg;
+      canvas.getContext("2d").imageSmoothingEnabled = false;
+    }
+  }
+  let esc = toque && !paisagem ? w / LARG : Math.min(w / LARG, h / ALT);
+  if (!toque && esc >= 2) esc = Math.floor(esc);
   canvas.style.width = Math.floor(LARG * esc) + "px";
   canvas.style.height = Math.floor(ALT * esc) + "px";
 }
@@ -398,10 +507,13 @@ async function iniciar() {
   const canvas = document.getElementById("tela");
   const barra = document.getElementById("carregando-barra");
   const aviso = document.getElementById("carregando");
-  ajustarTela(canvas);
-  addEventListener("resize", () => ajustarTela(canvas));
+  ajustarTela(canvas, null);
   const jogo = new Jogo(canvas);
   window.REDAME = jogo;
+  const reajustar = () => ajustarTela(canvas, jogo);
+  addEventListener("resize", reajustar);
+  addEventListener("orientationchange", () => setTimeout(reajustar, 200));
+  document.addEventListener("fullscreenchange", () => setTimeout(reajustar, 100));
   try {
     await jogo.carregar((p) => { if (barra) barra.style.width = Math.round(p * 100) + "%"; });
   } catch (e) {
@@ -411,6 +523,8 @@ async function iniciar() {
   }
   if (aviso) aviso.hidden = true;
   jogo.ent.ligarBotoes(document);
+  jogo.toque = new Toque(jogo);
+  reajustar();
   const hot = window.claude?.hot;
   if (hot?.snapshot) hot.snapshot(() => (jogo.mundo.def ? { save: jogo.estado.serializar() } : {}));
   const comecar = (dados) => {

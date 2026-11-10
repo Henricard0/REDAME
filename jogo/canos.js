@@ -489,7 +489,7 @@ export class MiniCanos extends Camada {
       d.moldura(g.bx + this.cx * T + 1, g.by + this.cy * T + 1, T - 2, T - 2, pisca);
     }
     const toque = this.jogo.ent.usouToque;
-    const ajuda = toque ? "Toque num cano para girar   B: pausa" : "Setas: mover   Espaço: girar   Q: voltar   H: dica   Esc: pausa";
+    const ajuda = toque ? "Toque num cano para girá-lo   Menu: pausa" : "Setas: mover   Espaço: girar   Q: voltar   H: dica   Esc: pausa";
     d.texto(ajuda, LARG / 2, ALT - 11, COR.fraco, { alinhar: "centro" });
     if (this.vitoria || this.estouro) {
       const v = this.vitoria || this.estouro;

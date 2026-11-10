@@ -1,6 +1,11 @@
 // REDAME: O Resgate do Legado - base: constantes, recursos, desenho e entrada.
 
-export const LARG = 320;
+// Largura logica da tela. No computador e 320; no celular deitado ela cresce para
+// preencher a tela inteira (a altura continua 180).
+export let LARG = 320;
+export function definirLargura(w) {
+  LARG = w;
+}
 export const ALT = 180;
 export const TILE = 16;
 
@@ -257,6 +262,12 @@ export class Entrada {
     this.canvas = canvas;
     this.usouToque = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
     this.pads = {};
+    // joystick analogico (coordenadas de tela, -1..1); tambem vira setas nos menus
+    this.eixo = { x: 0, y: 0, ativo: false };
+    this.segJoy = new Set();
+    this.joyDir = null;
+    this.joyDesde = 0;
+    this.joyRepete = 0;
     addEventListener("keydown", (e) => {
       const a = TECLAS[e.code];
       if (e.ctrlKey || e.metaKey || e.altKey) return;
@@ -282,29 +293,60 @@ export class Entrada {
     });
   }
 
+  definirEixo(x, y, ativo) {
+    this.eixo.x = x;
+    this.eixo.y = y;
+    this.eixo.ativo = ativo;
+    if (ativo) this.usouToque = true;
+  }
+
   ligarBotoes(raiz) {
     for (const b of raiz.querySelectorAll("[data-acao]")) {
-      const a = b.dataset.acao;
+      let a = null;
       const solta = (e) => {
         e.preventDefault();
-        this.seg.delete(a);
+        if (a) this.seg.delete(a);
+        a = null;
         b.classList.remove("ativo");
       };
       b.addEventListener("pointerdown", (e) => {
         e.preventDefault();
         b.setPointerCapture?.(e.pointerId);
+        a = b.dataset.acao; // le na hora: o mesmo botao muda de funcao conforme o contexto
         this.seg.add(a);
         this.fila.add(a);
         this.usouToque = true;
         b.classList.add("ativo");
+        if (navigator.vibrate) try { navigator.vibrate(8); } catch (err) { /* ignora */ }
       });
+      b.addEventListener("contextmenu", (e) => e.preventDefault());
       b.addEventListener("pointerup", solta);
       b.addEventListener("pointercancel", solta);
       b.addEventListener("lostpointercapture", solta);
     }
   }
 
+  // o joystick tambem gera "setas" (com repeticao) para menus, dialogos e o minigame
+  atualizarJoystick() {
+    const e = this.eixo;
+    let d = null;
+    if (e.ativo && Math.hypot(e.x, e.y) > 0.55) d = Math.abs(e.x) > Math.abs(e.y) ? (e.x < 0 ? "esq" : "dir") : e.y < 0 ? "cima" : "baixo";
+    const agora = performance.now();
+    this.segJoy.clear();
+    if (d) this.segJoy.add(d);
+    if (d && d !== this.joyDir) {
+      this.fila.add(d);
+      this.joyDesde = agora;
+      this.joyRepete = agora + 380;
+    } else if (d && agora >= this.joyRepete) {
+      this.fila.add(d);
+      this.joyRepete = agora + 150;
+    }
+    this.joyDir = d;
+  }
+
   atualizar() {
+    this.atualizarJoystick();
     this.ap = this.fila;
     this.fila = new Set();
     this.texto = this.textoFila;
@@ -343,7 +385,7 @@ export class Entrada {
   }
 
   segurando(a) {
-    return this.seg.has(a);
+    return this.seg.has(a) || this.segJoy.has(a);
   }
 
   consumir(a) {

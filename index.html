@@ -5,15 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>REDAME: O Resgate do Legado</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="Aventura em pixel art: viaje no tempo com o Revisor de Épocas e resgate a história de 15 engenheiras pioneiras.">
+<meta name="description" content="Action RPG isométrico em pixel art: viaje no tempo com o Revisor de Épocas e resgate a história de 15 engenheiras pioneiras.">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0d0b1c">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600&display=swap">
 <style>
-  /* Layout: a tela do jogo (320x180, pixels inteiros) centralizada sobre o ceu noturno do Revisor; controles de toque abaixo (retrato) ou por cima (paisagem). */
+  /* Layout: computador = tela 320x180 ampliada no centro do ceu noturno do Revisor.
+     Celular deitado = jogo em tela cheia com joystick e botoes por cima.
+     Celular em pe = jogo em cima, controles embaixo. */
   :root {
     --noite: #0d0b1c;
     --painel: #1c1838;
+    --painel-vidro: rgb(24 20 50 / 0.58);
     --borda: #3b3366;
     --texto: #f4ecd8;
     --latao: #ffd98a;
@@ -33,10 +39,12 @@
     padding-block: 0;
     box-sizing: border-box;
     display: grid;
-    grid-template-rows: 1fr auto;
+    grid-template-rows: 1fr;
     overflow: hidden;
+    overscroll-behavior: none;
     user-select: none;
     -webkit-user-select: none;
+    -webkit-touch-callout: none;
     -webkit-tap-highlight-color: transparent;
   }
   #area-jogo {
@@ -68,62 +76,150 @@
   }
   #carregando .trilho { width: min(240px, 60vw); height: 8px; border: 2px solid var(--latao); padding: 1px; }
   #carregando-barra { height: 100%; width: 0; background: var(--holograma); transition: width 0.15s; }
-  #controles {
-    display: none;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-    padding-block: 8px max(12px, env(safe-area-inset-bottom, 0px));
+
+  /* ---------------- celular */
+  #toque { display: none; }
+  body.toque { touch-action: none; }
+  body.toque #toque { display: block; touch-action: none; }
+  body.paisagem #area-jogo { padding-block: 0; }
+  body.paisagem #tela { box-shadow: none; }
+  body.paisagem #toque { position: fixed; inset: 0; pointer-events: none; }
+  body.retrato { grid-template-rows: auto 1fr; }
+  body.retrato #area-jogo { padding-block: max(12px, env(safe-area-inset-top, 0px)) 8px; }
+  body.retrato #toque { position: relative; min-height: 0; }
+
+  #zona-joy {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 52%;
+    height: 82%;
+    pointer-events: none;
     touch-action: none;
   }
-  @media (pointer: coarse) {
-    #controles { display: flex; }
+  body.retrato #zona-joy { width: 56%; height: 100%; }
+  #toque[data-modo="mundo"] #zona-joy { pointer-events: auto; }
+  #joy-base {
+    position: absolute;
+    left: 104px;
+    top: calc(100% - 108px - env(safe-area-inset-bottom, 0px));
+    width: 108px;
+    height: 108px;
+    margin: -54px 0 0 -54px;
+    border-radius: 50%;
+    border: 2px solid rgb(127 227 240 / 0.45);
+    background: radial-gradient(circle, rgb(127 227 240 / 0.08), rgb(24 20 50 / 0.45));
+    opacity: 0;
+    transition: opacity 0.15s;
   }
-  @media (pointer: coarse) and (orientation: portrait) {
-    #area-jogo { place-items: start center; padding-block: 24px 8px; }
+  #toque[data-modo="mundo"] #joy-base { opacity: 0.45; }
+  #toque[data-modo="mundo"] #joy-base.ativo { opacity: 0.95; transition: none; }
+  #joy-pino {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 48px;
+    height: 48px;
+    margin: -24px 0 0 -24px;
+    border-radius: 50%;
+    background: rgb(244 236 216 / 0.9);
+    border: 3px solid var(--holograma);
+    box-shadow: 0 2px 10px rgb(0 0 0 / 0.5);
   }
-  @media (pointer: coarse) and (orientation: landscape) {
-    body { grid-template-rows: 1fr; }
-    #controles {
-      position: fixed;
-      left: max(12px, env(safe-area-inset-left, 0px));
-      right: max(12px, env(safe-area-inset-right, 0px));
-      bottom: max(10px, env(safe-area-inset-bottom, 0px));
-      padding: 0;
-      pointer-events: none;
-      opacity: 0.72;
-    }
-    #controles > * { pointer-events: auto; }
-  }
-  .dpad { display: grid; grid-template-columns: repeat(3, 52px); grid-template-rows: repeat(3, 52px); }
-  .botao {
+
+  .tb {
+    position: absolute;
     appearance: none;
-    border: 2px solid var(--borda);
-    background: var(--painel);
+    border: 2px solid rgb(127 227 240 / 0.65);
+    background: var(--painel-vidro);
     color: var(--texto);
-    font: 600 1.05rem var(--fonte-pixel);
+    font: 600 0.95rem var(--fonte-pixel);
+    letter-spacing: 0.02em;
     display: grid;
     place-items: center;
     padding: 0;
     touch-action: none;
     cursor: pointer;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: scale(0.6);
+    transition: opacity 0.14s, transform 0.14s, visibility 0s 0.14s, right 0.14s, bottom 0.14s;
   }
-  .botao svg { width: 20px; height: 20px; fill: var(--latao); }
-  .botao.ativo, .botao:active { background: var(--borda); border-color: var(--holograma); }
-  .botao:focus-visible { outline: 2px solid var(--holograma); outline-offset: 2px; }
-  .dpad .cima { grid-area: 1 / 2; border-radius: 8px 8px 0 0; }
-  .dpad .esq { grid-area: 2 / 1; border-radius: 8px 0 0 8px; }
-  .dpad .dir { grid-area: 2 / 3; border-radius: 0 8px 8px 0; }
-  .dpad .baixo { grid-area: 3 / 2; border-radius: 0 0 8px 8px; }
-  .dpad .meio { grid-area: 2 / 2; background: var(--painel); border: 2px solid var(--borda); }
-  .acoes { display: grid; grid-template-columns: 64px 64px; grid-template-rows: 40px 64px; gap: 10px; align-items: end; }
-  .acoes .menu, .acoes .esquiva { width: 64px; height: 36px; border-radius: 18px; font-size: 0.8rem; }
-  .acoes .esquiva { color: var(--holograma); }
-  .acoes .redondo { width: 64px; height: 64px; border-radius: 50%; font-size: 1.4rem; }
-  .acoes .a { color: var(--holograma); border-color: var(--holograma); transform: translateY(-14px); }
-  .acoes .b { color: var(--latao); }
+  .tb svg { width: 28px; height: 28px; }
+  .tb.ativo { background: rgb(127 227 240 / 0.35); transform: scale(0.92) !important; }
+  .tb:focus-visible { outline: 2px solid var(--latao); outline-offset: 3px; }
+  .redondo { border-radius: 50%; }
+  .grande { width: 76px; height: 76px; }
+  .medio { width: 60px; height: 60px; }
+  .pequeno { width: 54px; height: 54px; }
+  .pilula { border-radius: 30px; padding-inline: 18px; min-width: 96px; height: 56px; }
+
+  #t-acoes {
+    position: absolute;
+    right: max(18px, env(safe-area-inset-right, 0px));
+    bottom: max(16px, env(safe-area-inset-bottom, 0px));
+    width: 220px;
+    height: 230px;
+    pointer-events: none;
+  }
+  body.retrato #t-acoes { bottom: max(20px, env(safe-area-inset-bottom, 0px)); }
+  #t-golpe, #t-ok { right: 0; bottom: 0; }
+  #t-pulso, #t-voltar { right: 90px; bottom: 6px; }
+  #t-esquiva { right: 10px; bottom: 90px; }
+  #t-interagir { right: 0; bottom: 4px; color: var(--latao); border-color: var(--latao); font-size: 1.05rem; }
+  #toque.combate #t-interagir { bottom: 158px; }
+  #t-golpe svg { fill: var(--latao); }
+  #t-pulso svg { fill: var(--holograma); }
+  #t-esquiva svg { fill: var(--texto); }
+  #t-voltar { font-size: 0.8rem; }
+  #t-menu {
+    top: max(10px, env(safe-area-inset-top, 0px));
+    right: max(14px, env(safe-area-inset-right, 0px));
+    width: 72px;
+    height: 34px;
+    border-radius: 17px;
+    font-size: 0.85rem;
+  }
+  body.retrato #t-menu { top: 4px; }
+  #toque[data-modo="minigame"] #t-menu { top: auto; bottom: max(16px, env(safe-area-inset-bottom, 0px)); }
+  #dica-girar {
+    display: none;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 22%;
+    text-align: center;
+    color: rgb(244 236 216 / 0.55);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    pointer-events: none;
+  }
+  #dica-girar svg { width: 44px; height: 44px; fill: none; stroke: var(--holograma); stroke-width: 1.6; opacity: 0.7; }
+  body.retrato #dica-girar { display: block; }
+
+  /* cada botao so aparece quando faz sentido */
+  #toque[data-modo="mundo"].com-alvo #t-interagir,
+  #toque[data-modo="mundo"].tem-golpe #t-golpe,
+  #toque[data-modo="mundo"].tem-pulso #t-pulso,
+  #toque[data-modo="mundo"].combate #t-esquiva,
+  #toque[data-modo="dialogo"] #t-ok,
+  #toque[data-modo="menu"] #t-ok,
+  #toque[data-modo="menu"].tem-voltar #t-voltar,
+  #toque[data-modo="mundo"] #t-menu,
+  #toque[data-modo="minigame"] #t-menu {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: scale(1);
+    transition: opacity 0.14s, transform 0.14s, visibility 0s, right 0.14s, bottom 0.14s;
+  }
+  #toque[data-modo="mundo"].com-alvo #t-interagir { animation: chamar 1.4s ease-in-out infinite; }
+  @keyframes chamar { 50% { box-shadow: 0 0 0 6px rgb(255 217 138 / 0.18); } }
+
   @media (prefers-reduced-motion: reduce) {
-    #carregando-barra { transition: none; }
+    #carregando-barra, .tb, #joy-base { transition: none; }
+    #toque[data-modo="mundo"].com-alvo #t-interagir { animation: none; }
   }
 </style>
 </head>
@@ -135,21 +231,28 @@
     <div class="trilho"><div id="carregando-barra"></div></div>
   </div>
 </main>
-<nav id="controles" aria-label="Controles de toque">
-  <div class="dpad">
-    <button class="botao cima" data-acao="cima" aria-label="Para cima"><svg viewBox="0 0 10 10"><path d="M5 2 9 8H1z"/></svg></button>
-    <button class="botao esq" data-acao="esq" aria-label="Para a esquerda"><svg viewBox="0 0 10 10"><path d="M2 5 8 1v8z"/></svg></button>
-    <span class="meio"></span>
-    <button class="botao dir" data-acao="dir" aria-label="Para a direita"><svg viewBox="0 0 10 10"><path d="M8 5 2 9V1z"/></svg></button>
-    <button class="botao baixo" data-acao="baixo" aria-label="Para baixo"><svg viewBox="0 0 10 10"><path d="M5 8 1 2h8z"/></svg></button>
+<div id="toque" data-modo="nada">
+  <div id="dica-girar">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M3 12a9 9 0 0 1 4-7.5M21 12a9 9 0 0 1-4 7.5"/></svg>
+    <div>Gire o celular para jogar<br>em tela cheia</div>
   </div>
-  <div class="acoes">
-    <button class="botao esquiva" data-acao="correr" aria-label="Esquivar ou correr">Esquiva</button>
-    <button class="botao menu" data-acao="menu">Menu</button>
-    <button class="botao redondo b" data-acao="voltar" aria-label="Pulso do Revisor ou voltar">B</button>
-    <button class="botao redondo a" data-acao="acao" aria-label="Agir ou golpear">A</button>
+  <div id="zona-joy" aria-label="Joystick: encoste e arraste para andar"><div id="joy-base"><div id="joy-pino"></div></div></div>
+  <button id="t-menu" class="tb" data-acao="menu">Menu</button>
+  <div id="t-acoes">
+    <button id="t-interagir" class="tb pilula" data-acao="interagir"><span id="t-interagir-rotulo">Falar</span></button>
+    <button id="t-golpe" class="tb redondo grande" data-acao="golpe" aria-label="Golpe com a chave inglesa">
+      <svg viewBox="0 0 16 16"><path d="M11.2 1.4a3.6 3.6 0 0 0-4 4.7L1.6 11.7a1.4 1.4 0 0 0 2 2l5.6-5.6a3.6 3.6 0 0 0 4.7-4L11.7 6.3 9.9 6.1 9.7 4.3z"/></svg>
+    </button>
+    <button id="t-pulso" class="tb redondo medio" data-acao="pulso" aria-label="Pulso do Revisor">
+      <svg viewBox="0 0 16 16"><path d="M9.5 1 3 9h4.2L6 15l7-8.4H8.6z"/></svg>
+    </button>
+    <button id="t-esquiva" class="tb redondo pequeno" data-acao="esquiva" aria-label="Esquiva">
+      <svg viewBox="0 0 16 16"><path d="M2 4h6l-2-2.5h2.4L11.5 6 8.4 10.5H6L8 8H2zm5 6h6l-2-2.5h2.4L16 12l-2.6 4.5H11L13 14H7z"/></svg>
+    </button>
+    <button id="t-ok" class="tb redondo grande" data-acao="acao"><span id="t-ok-rotulo">OK</span></button>
+    <button id="t-voltar" class="tb redondo medio" data-acao="voltar">Voltar</button>
   </div>
-</nav>
+</div>
 <script src="jogo.js"></script>
 </body>
 </html>

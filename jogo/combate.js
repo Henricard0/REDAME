@@ -3,7 +3,7 @@
 // A protagonista golpeia com a chave inglesa (Espaço), dispara o pulso do Revisor (X)
 // e se esquiva (Shift). Os inimigos sao criaturas do Esquecimento e maquinas tomadas
 // por ele. Cada tipo de inimigo esta descrito em dados/inimigos.json.
-import { TILE, clamp, iso } from "./base.js";
+import { TILE, clamp, iso, LARG } from "./base.js";
 import { VETOR } from "./mundo.js";
 
 const ENERGIA_MAX = 5;
@@ -212,6 +212,7 @@ export class Combate {
     const real = this.leve() ? dano * 0.5 : dano;
     e.vida = Math.max(0, e.vida - real);
     this.inv = 1.1;
+    this.jogo.vibrar(45);
     const j = this.mundo.jogador;
     const [nx, ny] = normal(j.x - ox, j.y - oy);
     this.kx = nx * 170;
@@ -238,6 +239,7 @@ export class Combate {
     const mult = i.estado === "tonto" ? 2 : 1;
     i.vida -= dano * mult;
     i.flash = 0.16;
+    this.jogo.vibrar(12);
     if (!i.solido) {
       const [nx, ny] = normal(i.x - ox, i.y - oy);
       i.kx = nx * 140;
@@ -261,6 +263,7 @@ export class Combate {
     if (i.chefe) {
       this.mundo.tremor = 0.8;
       this.jogo.flash = 0.8;
+      this.jogo.vibrar([80, 50, 160]);
     }
     // quedas
     const q = t.queda || {};
@@ -730,9 +733,9 @@ export class Combate {
     const ch = this.chefeAtual();
     if (ch) {
       const w = 180;
-      const x = (320 - w) / 2;
+      const x = Math.floor((LARG - w) / 2);
       const y = 168;
-      d.texto(ch.t.nome.toUpperCase(), 160, y - 10, "#ffd98a", { alinhar: "centro", contorno: "#14121e" });
+      d.texto(ch.t.nome.toUpperCase(), LARG / 2, y - 10, "#ffd98a", { alinhar: "centro", contorno: "#14121e" });
       d.ret(x, y, w, 7, "#14121e");
       d.ret(x + 1, y + 1, Math.round((w - 2) * Math.max(0, ch.vida) / ch.t.vida), 5, ch.vulneravel() ? "#ffb04a" : "#e5675b");
       d.moldura(x, y, w, 7, "#5a6280");

@@ -1,6 +1,9 @@
 (() => {
   // jogo/base.js
   var LARG = 320;
+  function definirLargura(w) {
+    LARG = w;
+  }
   var ALT = 180;
   var TILE = 16;
   var COR = {
@@ -245,6 +248,11 @@
       this.canvas = canvas;
       this.usouToque = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
       this.pads = {};
+      this.eixo = { x: 0, y: 0, ativo: false };
+      this.segJoy = /* @__PURE__ */ new Set();
+      this.joyDir = null;
+      this.joyDesde = 0;
+      this.joyRepete = 0;
       addEventListener("keydown", (e) => {
         const a = TECLAS[e.code];
         if (e.ctrlKey || e.metaKey || e.altKey) return;
@@ -269,28 +277,60 @@
         if (e.pointerType === "touch") this.usouToque = true;
       });
     }
+    definirEixo(x, y, ativo) {
+      this.eixo.x = x;
+      this.eixo.y = y;
+      this.eixo.ativo = ativo;
+      if (ativo) this.usouToque = true;
+    }
     ligarBotoes(raiz) {
       for (const b of raiz.querySelectorAll("[data-acao]")) {
-        const a = b.dataset.acao;
+        let a = null;
         const solta = (e) => {
           e.preventDefault();
-          this.seg.delete(a);
+          if (a) this.seg.delete(a);
+          a = null;
           b.classList.remove("ativo");
         };
         b.addEventListener("pointerdown", (e) => {
           e.preventDefault();
           b.setPointerCapture?.(e.pointerId);
+          a = b.dataset.acao;
           this.seg.add(a);
           this.fila.add(a);
           this.usouToque = true;
           b.classList.add("ativo");
+          if (navigator.vibrate) try {
+            navigator.vibrate(8);
+          } catch (err) {
+          }
         });
+        b.addEventListener("contextmenu", (e) => e.preventDefault());
         b.addEventListener("pointerup", solta);
         b.addEventListener("pointercancel", solta);
         b.addEventListener("lostpointercapture", solta);
       }
     }
+    // o joystick tambem gera "setas" (com repeticao) para menus, dialogos e o minigame
+    atualizarJoystick() {
+      const e = this.eixo;
+      let d = null;
+      if (e.ativo && Math.hypot(e.x, e.y) > 0.55) d = Math.abs(e.x) > Math.abs(e.y) ? e.x < 0 ? "esq" : "dir" : e.y < 0 ? "cima" : "baixo";
+      const agora = performance.now();
+      this.segJoy.clear();
+      if (d) this.segJoy.add(d);
+      if (d && d !== this.joyDir) {
+        this.fila.add(d);
+        this.joyDesde = agora;
+        this.joyRepete = agora + 380;
+      } else if (d && agora >= this.joyRepete) {
+        this.fila.add(d);
+        this.joyRepete = agora + 150;
+      }
+      this.joyDir = d;
+    }
     atualizar() {
+      this.atualizarJoystick();
       this.ap = this.fila;
       this.fila = /* @__PURE__ */ new Set();
       this.texto = this.textoFila;
@@ -326,7 +366,7 @@
       return this.ap.has(a);
     }
     segurando(a) {
-      return this.seg.has(a);
+      return this.seg.has(a) || this.segJoy.has(a);
     }
     consumir(a) {
       const t = this.ap.has(a);
@@ -771,9 +811,11 @@
   var LINHA_DIR = { baixo: 0, cima: 1, dir: 2, esq: 2 };
   var VETOR = { baixo: [0, 1], cima: [0, -1], esq: [-1, 0], dir: [1, 0] };
   var OPOSTA = { baixo: "cima", cima: "baixo", esq: "dir", dir: "esq" };
-  var TELA_DIR = { baixo: [0, 1], cima: [0, -1], esq: [-1, 0], dir: [1, 0] };
   function intersecta(a, b) {
     return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+  }
+  function telaParaGrade(sx, sy) {
+    return [(sx + 2 * sy) / 2, (2 * sy - sx) / 2];
   }
   function direcaoDe(dx, dy) {
     if (Math.abs(dx) >= Math.abs(dy)) return dx < 0 ? "esq" : "dir";
@@ -1202,38 +1244,52 @@
     atualizarJogador(dt, ent) {
       const j = this.jogador;
       this.desencalhar(j);
-      let dx = 0;
-      let dy = 0;
-      if (ent.segurando("esq")) dx -= 1;
-      if (ent.segurando("dir")) dx += 1;
-      if (ent.segurando("cima")) dy -= 1;
-      if (ent.segurando("baixo")) dy += 1;
       const cb = this.jogo.combate;
+      let gx = 0;
+      let gy = 0;
+      let forca = 1;
+      let correr = ent.segurando("correr");
+      const ex = ent.eixo;
+      const mag = Math.hypot(ex.x, ex.y);
+      if (ex.ativo && mag > 0.18) {
+        const [tx, ty] = telaParaGrade(ex.x, ex.y);
+        const n = Math.hypot(tx, ty) || 1;
+        gx = tx / n;
+        gy = ty / n;
+        forca = clamp(mag / 0.75, 0.45, 1);
+        correr = correr || mag > 0.95;
+      } else if (!ex.ativo) {
+        if (ent.segurando("esq")) gx -= 1;
+        if (ent.segurando("dir")) gx += 1;
+        if (ent.segurando("cima")) gy -= 1;
+        if (ent.segurando("baixo")) gy += 1;
+        if (gx && gy) {
+          gx *= R;
+          gy *= R;
+        }
+      }
       if (cb && cb.moverJogadora(dt)) {
         j.movendo = true;
         j.anim += dt * 2;
         return;
       }
-      if (cb && ent.apertou("correr") && cb.ativo() && cb.esquivar(dx, dy)) return;
-      j.movendo = dx !== 0 || dy !== 0;
+      if (cb && (ent.apertou("correr") || ent.apertou("esquiva")) && cb.ativo() && cb.esquivar(gx, gy)) return;
+      j.movendo = gx !== 0 || gy !== 0;
       if (j.movendo) {
-        if (dx && !dy) j.dir = dx < 0 ? "esq" : "dir";
-        else if (dy && !dx) j.dir = dy < 0 ? "cima" : "baixo";
-        else if (!(TELA_DIR[j.dir][0] === dx || TELA_DIR[j.dir][1] === dy)) j.dir = dy < 0 ? "cima" : "baixo";
-        const vel = (ent.segurando("correr") ? 100 : 64) * (cb && cb.golpe ? 0.45 : 1) * dt;
-        const n = dx && dy ? R : 1;
-        this.mover(j, dx * vel * n, dy * vel * n);
-        j.anim += dt * (ent.segurando("correr") ? 1.4 : 1);
+        j.dir = direcaoDe(gx, gy);
+        const vel = (correr ? 100 : 64) * forca * (cb && cb.golpe ? 0.45 : 1) * dt;
+        this.mover(j, gx * vel, gy * vel);
+        j.anim += dt * (correr ? 1.4 : 1) * Math.max(forca, 0.7);
       } else j.anim = 0;
       this.alvo = this.procurarAlvo();
       const prioriza = this.alvo && !(cb && cb.emCombate() && !["npc", "item", "coleta"].includes(this.alvo.tipo));
-      if (ent.apertou("acao") && prioriza) {
+      if (this.alvo && (ent.apertou("interagir") || ent.apertou("acao") && prioriza)) {
         ent.consumir("acao");
         this.interagir(this.alvo);
         return;
       }
-      if (cb && ent.apertou("acao")) cb.atacar();
-      if (cb && ent.apertou("voltar")) cb.disparar();
+      if (cb && (ent.apertou("acao") || ent.apertou("golpe"))) cb.atacar();
+      if (cb && (ent.apertou("voltar") || ent.apertou("pulso"))) cb.disparar();
       const tile = this.tileDe(j);
       if (tile !== this.ultimoTile) {
         this.ultimoTile = tile;
@@ -1406,6 +1462,14 @@
       const maxY = (this.w + this.h) * 8 + 8;
       this.camX = maxX - minX <= LARG ? Math.floor((minX + maxX - LARG) / 2) : Math.round(clamp(p.x - LARG / 2, minX, maxX - LARG));
       this.camY = maxY - minY <= ALT ? Math.floor((minY + maxY - ALT) / 2) : Math.round(clamp(p.y - 16 - ALT / 2, minY, maxY - ALT));
+    }
+    // a largura da tela mudou (celular girou): refaz as camadas de desenho
+    redimensionar() {
+      this.camada.width = LARG;
+      this.camada.height = ALT;
+      this.camadaCtx.imageSmoothingEnabled = false;
+      this.vinheta = null;
+      if (this.def) this.camera();
     }
     // posicao de tela (ja sem a camera) de um ponto logico a uma certa altura
     tela(x, y, z = 0) {
@@ -2024,14 +2088,15 @@
         d.texto(this.brilhoObjetivo > 0 ? "NOVO OBJETIVO" : "OBJETIVO", 10, 7 + dy, corT, { sombra: true });
         linhas.forEach((l, i) => d.texto(l, 10, 17 + dy + i * 9, COR.texto, { sombra: true }));
       }
+      const yd = this.jogo.ent.usouToque && document.body.classList.contains("paisagem") ? 20 : 0;
       if (mostrarObjetivo && e.itens.length) {
         const n = e.itens.length;
-        d.painel(LARG - 8 - n * 17, 3, n * 17 + 5, 24);
-        e.itens.forEach((it, i) => d.img("item_" + it, LARG - 5 - (n - i) * 17, 7));
+        d.painel(LARG - 8 - n * 17, 3 + yd, n * 17 + 5, 24);
+        e.itens.forEach((it, i) => d.img("item_" + it, LARG - 5 - (n - i) * 17, 7 + yd));
       }
       const mats = Object.entries(e.mat).filter(([, q]) => q > 0);
       if (mostrarObjetivo && mats.length) {
-        const y = e.itens.length ? 29 : 3;
+        const y = (e.itens.length ? 29 : 3) + yd;
         const w = mats.length * 28 + 6;
         d.painel(LARG - 3 - w, y, w, 24);
         mats.forEach(([m, q], i) => {
@@ -2071,7 +2136,7 @@
       this.cobreTudo = true;
       this.iniciado = false;
       this.temSave = temSave;
-      this.estrelas = Array.from({ length: 70 }, () => ({ x: Math.random() * LARG, y: Math.random() * ALT, v: Math.random() }));
+      this.estrelas = Array.from({ length: 90 }, () => ({ x: Math.random(), y: Math.random() * ALT, v: Math.random() }));
       const ops = [];
       if (temSave) ops.push({ texto: "Continuar", acao: () => this.fechar("continuar") });
       ops.push({ texto: "Novo jogo", acao: () => this.fechar("novo") });
@@ -2083,6 +2148,7 @@
       if (!this.iniciado) {
         if (ent.apertou("acao") || ent.apertou("menu") || ent.cliques.length) {
           this.iniciado = true;
+          if (this.jogo.ent.usouToque) this.jogo.telaCheiaMovel();
           this.jogo.som.destravar();
           this.jogo.som.tocarMusica("titulo");
           this.jogo.som.efeito("confirmar");
@@ -2101,7 +2167,7 @@
       c.fillRect(0, 0, LARG, ALT);
       for (const s of this.estrelas) {
         const b = 0.4 + 0.6 * Math.abs(Math.sin(t * (0.5 + s.v) + s.x));
-        d.ret(s.x, s.y, 1, 1, `rgba(220,230,255,${b * 0.8})`);
+        d.ret(s.x * LARG, s.y, 1, 1, `rgba(220,230,255,${b * 0.8})`);
       }
       const q = Math.floor(t * 4) % 7;
       d.img("ret_revisor", LARG / 2 - 48, 6, { sx: q * 48, sw: 48, sh: 48, escala: 2, alpha: 0.35 });
@@ -2111,7 +2177,7 @@
       if (!this.iniciado) {
         if (Math.floor(t * 2) % 2 === 0) d.texto(this.jogo.ent.usouToque ? "Toque para come\xE7ar" : "Clique ou pressione Enter para come\xE7ar", LARG / 2, 132, COR.texto, { alinhar: "centro", sombra: true });
       } else this.menu.desenhar(d, t);
-      const dica = this.jogo.ent.usouToque ? "Direcional: andar   A: agir/golpe   B: pulso   Esquiva   Menu" : "Setas: andar na grade   Espa\xE7o: agir/golpe   X: pulso   Shift: esquiva";
+      const dica = this.jogo.ent.usouToque ? "Joystick: andar   Os bot\xF5es aparecem quando voc\xEA precisar" : "Setas: andar na grade   Espa\xE7o: agir/golpe   X: pulso   Shift: esquiva";
       d.texto(dica, LARG / 2, ALT - 11, "#6c7299", { alinhar: "centro" });
     }
   };
@@ -2126,6 +2192,7 @@
   var EntradaNome = class extends Camada {
     constructor(jogo) {
       super(jogo);
+      this.largura = 320;
       this.cobreTudo = true;
       this.nome = "";
       this.cx = 0;
@@ -2199,7 +2266,7 @@
       return { x: 76 + i * 58, y: 62 + j * 13 + 4, w: 54, h: 13 };
     }
     desenhar(d, t) {
-      d.ret(0, 0, LARG, ALT, "#14121e");
+      d.ret(-LARG, 0, LARG * 3, ALT, "#14121e");
       d.painel(40, 6, 240, 168);
       d.retrato("protagonista_jaleco", "feliz", 52, 12);
       d.texto("Qual \xE9 o seu nome?", 112, 18, COR.titulo, { sombra: true });
@@ -2221,6 +2288,7 @@
   var Inventario = class extends Camada {
     constructor(jogo) {
       super(jogo);
+      this.largura = 320;
       this.sel = 0;
     }
     entradas() {
@@ -2242,7 +2310,7 @@
       if (ent.apertou("voltar") || ent.apertou("menu") || ent.apertou("acao") || ent.cliques.length) this.fechar();
     }
     desenhar(d) {
-      d.ret(0, 0, LARG, ALT, "rgba(10,8,20,0.6)");
+      d.ret(-LARG, 0, LARG * 3, ALT, "rgba(10,8,20,0.6)");
       d.painel(14, 10, 292, 160);
       const lista = this.entradas();
       d.texto("ITENS", 86, 17, COR.titulo, { alinhar: "centro", sombra: true });
@@ -2269,6 +2337,7 @@
   var Bancada = class extends Camada {
     constructor(jogo) {
       super(jogo);
+      this.largura = 320;
       const m = jogo.rec.dados.materiais;
       this.mats = m.materiais;
       this.receitas = m.receitas;
@@ -2320,7 +2389,7 @@
     }
     desenhar(d, t) {
       const e = this.jogo.estado;
-      d.ret(0, 0, LARG, ALT, "rgba(10,8,20,0.65)");
+      d.ret(-LARG, 0, LARG * 3, ALT, "rgba(10,8,20,0.65)");
       d.painel(8, 6, 304, 168);
       d.texto("BANCADA DE MONTAGEM", LARG / 2, 12, COR.titulo, { alinhar: "centro", sombra: true });
       d.ret(142, 24, 1, 120, "#3b3366");
@@ -2368,6 +2437,7 @@
   var Caderneta = class extends Camada {
     constructor(jogo, focar) {
       super(jogo);
+      this.largura = 320;
       this.cobreTudo = true;
       this.lista = jogo.rec.dados.pioneiras.pioneiras;
       this.sel = Math.max(0, this.lista.findIndex((p) => p.id === focar));
@@ -2538,6 +2608,7 @@
   var Seletor = class extends Camada {
     constructor(jogo) {
       super(jogo);
+      this.largura = 320;
       this.lista = jogo.rec.dados.pioneiras.pioneiras;
       this.sel = 0;
     }
@@ -2577,7 +2648,7 @@
       }
     }
     desenhar(d, t) {
-      d.ret(0, 0, LARG, ALT, "rgba(4,10,20,0.7)");
+      d.ret(-LARG, 0, LARG * 3, ALT, "rgba(4,10,20,0.7)");
       d.painel(14, 8, 292, 164, "ui_holograma");
       d.texto("REVISOR DE \xC9POCAS", LARG / 2, 15, COR.destaque, { alinhar: "centro", sombra: true });
       this.lista.forEach((p, i) => {
@@ -3083,7 +3154,7 @@
         d.moldura(g.bx + this.cx * T + 1, g.by + this.cy * T + 1, T - 2, T - 2, pisca);
       }
       const toque = this.jogo.ent.usouToque;
-      const ajuda = toque ? "Toque num cano para girar   B: pausa" : "Setas: mover   Espa\xE7o: girar   Q: voltar   H: dica   Esc: pausa";
+      const ajuda = toque ? "Toque num cano para gir\xE1-lo   Menu: pausa" : "Setas: mover   Espa\xE7o: girar   Q: voltar   H: dica   Esc: pausa";
       d.texto(ajuda, LARG / 2, ALT - 11, COR.fraco, { alinhar: "centro" });
       if (this.vitoria || this.estouro) {
         const v = this.vitoria || this.estouro;
@@ -3285,6 +3356,7 @@
       const real = this.leve() ? dano * 0.5 : dano;
       e.vida = Math.max(0, e.vida - real);
       this.inv = 1.1;
+      this.jogo.vibrar(45);
       const j = this.mundo.jogador;
       const [nx, ny] = normal(j.x - ox, j.y - oy);
       this.kx = nx * 170;
@@ -3310,6 +3382,7 @@
       const mult = i.estado === "tonto" ? 2 : 1;
       i.vida -= dano * mult;
       i.flash = 0.16;
+      this.jogo.vibrar(12);
       if (!i.solido) {
         const [nx, ny] = normal(i.x - ox, i.y - oy);
         i.kx = nx * 140;
@@ -3332,6 +3405,7 @@
       if (i.chefe) {
         this.mundo.tremor = 0.8;
         this.jogo.flash = 0.8;
+        this.jogo.vibrar([80, 50, 160]);
       }
       const q = t.queda || {};
       if (q.coracao && Math.random() < q.coracao) this.soltar(i.x - 5, i.y, "coracao");
@@ -3783,14 +3857,123 @@
       const ch = this.chefeAtual();
       if (ch) {
         const w = 180;
-        const x = (320 - w) / 2;
+        const x = Math.floor((LARG - w) / 2);
         const y = 168;
-        d.texto(ch.t.nome.toUpperCase(), 160, y - 10, "#ffd98a", { alinhar: "centro", contorno: "#14121e" });
+        d.texto(ch.t.nome.toUpperCase(), LARG / 2, y - 10, "#ffd98a", { alinhar: "centro", contorno: "#14121e" });
         d.ret(x, y, w, 7, "#14121e");
         d.ret(x + 1, y + 1, Math.round((w - 2) * Math.max(0, ch.vida) / ch.t.vida), 5, ch.vulneravel() ? "#ffb04a" : "#e5675b");
         d.moldura(x, y, w, 7, "#5a6280");
       }
       return 11;
+    }
+  };
+
+  // jogo/toque.js
+  var ROTULO_TIPO = { npc: "Falar", item: "Pegar", coleta: "Coletar", inspecao: "Inspecionar", predio: "Ver", barreira: "Ver" };
+  var ROTULO_OBJ = {
+    bancada: "Montar",
+    painel: "Usar",
+    terminal: "Usar",
+    porta_comando: "Usar",
+    valvula: "Inspecionar",
+    turbina: "Inspecionar",
+    caixa_antiga: "Abrir",
+    revisor: "Usar",
+    banca: "Ler",
+    estante: "Ver",
+    arquivo: "Ver",
+    quadro: "Ler",
+    lousa_usina: "Ler",
+    mesa_moderna: "Usar",
+    mesa_projeto: "Ver"
+  };
+  function rotuloDe(alvo) {
+    if (!alvo) return null;
+    if (alvo.def.rotulo) return alvo.def.rotulo;
+    if (alvo.tipo === "obj") {
+      const o = alvo.def.obj;
+      return ROTULO_OBJ[o] || (o.startsWith("placa") ? "Ler" : "Ver");
+    }
+    return ROTULO_TIPO[alvo.tipo] || "Usar";
+  }
+  var Toque = class {
+    constructor(jogo) {
+      this.jogo = jogo;
+      this.raiz = document.getElementById("toque");
+      this.ultimo = "";
+      if (!this.raiz) return;
+      this.zona = document.getElementById("zona-joy");
+      this.base = document.getElementById("joy-base");
+      this.pino = document.getElementById("joy-pino");
+      this.rotulo = document.getElementById("t-interagir-rotulo");
+      this.ok = document.getElementById("t-ok-rotulo");
+      this.botaoOk = document.getElementById("t-ok");
+      this.ligarJoystick();
+    }
+    ligarJoystick() {
+      const R2 = 46;
+      let id = null;
+      let cx = 0;
+      let cy = 0;
+      const ent = this.jogo.ent;
+      const mover = (e) => {
+        if (e.pointerId !== id) return;
+        let dx = e.clientX - cx;
+        let dy = e.clientY - cy;
+        const d = Math.hypot(dx, dy);
+        if (d > R2) {
+          dx = dx / d * R2;
+          dy = dy / d * R2;
+        }
+        this.pino.style.transform = `translate(${dx}px, ${dy}px)`;
+        ent.definirEixo(dx / R2, dy / R2, true);
+      };
+      const soltar = (e) => {
+        if (e.pointerId !== id) return;
+        id = null;
+        this.base.classList.remove("ativo");
+        this.base.style.left = "";
+        this.base.style.top = "";
+        this.pino.style.transform = "";
+        ent.definirEixo(0, 0, false);
+      };
+      this.zona.addEventListener("pointerdown", (e) => {
+        if (id !== null) return;
+        e.preventDefault();
+        id = e.pointerId;
+        this.zona.setPointerCapture?.(e.pointerId);
+        const r = this.zona.getBoundingClientRect();
+        cx = e.clientX;
+        cy = e.clientY;
+        this.base.style.left = `${cx - r.left}px`;
+        this.base.style.top = `${cy - r.top}px`;
+        this.base.classList.add("ativo");
+        mover(e);
+      });
+      this.zona.addEventListener("pointermove", (e) => {
+        e.preventDefault();
+        mover(e);
+      });
+      this.zona.addEventListener("pointerup", soltar);
+      this.zona.addEventListener("pointercancel", soltar);
+      this.zona.addEventListener("lostpointercapture", soltar);
+      this.zona.addEventListener("contextmenu", (e) => e.preventDefault());
+    }
+    atualizar() {
+      if (!this.raiz) return;
+      const c = this.jogo.contextoToque();
+      const chave = JSON.stringify(c);
+      if (chave === this.ultimo) return;
+      this.ultimo = chave;
+      const r = this.raiz;
+      r.dataset.modo = c.modo;
+      r.classList.toggle("com-alvo", !!c.rotulo);
+      r.classList.toggle("combate", c.combate);
+      r.classList.toggle("tem-golpe", c.golpe);
+      r.classList.toggle("tem-pulso", c.pulso);
+      r.classList.toggle("tem-voltar", c.voltar);
+      if (c.rotulo) this.rotulo.textContent = c.rotulo;
+      this.ok.textContent = c.ok;
     }
   };
 
@@ -3840,6 +4023,76 @@
         banner: (t) => this.hud.banner(t),
         novoObjetivo: () => this.hud.novoObjetivo()
       };
+    }
+    // ---------------------------------------------------------------- celular
+    redimensionar() {
+      this.canvas.width = LARG;
+      this.canvas.height = ALT;
+      this.ctx.imageSmoothingEnabled = false;
+      if (this.mundo) this.mundo.redimensionar();
+    }
+    vibrar(padrao) {
+      if (!this.ent.usouToque || !navigator.vibrate) return;
+      try {
+        navigator.vibrate(padrao);
+      } catch (e) {
+      }
+    }
+    // tenta tela cheia e paisagem no primeiro toque (nem todo navegador deixa)
+    telaCheiaMovel() {
+      if (this.tentouTelaCheia || document.fullscreenElement) return;
+      this.tentouTelaCheia = true;
+      const el = document.documentElement;
+      if (!el.requestFullscreen) return;
+      el.requestFullscreen({ navigationUI: "hide" }).then(() => screen.orientation?.lock?.("landscape")).catch(() => {
+      });
+    }
+    // o que os botoes de toque devem mostrar agora
+    contextoToque() {
+      const topo = this.camadas[this.camadas.length - 1];
+      const c = { modo: "mundo", rotulo: null, combate: false, golpe: false, pulso: false, ok: "OK", voltar: false };
+      if (topo) {
+        if (topo instanceof Titulo) c.modo = "titulo";
+        else if (topo instanceof EntradaNome) c.modo = "nome";
+        else if (topo instanceof MiniCanos) {
+          c.modo = "minigame";
+          c.ok = "Girar";
+        } else if (topo instanceof Dialogo) {
+          c.modo = "dialogo";
+          c.ok = "Avan\xE7ar";
+        } else if (topo instanceof Gravacao || topo instanceof FimDemo) {
+          c.modo = "dialogo";
+          c.ok = "Continuar";
+        } else {
+          c.modo = "menu";
+          c.voltar = !(topo instanceof Escolha) && topo.podeVoltar !== false;
+          if (topo instanceof Bancada) c.ok = "Montar";
+          if (topo instanceof Caderneta) c.ok = "Virar";
+          if (topo instanceof Escolha) c.ok = "Escolher";
+        }
+        return c;
+      }
+      if (!this.mundo.def) {
+        c.modo = "nada";
+        return c;
+      }
+      if (this.ocupado > 0 || this.fadeA > 0.5) {
+        c.modo = "ocupado";
+        return c;
+      }
+      c.rotulo = rotuloDe(this.mundo.alvo);
+      const cb = this.combate;
+      if (cb.ativo()) {
+        const j = this.mundo.jogador;
+        const perto = !!cb.chefeAtual() || cb.inimigos.some((i) => Math.hypot(i.x - j.x, i.y - j.y) < 130);
+        c.combate = perto;
+        c.golpe = perto && this.estado.v("arma_chave") > 0;
+        c.pulso = perto && this.estado.v("arma_pulso") > 0;
+      }
+      return c;
+    }
+    deslocamento(cam) {
+      return cam.largura ? Math.floor((LARG - cam.largura) / 2) : 0;
     }
     // ---------------------------------------------------------------- camadas
     empilhar(c) {
@@ -4096,8 +4349,11 @@
       prontas.forEach((e) => e.ok());
       const topo = this.camadas[this.camadas.length - 1];
       const cobre = this.camadas.some((c) => c.cobreTudo);
-      if (topo) topo.atualizar(dt, this.ent);
-      else if (this.mundo.def && this.ocupado === 0 && this.fadeA < 0.5) {
+      if (topo) {
+        const off = this.deslocamento(topo);
+        if (off) this.ent.cliques = this.ent.cliques.map((k) => ({ x: k.x - off, y: k.y }));
+        topo.atualizar(dt, this.ent);
+      } else if (this.mundo.def && this.ocupado === 0 && this.fadeA < 0.5) {
         if (this.ent.apertou("menu")) this.abrirPausa();
         else this.mundo.atualizarJogador(dt, this.ent);
       }
@@ -4133,7 +4389,16 @@
         const dy = mostrar ? this.combate.desenharHud(d, this.t) : 0;
         this.hud.desenharObjetivo(d, this.t, mostrar, dy);
       }
-      for (let i = inicio; i < this.camadas.length; i++) this.camadas[i].desenhar(d, this.t);
+      for (let i = inicio; i < this.camadas.length; i++) {
+        const cam = this.camadas[i];
+        const off = this.deslocamento(cam);
+        if (off) {
+          c.save();
+          c.translate(off, 0);
+          cam.desenhar(d, this.t);
+          c.restore();
+        } else cam.desenhar(d, this.t);
+      }
       this.hud.desenharAvisos(d, this.t);
       if (this.fadeA > 0) {
         c.fillStyle = `rgba(8,6,14,${this.fadeA})`;
@@ -4152,6 +4417,7 @@
         try {
           this.atualizar(dt);
           this.desenhar();
+          if (this.toque) this.toque.atualizar();
         } catch (e) {
           console.error(e);
         }
@@ -4160,12 +4426,27 @@
       requestAnimationFrame(quadro);
     }
   };
-  function ajustarTela(canvas) {
+  function ajustarTela(canvas, jogo) {
+    const toque = matchMedia("(pointer: coarse)").matches;
+    const paisagem = toque && innerWidth > innerHeight;
+    const b = document.body;
+    b.classList.toggle("toque", toque);
+    b.classList.toggle("paisagem", paisagem);
+    b.classList.toggle("retrato", toque && !paisagem);
     const area = document.getElementById("area-jogo");
     const w = area.clientWidth;
     const h = area.clientHeight;
-    let esc = Math.min(w / LARG, h / ALT);
-    if (esc >= 2) esc = Math.floor(esc);
+    const larg = paisagem ? Math.max(320, Math.min(440, Math.round(ALT * w / Math.max(1, h)))) : 320;
+    if (larg !== LARG) {
+      definirLargura(larg);
+      if (jogo) jogo.redimensionar();
+      else {
+        canvas.width = larg;
+        canvas.getContext("2d").imageSmoothingEnabled = false;
+      }
+    }
+    let esc = toque && !paisagem ? w / LARG : Math.min(w / LARG, h / ALT);
+    if (!toque && esc >= 2) esc = Math.floor(esc);
     canvas.style.width = Math.floor(LARG * esc) + "px";
     canvas.style.height = Math.floor(ALT * esc) + "px";
   }
@@ -4173,10 +4454,13 @@
     const canvas = document.getElementById("tela");
     const barra = document.getElementById("carregando-barra");
     const aviso = document.getElementById("carregando");
-    ajustarTela(canvas);
-    addEventListener("resize", () => ajustarTela(canvas));
+    ajustarTela(canvas, null);
     const jogo = new Jogo(canvas);
     window.REDAME = jogo;
+    const reajustar = () => ajustarTela(canvas, jogo);
+    addEventListener("resize", reajustar);
+    addEventListener("orientationchange", () => setTimeout(reajustar, 200));
+    document.addEventListener("fullscreenchange", () => setTimeout(reajustar, 100));
     try {
       await jogo.carregar((p) => {
         if (barra) barra.style.width = Math.round(p * 100) + "%";
@@ -4188,6 +4472,8 @@
     }
     if (aviso) aviso.hidden = true;
     jogo.ent.ligarBotoes(document);
+    jogo.toque = new Toque(jogo);
+    reajustar();
     const hot = window.claude?.hot;
     if (hot?.snapshot) hot.snapshot(() => jogo.mundo.def ? { save: jogo.estado.serializar() } : {});
     const comecar = (dados) => {

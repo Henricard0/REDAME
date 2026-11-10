@@ -41,6 +41,19 @@ Durante a luta com um chefe, ou com um inimigo colado na protagonista, o Espaço
 | Girar cano ao contrário (minigame) | Q | — |
 | Dica (minigame) | H | Botão "Dica" |
 
+### No celular
+
+- **Deitado:** o jogo ocupa a tela inteira e os controles ficam por cima. Em pé, o jogo fica em cima e os controles embaixo.
+- **Joystick:** encoste o dedo em qualquer lugar da metade esquerda e arraste. A protagonista anda na direção da tela; empurrando até o fim, ela corre.
+- **Botões que aparecem quando precisam:**
+  - perto de alguém ou de algo: o botão mostra a ação ("Falar", "Pegar", "Coletar", "Montar", "Usar", "Inspecionar", "Ler");
+  - com inimigos por perto: Golpe (chave inglesa), Pulso (raio) e Esquiva;
+  - em diálogos e menus: "Avançar", "OK" e "Voltar".
+- No minigame, toque nos canos para girá-los. Menu pausa o jogo.
+- No Android, o celular vibra ao levar dano e ao acertar. No primeiro toque, o jogo tenta abrir em tela cheia deitado (alguns navegadores não permitem).
+
+Para mostrar um rótulo próprio no botão de interação, use `"rotulo": "Consertar"` na entidade do mapa.
+
 ## Rodar no seu computador
 
 O jogo carrega arquivos com `fetch`, então precisa de um servidor local (abrir o `index.html` direto com dois cliques não funciona):

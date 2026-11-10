@@ -256,14 +256,16 @@ export class Hud {
       d.texto(this.brilhoObjetivo > 0 ? "NOVO OBJETIVO" : "OBJETIVO", 10, 7 + dy, corT, { sombra: true });
       linhas.forEach((l, i) => d.texto(l, 10, 17 + dy + i * 9, COR.texto, { sombra: true }));
     }
+    // no celular deitado o botao Menu fica no canto: o HUD da direita desce um pouco
+    const yd = this.jogo.ent.usouToque && document.body.classList.contains("paisagem") ? 20 : 0;
     if (mostrarObjetivo && e.itens.length) {
       const n = e.itens.length;
-      d.painel(LARG - 8 - n * 17, 3, n * 17 + 5, 24);
-      e.itens.forEach((it, i) => d.img("item_" + it, LARG - 5 - (n - i) * 17, 7));
+      d.painel(LARG - 8 - n * 17, 3 + yd, n * 17 + 5, 24);
+      e.itens.forEach((it, i) => d.img("item_" + it, LARG - 5 - (n - i) * 17, 7 + yd));
     }
     const mats = Object.entries(e.mat).filter(([, q]) => q > 0);
     if (mostrarObjetivo && mats.length) {
-      const y = e.itens.length ? 29 : 3;
+      const y = (e.itens.length ? 29 : 3) + yd;
       const w = mats.length * 28 + 6;
       d.painel(LARG - 3 - w, y, w, 24);
       mats.forEach(([m, q], i) => {
@@ -306,7 +308,7 @@ export class Titulo extends Camada {
     this.cobreTudo = true;
     this.iniciado = false;
     this.temSave = temSave;
-    this.estrelas = Array.from({ length: 70 }, () => ({ x: Math.random() * LARG, y: Math.random() * ALT, v: Math.random() }));
+    this.estrelas = Array.from({ length: 90 }, () => ({ x: Math.random(), y: Math.random() * ALT, v: Math.random() }));
     const ops = [];
     if (temSave) ops.push({ texto: "Continuar", acao: () => this.fechar("continuar") });
     ops.push({ texto: "Novo jogo", acao: () => this.fechar("novo") });
@@ -319,6 +321,7 @@ export class Titulo extends Camada {
     if (!this.iniciado) {
       if (ent.apertou("acao") || ent.apertou("menu") || ent.cliques.length) {
         this.iniciado = true;
+        if (this.jogo.ent.usouToque) this.jogo.telaCheiaMovel();
         this.jogo.som.destravar();
         this.jogo.som.tocarMusica("titulo");
         this.jogo.som.efeito("confirmar");
@@ -338,7 +341,7 @@ export class Titulo extends Camada {
     c.fillRect(0, 0, LARG, ALT);
     for (const s of this.estrelas) {
       const b = 0.4 + 0.6 * Math.abs(Math.sin(t * (0.5 + s.v) + s.x));
-      d.ret(s.x, s.y, 1, 1, `rgba(220,230,255,${b * 0.8})`);
+      d.ret(s.x * LARG, s.y, 1, 1, `rgba(220,230,255,${b * 0.8})`);
     }
     // o Revisor de Epocas, girando atras do titulo
     const q = Math.floor(t * 4) % 7;
@@ -349,7 +352,7 @@ export class Titulo extends Camada {
     if (!this.iniciado) {
       if (Math.floor(t * 2) % 2 === 0) d.texto(this.jogo.ent.usouToque ? "Toque para começar" : "Clique ou pressione Enter para começar", LARG / 2, 132, COR.texto, { alinhar: "centro", sombra: true });
     } else this.menu.desenhar(d, t);
-    const dica = this.jogo.ent.usouToque ? "Direcional: andar   A: agir/golpe   B: pulso   Esquiva   Menu" : "Setas: andar na grade   Espaço: agir/golpe   X: pulso   Shift: esquiva";
+    const dica = this.jogo.ent.usouToque ? "Joystick: andar   Os botões aparecem quando você precisar" : "Setas: andar na grade   Espaço: agir/golpe   X: pulso   Shift: esquiva";
     d.texto(dica, LARG / 2, ALT - 11, "#6c7299", { alinhar: "centro" });
   }
 }
@@ -367,6 +370,7 @@ const GRADE_NOME = [
 export class EntradaNome extends Camada {
   constructor(jogo) {
     super(jogo);
+    this.largura = 320; // layout fixo: o jogo centraliza quando a tela e mais larga
     this.cobreTudo = true;
     this.nome = "";
     this.cx = 0;
@@ -446,7 +450,7 @@ export class EntradaNome extends Camada {
   }
 
   desenhar(d, t) {
-    d.ret(0, 0, LARG, ALT, "#14121e");
+    d.ret(-LARG, 0, LARG * 3, ALT, "#14121e");
     d.painel(40, 6, 240, 168);
     d.retrato("protagonista_jaleco", "feliz", 52, 12);
     d.texto("Qual é o seu nome?", 112, 18, COR.titulo, { sombra: true });
@@ -470,6 +474,7 @@ export class EntradaNome extends Camada {
 export class Inventario extends Camada {
   constructor(jogo) {
     super(jogo);
+    this.largura = 320; // layout fixo: o jogo centraliza quando a tela e mais larga
     this.sel = 0;
   }
 
@@ -494,7 +499,7 @@ export class Inventario extends Camada {
   }
 
   desenhar(d) {
-    d.ret(0, 0, LARG, ALT, "rgba(10,8,20,0.6)");
+    d.ret(-LARG, 0, LARG * 3, ALT, "rgba(10,8,20,0.6)");
     d.painel(14, 10, 292, 160);
     const lista = this.entradas();
     d.texto("ITENS", 86, 17, COR.titulo, { alinhar: "centro", sombra: true });
@@ -523,6 +528,7 @@ export class Inventario extends Camada {
 export class Bancada extends Camada {
   constructor(jogo) {
     super(jogo);
+    this.largura = 320; // layout fixo: o jogo centraliza quando a tela e mais larga
     const m = jogo.rec.dados.materiais;
     this.mats = m.materiais;
     this.receitas = m.receitas;
@@ -578,7 +584,7 @@ export class Bancada extends Camada {
 
   desenhar(d, t) {
     const e = this.jogo.estado;
-    d.ret(0, 0, LARG, ALT, "rgba(10,8,20,0.65)");
+    d.ret(-LARG, 0, LARG * 3, ALT, "rgba(10,8,20,0.65)");
     d.painel(8, 6, 304, 168);
     d.texto("BANCADA DE MONTAGEM", LARG / 2, 12, COR.titulo, { alinhar: "centro", sombra: true });
     d.ret(142, 24, 1, 120, "#3b3366");
@@ -630,6 +636,7 @@ export class Bancada extends Camada {
 export class Caderneta extends Camada {
   constructor(jogo, focar) {
     super(jogo);
+    this.largura = 320; // layout fixo: o jogo centraliza quando a tela e mais larga
     this.cobreTudo = true;
     this.lista = jogo.rec.dados.pioneiras.pioneiras;
     this.sel = Math.max(0, this.lista.findIndex((p) => p.id === focar));
@@ -811,6 +818,7 @@ export class Gravacao extends Camada {
 export class Seletor extends Camada {
   constructor(jogo) {
     super(jogo);
+    this.largura = 320; // layout fixo: o jogo centraliza quando a tela e mais larga
     this.lista = jogo.rec.dados.pioneiras.pioneiras;
     this.sel = 0;
   }
@@ -853,7 +861,7 @@ export class Seletor extends Camada {
   }
 
   desenhar(d, t) {
-    d.ret(0, 0, LARG, ALT, "rgba(4,10,20,0.7)");
+    d.ret(-LARG, 0, LARG * 3, ALT, "rgba(4,10,20,0.7)");
     d.painel(14, 8, 292, 164, "ui_holograma");
     d.texto("REVISOR DE ÉPOCAS", LARG / 2, 15, COR.destaque, { alinhar: "centro", sombra: true });
     this.lista.forEach((p, i) => {
