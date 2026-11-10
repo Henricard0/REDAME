@@ -18,6 +18,8 @@ export const COR = {
 };
 
 export const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+// projecao isometrica: ponto da grade logica -> ponto na tela (antes da camera)
+export const iso = (x, y) => ({ x: x - y, y: (x + y) / 2 });
 export const lerp = (a, b, t) => a + (b - a) * t;
 
 export function hash2(x, y) {

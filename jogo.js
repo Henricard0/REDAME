@@ -16,6 +16,7 @@
     fundo: "#14121e"
   };
   var clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  var iso = (x, y) => ({ x: x - y, y: (x + y) / 2 });
   function hash2(x, y) {
     let h = x * 374761393 + y * 668265263 | 0;
     h = Math.imul(h ^ h >>> 13, 1274126177);
@@ -766,11 +767,17 @@
     y: { t: ["cabo_h"] },
     v: { t: ["cabo_v"] }
   };
+  var R = Math.SQRT1_2;
   var LINHA_DIR = { baixo: 0, cima: 1, dir: 2, esq: 2 };
   var VETOR = { baixo: [0, 1], cima: [0, -1], esq: [-1, 0], dir: [1, 0] };
   var OPOSTA = { baixo: "cima", cima: "baixo", esq: "dir", dir: "esq" };
+  var TELA_DIR = { baixo: [0, 1], cima: [0, -1], esq: [-1, 0], dir: [1, 0] };
   function intersecta(a, b) {
     return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+  }
+  function direcaoDe(dx, dy) {
+    if (Math.abs(dx) >= Math.abs(dy)) return dx < 0 ? "esq" : "dir";
+    return dy < 0 ? "cima" : "baixo";
   }
   var Ator = class {
     constructor(sprite, x, y, dir = "baixo") {
@@ -783,20 +790,24 @@
       this.rota = null;
     }
     caixa() {
-      return { x: this.x - 5, y: this.y - 5, w: 10, h: 5 };
+      return { x: this.x - 5, y: this.y - 5, w: 10, h: 10 };
     }
     quadro() {
       if (!this.movendo) return 0;
       return [0, 1, 0, 2][Math.floor(this.anim * 8) % 4];
     }
     desenhar(d) {
-      const linha = LINHA_DIR[this.dir];
-      d.img("ui_sombra", this.x - 6, this.y - 4);
-      d.img("pers_" + this.sprite, this.x - 8, this.y - 22, {
-        sx: this.quadro() * 16,
-        sy: linha * 24,
-        sw: 16,
-        sh: 24,
+      const im = d.rec.img["pers_" + this.sprite];
+      if (!im) return;
+      const fw = im.width / 3;
+      const fh = im.height / 3;
+      const p = iso(this.x, this.y);
+      d.img("ui_sombra", p.x - 6, p.y - 3);
+      d.img("pers_" + this.sprite, p.x - fw / 2, p.y - fh + 1, {
+        sx: this.quadro() * fw,
+        sy: LINHA_DIR[this.dir] * fh,
+        sw: fw,
+        sh: fh,
         espelhar: this.dir === "esq"
       });
     }
@@ -817,18 +828,33 @@
         const meta = mundo.arte.objetos[def.obj];
         if (!meta) throw new Error(`Objeto desconhecido no mapa: ${def.obj}`);
         this.meta = meta;
-        const c = meta.col;
-        if (c && def.solido !== false) this.col = { x: this.x + c[0], y: this.base - c[1] - c[3], w: c[2], h: c[3] };
+        this.iso = mundo.arte.iso[def.obj] || null;
+        this.parede = mundo.tileSolido(cx, cy) && (!this.iso || this.iso.tipo !== "caixa");
+        const [w, d] = this.iso ? this.iso.pegada : [1, 1];
+        this.x0 = cx * TILE + dx;
+        this.y0 = (cy - d + 1) * TILE + dy;
+        this.W = w * TILE;
+        this.D = d * TILE;
+        this.centro = { x: this.x0 + this.W / 2, y: this.y0 + this.D / 2 };
+        let col = this.iso ? this.iso.col : meta.col ? [4, 4, 8, 8] : null;
+        if (col && def.solido !== false && !this.parede) this.col = { x: this.x0 + col[0], y: this.y0 + col[1], w: col[2], h: col[3] };
+      }
+      if (tipo === "predio") {
+        this.x0 = cx * TILE;
+        this.y0 = (cy - (def.prof || 1) + 1) * TILE;
+        this.W = (def.larg || 1) * TILE;
+        this.D = (def.prof || 1) * TILE;
       }
       if (tipo === "npc") {
-        this.ator = new Ator(def.sprite, cx * TILE + 8 + dx, cy * TILE + 14 + dy, def.dir || "baixo");
+        this.ator = new Ator(def.sprite, cx * TILE + 8 + dx, cy * TILE + 8 + dy, def.dir || "baixo");
         this.casa = { x: this.ator.x, y: this.ator.y };
         this.vagarT = Math.random() * 2;
       }
       if (tipo === "carro") {
-        this.cx0 = this.x;
         this.vel = def.vel || 40;
         this.sentido = def.sentido || 1;
+        this.y0 = cy * TILE;
+        this.iso = mundo.arte.iso[def.obj + (this.sentido > 0 ? "_d" : "_e")];
       }
     }
     visivel() {
@@ -843,16 +869,18 @@
       }
       if (this.tipo === "obj" || this.tipo === "coleta") return this.col || null;
       if (this.tipo === "npc") return this.ator.caixa();
-      if (this.tipo === "carro") return { x: this.x + 2, y: this.base - 8, w: 28, h: 8 };
+      if (this.tipo === "carro") return { x: this.x + 2, y: this.y0 + 3, w: 28, h: 10 };
       return null;
     }
     // Area onde a protagonista pode interagir.
     caixaInteracao() {
-      if (this.tipo === "npc") return { x: this.ator.x - 8, y: this.ator.y - 14, w: 16, h: 16 };
+      if (this.tipo === "npc") return { x: this.ator.x - 9, y: this.ator.y - 9, w: 18, h: 18 };
       if (this.tipo === "obj" || this.tipo === "coleta") {
-        if (this.col) return { x: this.col.x - 3, y: this.col.y - 3, w: this.col.w + 6, h: this.col.h + 6 };
-        return { x: this.x, y: this.base - Math.min(this.meta.h, 24), w: this.meta.w, h: Math.min(this.meta.h, 24) };
+        if (this.parede) return { x: this.cx * TILE - 3, y: this.cy * TILE - 3, w: TILE + 6, h: TILE + 6 };
+        if (this.col) return { x: this.col.x - 4, y: this.col.y - 4, w: this.col.w + 8, h: this.col.h + 8 };
+        return { x: this.x0 - 2, y: this.y0 - 2, w: this.W + 4, h: this.D + 4 };
       }
+      if (this.tipo === "predio") return { x: this.x0 - 4, y: this.y0 - 4, w: this.W + 8, h: this.D + 8 };
       if (this.tipo === "item" || this.tipo === "inspecao" || this.tipo === "barreira") {
         const w = (this.def.larg || 1) * TILE;
         const h = (this.def.alt || 1) * TILE;
@@ -862,40 +890,87 @@
     }
     interativa() {
       if (!this.visivel()) return false;
-      if (["npc", "item", "inspecao", "barreira"].includes(this.tipo)) return !!this.def.roteiro;
-      if (this.tipo === "obj") return !!this.def.roteiro;
+      if (["npc", "item", "inspecao", "barreira", "obj", "predio"].includes(this.tipo)) return !!this.def.roteiro;
       if (this.tipo === "coleta") return true;
       return false;
     }
     ordem() {
-      if (this.def.camada === "fundo") return -1e6 + this.base;
       if (this.def.camada === "chao") return -1e7;
-      if (this.tipo === "npc") return this.ator.y;
-      return this.base;
+      if (this.tipo === "npc") return this.ator.x + this.ator.y;
+      if (this.tipo === "carro") return this.x + 16 + this.y0 + 8;
+      if (this.parede) return (this.cx + this.cy + 1) * TILE + 2;
+      if (this.centro) return this.centro.x + this.centro.y - (this.def.camada === "fundo" ? 8 : 0);
+      return this.x + 8 + this.base - 8;
+    }
+    // ponto de ancoragem na parede (objetos presos em blocos)
+    pontoParede() {
+      const m = this.mundo;
+      let px = (this.cx + 1) * TILE;
+      let py = (this.cy + 1) * TILE;
+      if (!m.tileSolido(this.cx, this.cy + 1)) px = (this.cx + 0.5) * TILE;
+      else if (!m.tileSolido(this.cx + 1, this.cy)) py = (this.cy + 0.5) * TILE;
+      const b = iso(px, py);
+      const h = m.alturaBloco(this.cx, this.cy);
+      return { x: b.x, y: b.y - h * 0.5 };
     }
     topo() {
-      if (this.tipo === "npc") return { x: this.ator.x, y: this.ator.y - 30 };
-      if (this.tipo === "obj" || this.tipo === "coleta") return { x: this.x + this.meta.w / 2, y: this.base - this.meta.h - 6 };
-      if (this.tipo === "item") return { x: this.x + 8, y: this.base - 22 };
+      if (this.tipo === "npc") {
+        const p2 = iso(this.ator.x, this.ator.y);
+        return { x: p2.x, y: p2.y - 40 };
+      }
+      if (this.tipo === "obj" || this.tipo === "coleta") {
+        if (this.parede) {
+          const p3 = this.pontoParede();
+          return { x: p3.x, y: p3.y - this.meta.h / 2 - 6 };
+        }
+        const p2 = iso(this.centro.x, this.centro.y);
+        if (this.iso && this.iso.tipo === "caixa") {
+          const o = iso(this.x0, this.y0);
+          return { x: p2.x, y: o.y - this.iso.ancora[1] - 4 };
+        }
+        return { x: p2.x, y: p2.y - this.meta.h - 4 };
+      }
+      if (this.tipo === "predio") {
+        const p2 = iso(this.x0 + this.W / 2, this.y0 + this.D);
+        return { x: p2.x, y: p2.y - 20 };
+      }
       const w = (this.def.larg || 1) * TILE;
       const h = (this.def.alt || 1) * TILE;
-      return { x: this.x + w / 2, y: this.base - h - 6 };
+      const p = iso(this.x + w / 2, this.base - h / 2);
+      return { x: p.x, y: p.y - 24 };
     }
     desenhar(d, t) {
       if (this.tipo === "obj" || this.tipo === "coleta") {
         const m = this.meta;
+        const I = this.iso;
+        if (this.parede) {
+          const p2 = this.pontoParede();
+          const q2 = m.quadros > 1 ? Math.floor(t * (this.def.fps || 4)) % m.quadros : 0;
+          d.img("obj_" + this.def.obj, p2.x - m.w / 2, p2.y - m.h / 2, { sx: q2 * m.w, sw: m.w, sh: m.h });
+          return;
+        }
+        if (I && I.tipo === "caixa") {
+          const q2 = I.quadros > 1 ? Math.floor(t * (this.def.fps || 4)) % I.quadros : 0;
+          const o = iso(this.x0, this.y0);
+          d.img(I.sprite, o.x - I.ancora[0], o.y - I.ancora[1], { sx: q2 * I.w, sw: I.w, sh: I.h });
+          return;
+        }
         const q = m.quadros > 1 ? Math.floor(t * (this.def.fps || 4)) % m.quadros : 0;
-        d.img("obj_" + this.def.obj, this.x, this.base - m.h, { sx: q * m.w, sw: m.w, sh: m.h, espelhar: this.def.espelhar });
-        if (this.tipo === "coleta" && Math.floor(t * 2 + this.cx) % 3 === 0) d.img("ui_brilho", this.x + m.w - 5, this.base - m.h - 1);
+        const p = iso(this.centro.x, this.centro.y);
+        d.img("obj_" + this.def.obj, p.x - m.w / 2, p.y - m.h + 2, { sx: q * m.w, sw: m.w, sh: m.h, espelhar: this.def.espelhar });
+        if (this.tipo === "coleta" && Math.floor(t * 2 + this.cx) % 3 === 0) d.img("ui_brilho", p.x + m.w / 2 - 5, p.y - m.h);
       } else if (this.tipo === "npc") {
         this.ator.desenhar(d);
       } else if (this.tipo === "item") {
         const bob = Math.round(Math.sin(t * 3) * 1.5);
-        d.img("ui_sombra", this.x + 2, this.base - 5);
-        d.img("item_" + this.def.item, this.x, this.base - 18 + bob);
-        if (Math.floor(t * 2) % 3 === 0) d.img("ui_brilho", this.x + 11, this.base - 19 + bob);
-      } else if (this.tipo === "carro") {
-        d.img("obj_" + this.def.obj, this.x, this.base - 20, { espelhar: this.sentido < 0 });
+        const p = iso(this.x + 8, this.base - 8);
+        d.img("ui_sombra", p.x - 6, p.y - 3);
+        d.img("item_" + this.def.item, p.x - 8, p.y - 18 + bob);
+        if (Math.floor(t * 2) % 3 === 0) d.img("ui_brilho", p.x + 3, p.y - 19 + bob);
+      } else if (this.tipo === "carro" && this.iso) {
+        const I = this.iso;
+        const o = iso(this.x, this.y0);
+        d.img(I.sprite, o.x - I.ancora[0], o.y - I.ancora[1]);
       }
     }
   };
@@ -925,30 +1000,71 @@
     carregar(def) {
       this.def = def;
       this.h = def.linhas.length;
-      this.w = Math.max(...def.linhas.map((l) => l.length));
+      this.w = Math.max(...def.linhas.map((l) => [...l].length));
       this.chao = [];
       this.solido = new Uint8Array(this.w * this.h);
       this.ents = [];
       this.spawns = {};
       this.defsInimigos = [];
+      const pendentes = [];
       for (let cy = 0; cy < this.h; cy++) {
+        const linha = [...def.linhas[cy]];
         for (let cx = 0; cx < this.w; cx++) {
-          const ch = def.linhas[cy][cx] ?? def.chao;
+          const ch = linha[cx] ?? def.chao;
           let tch = ch;
           if (!TILES[ch]) {
             const e = def.legenda?.[ch];
             tch = e && e.chao || def.chao;
-            if (e) this.criarEnt(e, cx, cy);
+            if (e) pendentes.push([e, cx, cy]);
             else console.warn(`Caractere sem legenda no mapa ${def.id}: "${ch}"`);
           }
           this.chao.push(tch);
           if (TILES[tch]?.solido) this.solido[cy * this.w + cx] = 1;
         }
       }
+      this.predios = [];
+      for (const [e, cx, cy] of pendentes) if (e.tipo === "predio") this.criarPredio(e, cx, cy);
+      for (const [e, cx, cy] of pendentes) if (e.tipo !== "predio") this.criarEnt(e, cx, cy);
+      this.blocos = [];
+      const B = this.arte.iso_chao.blocos;
+      for (let cy = 0; cy < this.h; cy++) {
+        for (let cx = 0; cx < this.w; cx++) {
+          const ch = this.chao[cy * this.w + cx];
+          if (B[ch] && !this.predioEm(cx, cy)) this.blocos.push({ cx, cy, i: B[ch].i, h: B[ch].altura });
+        }
+      }
+      this.jogador.sprite = def.traje && this.jogo.rec.img["pers_protagonista_" + def.traje] ? "protagonista_" + def.traje : "protagonista";
       this.preRenderizar();
       if (this.jogo.combate) this.jogo.combate.carregarMapa(this.defsInimigos);
       this.memoriaVista = this.memoria();
       this.ultimoTile = null;
+    }
+    criarPredio(e, cx, cy) {
+      const ent = new Ent(this, "predio", e, cx, cy);
+      this.ents.push(ent);
+      const larg = e.larg || 1;
+      const prof = e.prof || 1;
+      const tipos = this.arte.iso_chao.predios[e.estilo].tipos;
+      const H = this.arte.iso_chao.predios[e.estilo].altura;
+      for (let ty = cy - prof + 1; ty <= cy; ty++) {
+        for (let tx = cx; tx < cx + larg; tx++) {
+          this.solido[ty * this.w + tx] = 1;
+          let esq = "liso";
+          let dir = "liso";
+          if (ty === cy) esq = tx - cx === e.porta ? "porta" : "janela";
+          if (tx === cx + larg - 1) dir = "janela";
+          this.predios.push({ cx: tx, cy: ty, estilo: e.estilo, cel: tipos.indexOf(esq) * 3 + tipos.indexOf(dir), h: H });
+        }
+      }
+    }
+    predioEm(cx, cy) {
+      return this.predios.some((p) => p.cx === cx && p.cy === cy);
+    }
+    alturaBloco(cx, cy) {
+      const p = this.predios.find((q) => q.cx === cx && q.cy === cy);
+      if (p) return p.h;
+      const b = this.arte.iso_chao.blocos[this.chao[cy * this.w + cx]];
+      return b ? b.altura : 0;
     }
     criarEnt(e, cx, cy) {
       if (e.tipo === "spawn") {
@@ -963,17 +1079,18 @@
     }
     preRenderizar() {
       const cv = document.createElement("canvas");
-      cv.width = this.w * TILE;
-      cv.height = this.h * TILE;
+      this.OX = this.h * TILE;
+      cv.width = (this.w + this.h) * TILE;
+      cv.height = (this.w + this.h) * 8 + 16;
       const c = cv.getContext("2d");
-      const atlas = this.jogo.rec.img.tiles;
-      const cols = this.arte.tiles_colunas;
+      const atlas = this.jogo.rec.img.iso_chao;
+      const IC = this.arte.iso_chao;
       for (let cy = 0; cy < this.h; cy++) {
         for (let cx = 0; cx < this.w; cx++) {
           const def = TILES[this.chao[cy * this.w + cx]] || TILES["."];
           const nome = def.t[Math.floor(hash2(cx, cy) * def.t.length)];
-          const k = this.arte.tiles[nome];
-          c.drawImage(atlas, k % cols * TILE, Math.floor(k / cols) * TILE, TILE, TILE, cx * TILE, cy * TILE, TILE, TILE);
+          const k = IC.chao[nome];
+          c.drawImage(atlas, k % IC.colunas * 32, Math.floor(k / IC.colunas) * 16, 32, 16, this.OX + (cx - cy) * TILE - 16, (cx + cy) * 8, 32, 16);
         }
       }
       this.chaoCanvas = cv;
@@ -990,12 +1107,12 @@
         return;
       }
       this.jogador.x = s.cx * TILE + 8;
-      this.jogador.y = s.cy * TILE + 14;
+      this.jogador.y = s.cy * TILE + 8;
       this.jogador.dir = s.dir;
       this.ultimoTile = this.tileDe(this.jogador);
     }
     tileDe(a) {
-      return Math.floor(a.x / TILE) + "," + Math.floor((a.y - 2) / TILE);
+      return Math.floor(a.x / TILE) + "," + Math.floor(a.y / TILE);
     }
     npc(id) {
       return this.ents.find((e) => e.tipo === "npc" && e.id === id);
@@ -1082,9 +1199,9 @@
       if (j.movendo) {
         if (dx && !dy) j.dir = dx < 0 ? "esq" : "dir";
         else if (dy && !dx) j.dir = dy < 0 ? "cima" : "baixo";
-        else if (!(VETOR[j.dir][0] === dx || VETOR[j.dir][1] === dy)) j.dir = dy < 0 ? "cima" : "baixo";
-        const vel = (ent.segurando("correr") ? 112 : 72) * (cb && cb.golpe ? 0.45 : 1) * dt;
-        const n = dx && dy ? Math.SQRT1_2 : 1;
+        else if (!(TELA_DIR[j.dir][0] === dx || TELA_DIR[j.dir][1] === dy)) j.dir = dy < 0 ? "cima" : "baixo";
+        const vel = (ent.segurando("correr") ? 100 : 64) * (cb && cb.golpe ? 0.45 : 1) * dt;
+        const n = dx && dy ? R : 1;
         this.mover(j, dx * vel * n, dy * vel * n);
         j.anim += dt * (ent.segurando("correr") ? 1.4 : 1);
       } else j.anim = 0;
@@ -1105,8 +1222,8 @@
     procurarAlvo() {
       const j = this.jogador;
       const [vx, vy] = VETOR[j.dir];
-      const px = j.x + vx * 11;
-      const py = j.y - 3 + vy * 10;
+      const px = j.x + vx * 12;
+      const py = j.y + vy * 12;
       let melhor = null;
       let dist = 1e9;
       for (const e of this.ents) {
@@ -1116,7 +1233,7 @@
         const cx = clamp(px, r.x, r.x + r.w);
         const cy = clamp(py, r.y, r.y + r.h);
         const d = Math.hypot(cx - px, cy - py);
-        if (d <= 5 && d < dist) {
+        if (d <= 6 && d < dist) {
           dist = d;
           melhor = e;
         }
@@ -1166,7 +1283,6 @@
     }
     // ---------------------------------------------------------------- mundo vivo
     atualizar(dt, livre) {
-      const t = this.jogo.t;
       for (const e of this.ents) {
         if (e.tipo === "npc") this.atualizarNpc(e, dt, livre);
         if (e.tipo === "carro") this.atualizarCarro(e, dt);
@@ -1194,11 +1310,11 @@
       a.movendo = true;
       a.anim += dt;
       if (Math.abs(dx) > 0.5) {
-        a.dir = dx < 0 ? "esq" : "dir";
+        a.dir = direcaoDe(dx, 0);
         a.x += clamp(dx, -vel, vel);
       } else if (Math.abs(dy) > 0.5) {
         a.x = r.x;
-        a.dir = dy < 0 ? "cima" : "baixo";
+        a.dir = direcaoDe(0, dy);
         a.y += clamp(dy, -vel, vel);
       } else {
         a.x = r.x;
@@ -1212,7 +1328,7 @@
     }
     andar(a, cx, cy, vel) {
       return new Promise((fim) => {
-        a.rota = { x: cx * TILE + 8, y: cy * TILE + 14, vel, fim };
+        a.rota = { x: cx * TILE + 8, y: cy * TILE + 8, vel, fim };
       });
     }
     atualizarNpc(e, dt, livre) {
@@ -1237,8 +1353,8 @@
       if (e.passo) {
         const [vx, vy] = VETOR[e.passo];
         const raio = e.def.vagar * TILE;
-        const nx = a.x + vx * 28 * dt;
-        const ny = a.y + vy * 28 * dt;
+        const nx = a.x + vx * 26 * dt;
+        const ny = a.y + vy * 26 * dt;
         if (Math.abs(nx - e.casa.x) > raio || Math.abs(ny - e.casa.y) > raio) {
           e.passo = null;
           a.movendo = false;
@@ -1246,14 +1362,14 @@
         }
         const ox = a.x;
         const oy = a.y;
-        this.mover(a, vx * 28 * dt, vy * 28 * dt, e);
+        this.mover(a, vx * 26 * dt, vy * 26 * dt, e);
         a.movendo = ox !== a.x || oy !== a.y;
         a.anim += dt;
       } else a.movendo = false;
     }
     atualizarCarro(e, dt) {
       const j = this.jogador;
-      const frente = e.sentido > 0 ? { x: e.x + 30, y: e.base - 10, w: 22, h: 12 } : { x: e.x - 20, y: e.base - 10, w: 22, h: 12 };
+      const frente = e.sentido > 0 ? { x: e.x + 32, y: e.y0 + 1, w: 22, h: 14 } : { x: e.x - 22, y: e.y0 + 1, w: 22, h: 14 };
       if (intersecta(frente, j.caixa())) return;
       e.x += e.sentido * e.vel * dt;
       const lw = this.w * TILE;
@@ -1261,11 +1377,19 @@
       if (e.x < -72) e.x = lw + 40;
     }
     camera() {
-      const j = this.jogador;
-      const lw = this.w * TILE;
-      const lh = this.h * TILE;
-      this.camX = lw <= LARG ? Math.floor((lw - LARG) / 2) : Math.round(clamp(j.x - LARG / 2, 0, lw - LARG));
-      this.camY = lh <= ALT ? Math.floor((lh - ALT) / 2) : Math.round(clamp(j.y - 12 - ALT / 2, 0, lh - ALT));
+      const p = iso(this.jogador.x, this.jogador.y);
+      const alt = this.arte.iso_chao.blocos_altura;
+      const minX = -this.h * TILE;
+      const maxX = this.w * TILE;
+      const minY = -alt;
+      const maxY = (this.w + this.h) * 8 + 8;
+      this.camX = maxX - minX <= LARG ? Math.floor((minX + maxX - LARG) / 2) : Math.round(clamp(p.x - LARG / 2, minX, maxX - LARG));
+      this.camY = maxY - minY <= ALT ? Math.floor((minY + maxY - ALT) / 2) : Math.round(clamp(p.y - 16 - ALT / 2, minY, maxY - ALT));
+    }
+    // posicao de tela (ja sem a camera) de um ponto logico a uma certa altura
+    tela(x, y, z = 0) {
+      const p = iso(x, y);
+      return { x: p.x - this.camX, y: p.y - z - this.camY };
     }
     // ---------------------------------------------------------------- luz
     // Mapas com "luz": {"escuridao": 0.6} ficam escuros, com luz em volta de lampadas,
@@ -1305,32 +1429,41 @@
           lc.fillRect(x - r, y - r, r * 2, r * 2);
         };
         const j = this.jogador;
-        furo(j.x - this.camX, j.y - 10 - this.camY, L.jogadora || 58, 0.95);
+        const pj = this.tela(j.x, j.y, 14);
+        furo(pj.x, pj.y, L.jogadora || 60, 0.95);
         for (const e of this.ents) {
           if (e.tipo !== "obj" || !e.visivel()) continue;
           const nome = e.def.obj;
-          const x = e.x + e.meta.w / 2 - this.camX;
-          const y = e.base - e.meta.h / 2 - this.camY;
+          let p;
+          if (e.parede) {
+            const q = e.pontoParede();
+            p = { x: q.x - this.camX, y: q.y - this.camY };
+          } else p = this.tela(e.centro.x, e.centro.y, 14);
           if (nome === "lampada") {
-            const r = 50 + Math.sin(t * 7 + e.cx) * 1.5;
-            furo(x, y + 6, r, 1);
-            brilhos.push([x, y + 6, 40, "255,190,110", 0.16]);
+            const r = 52 + Math.sin(t * 7 + e.cx) * 1.5;
+            furo(p.x, p.y + 8, r, 1);
+            brilhos.push([p.x, p.y + 8, 42, "255,190,110", 0.16]);
           } else if (nome === "painel" || nome === "terminal" || nome === "servidor") {
-            furo(x, y, 34, 0.85);
-            brilhos.push([x, y, 26, "90,230,140", 0.14]);
+            furo(p.x, p.y, 36, 0.85);
+            brilhos.push([p.x, p.y, 28, "90,230,140", 0.14]);
           }
         }
         const cb = this.jogo.combate;
         if (cb) {
-          for (const p of cb.projeteis) {
-            furo(p.x - this.camX, p.y - this.camY, 22, 0.9);
-            brilhos.push([p.x - this.camX, p.y - this.camY, 14, p.dono === "jogadora" ? "120,230,250" : "255,170,80", 0.3]);
+          for (const pr of cb.projeteis) {
+            const p = this.tela(pr.x, pr.y, pr.z ?? 10);
+            furo(p.x, p.y, 22, 0.9);
+            brilhos.push([p.x, p.y, 14, pr.dono === "jogadora" ? "120,230,250" : "255,170,80", 0.3]);
           }
           for (const i of cb.inimigos) {
             if (i.chefe && i.estado === "superaquecido") {
-              furo(i.x - this.camX, i.y - 24 - this.camY, 70, 1);
-              brilhos.push([i.x - this.camX, i.y - 24 - this.camY, 50, "255,150,60", 0.25]);
-            } else if (i.t.brilho) furo(i.x - this.camX, i.y - 8 - this.camY, 26, 0.7);
+              const p = this.tela(i.x, i.y, 24);
+              furo(p.x, p.y, 70, 1);
+              brilhos.push([p.x, p.y, 50, "255,150,60", 0.25]);
+            } else if (i.t.brilho) {
+              const p = this.tela(i.x, i.y, 8);
+              furo(p.x, p.y, 26, 0.7);
+            }
           }
         }
         c.drawImage(this.luzCanvas, 0, 0);
@@ -1347,6 +1480,9 @@
       c.drawImage(this.vinheta, 0, 0);
     }
     // ---------------------------------------------------------------- desenho
+    visivelNaTela(px, py, margem = 80) {
+      return px > this.camX - margem && px < this.camX + LARG + margem && py > this.camY - margem && py < this.camY + ALT + margem * 1.5;
+    }
     desenhar(ctxFinal, d, t, mostrarAlvo) {
       const c = this.camadaCtx;
       const dd = Object.create(d);
@@ -1361,15 +1497,40 @@
       }
       c.save();
       c.translate(-this.camX + sx, -this.camY + sy);
-      c.drawImage(this.chaoCanvas, 0, 0);
+      c.drawImage(this.chaoCanvas, -this.OX, 0);
       const lista = [];
+      const imgB = this.jogo.rec.img.iso_blocos;
+      const altB = this.arte.iso_chao.blocos_altura;
+      const j0 = this.jogador;
+      const pj0 = iso(j0.x, j0.y);
+      const profJ = j0.x + j0.y;
+      const cobre = (o, p, h) => o > profJ + 4 && Math.abs(p.x - pj0.x) < 26 && pj0.y - 34 < p.y + 16 && pj0.y > p.y - h;
+      const blocoFn = (im, sx2, w, h, p, alpha) => () => {
+        if (alpha < 1) c.globalAlpha = alpha;
+        c.drawImage(im, sx2, 0, w, 16 + h, p.x - 16, p.y - h, w, 16 + h);
+        c.globalAlpha = 1;
+      };
+      for (const b of this.blocos) {
+        const p = iso(b.cx * TILE, b.cy * TILE);
+        if (!this.visivelNaTela(p.x, p.y)) continue;
+        const o = (b.cx + b.cy + 1) * TILE;
+        lista.push({ o, d: blocoFn(imgB, b.i * 32, 32, altB, p, cobre(o, p, altB) ? 0.35 : 1) });
+      }
+      for (const b of this.predios) {
+        const p = iso(b.cx * TILE, b.cy * TILE);
+        if (!this.visivelNaTela(p.x, p.y, 120)) continue;
+        const im = this.jogo.rec.img["iso_predio_" + b.estilo];
+        const o = (b.cx + b.cy + 1) * TILE;
+        lista.push({ o, d: blocoFn(im, b.cel * 32, 32, b.h, p, cobre(o, p, b.h) ? 0.4 : 1) });
+      }
       for (const e of this.ents) {
-        if (["portal", "gatilho", "inspecao", "barreira"].includes(e.tipo)) continue;
+        if (["portal", "gatilho", "inspecao", "barreira", "predio"].includes(e.tipo)) continue;
         if (!e.visivel()) continue;
         lista.push({ o: e.ordem(), d: () => e.desenhar(dd, t) });
       }
       const cb = this.jogo.combate;
-      if (!this.jogo.esconderJogador && (!cb || cb.jogadoraVisivel(t))) lista.push({ o: this.jogador.y, d: () => this.jogador.desenhar(dd) });
+      const j = this.jogador;
+      if (!this.jogo.esconderJogador && (!cb || cb.jogadoraVisivel(t))) lista.push({ o: j.x + j.y, d: () => j.desenhar(dd) });
       if (cb) lista.push(...cb.itensDesenho(dd, t));
       lista.sort((a, b) => a.o - b.o);
       for (const it of lista) it.d();
@@ -1631,6 +1792,8 @@
       super(jogo);
       const pers = jogo.rec.dados.personagens;
       this.p = pers[quem] || pers.narrador;
+      const traje = jogo.mundo?.def?.traje;
+      if (quem === "protagonista" && traje && jogo.rec.img["ret_protagonista_" + traje]) this.p = { ...this.p, retrato: "protagonista_" + traje };
       this.quem = quem;
       this.emocao = emocao;
       this.icone = opc.icone || null;
@@ -1927,7 +2090,7 @@
       if (!this.iniciado) {
         if (Math.floor(t * 2) % 2 === 0) d.texto(this.jogo.ent.usouToque ? "Toque para come\xE7ar" : "Clique ou pressione Enter para come\xE7ar", LARG / 2, 132, COR.texto, { alinhar: "centro", sombra: true });
       } else this.menu.desenhar(d, t);
-      const dica = this.jogo.ent.usouToque ? "Direcional: andar   A: agir/golpe   B: pulso   Esquiva   Menu" : "Setas: andar   Espa\xE7o: agir/golpe   X: pulso   Shift: esquiva   Esc: menu";
+      const dica = this.jogo.ent.usouToque ? "Direcional: andar   A: agir/golpe   B: pulso   Esquiva   Menu" : "Setas: andar na grade   Espa\xE7o: agir/golpe   X: pulso   Shift: esquiva";
       d.texto(dica, LARG / 2, ALT - 11, "#6c7299", { alinhar: "centro" });
     }
   };
@@ -2017,7 +2180,7 @@
     desenhar(d, t) {
       d.ret(0, 0, LARG, ALT, "#14121e");
       d.painel(40, 6, 240, 168);
-      d.retrato("protagonista", "feliz", 52, 12);
+      d.retrato("protagonista_jaleco", "feliz", 52, 12);
       d.texto("Qual \xE9 o seu nome?", 112, 18, COR.titulo, { sombra: true });
       d.texto("A estudante do projeto REDAME", 112, 30, COR.fraco);
       d.painel(110, 40, 160, 16, "ui_papel");
@@ -2954,14 +3117,13 @@
     }
     caixa() {
       const [w, h] = this.t.caixa;
-      return { x: this.x - w / 2, y: this.y - h, w, h };
+      return { x: this.x - w / 2, y: this.y - h / 2, w, h };
     }
     // area que recebe golpes e disparos: cobre boa parte do desenho, nao so os pes
     corpo() {
-      const [w, h] = this.t.caixa;
-      const alt = Math.max(h, Math.round(this.t.h * (this.t.voa ? 0.9 : 0.75)));
-      const voo = this.t.voa ? 6 : 0;
-      return { x: this.x - w / 2 - 1, y: this.y - alt - voo, w: w + 2, h: alt + voo };
+      const c = this.caixa();
+      const m = this.t.voa ? 5 : 3;
+      return { x: c.x - m, y: c.y - m, w: c.w + 2 * m, h: c.h + 2 * m };
     }
     vulneravel() {
       return this.t.ia !== "chefe_gerador" || this.estado === "superaquecido";
@@ -3016,7 +3178,7 @@
       this.limpar();
       for (const { def, cx, cy } of defs) {
         if (def.se && !this.estado.condicao(def.se)) continue;
-        this.inimigos.push(new Inimigo(this, def.inimigo, def, cx * TILE + 8, cy * TILE + 14));
+        this.inimigos.push(new Inimigo(this, def.inimigo, def, cx * TILE + 8, cy * TILE + 8));
       }
     }
     // ---------------------------------------------------------------- acoes da jogadora
@@ -3031,16 +3193,18 @@
       if (this.estado.v("arma_pulso") <= 0 || this.cdPulso > 0) return false;
       if (this.energia < 1) {
         this.jogo.som.efeito("erro");
-        this.texto(this.mundo.jogador.x, this.mundo.jogador.y - 28, "sem energia", "#9aa3c7");
+        this.texto(this.mundo.jogador.x, this.mundo.jogador.y, "sem energia", "#9aa3c7", 40);
         this.cdPulso = 0.4;
         return true;
       }
       const j = this.mundo.jogador;
       const [vx, vy] = VETOR[j.dir];
+      const gx = vx * 165;
+      const gy = vy * 165;
       this.energia -= 1;
       this.recargaEnergia = 0;
       this.cdPulso = 0.28;
-      this.projeteis.push({ x: j.x + vx * 8, y: j.y - 8 + vy * 6, vx: vx * 175, vy: vy * 175, vida: 0.75, dono: "jogadora", dano: 1, sprite: "fx_pulso" });
+      this.projeteis.push({ x: j.x + vx * 8, y: j.y + vy * 8, z: 12, vx: gx, vy: gy, vida: 0.8, dono: "jogadora", dano: 1, sprite: "fx_pulso" });
       this.jogo.som.efeito("disparo");
       return true;
     }
@@ -3051,25 +3215,19 @@
       this.esquiva = { t: 0, dur: 0.17, vx: vx * 210, vy: vy * 210 };
       this.cdEsquiva = 0.6;
       this.jogo.som.efeito("esquiva");
-      for (let k = 0; k < 4; k++) this.particula(j.x, j.y - 4, -vx * 20 + (Math.random() - 0.5) * 20, -vy * 20 - Math.random() * 10, "#c8d0e0", 0.3);
+      for (let k = 0; k < 4; k++) this.particula(j.x, j.y, (Math.random() - 0.5) * 30, -Math.random() * 15, "#c8d0e0", 0.3, 4);
       return true;
     }
     caixaGolpe() {
       const j = this.mundo.jogador;
-      switch (j.dir) {
-        case "dir":
-          return { x: j.x + 1, y: j.y - 17, w: 17, h: 16 };
-        case "esq":
-          return { x: j.x - 18, y: j.y - 17, w: 17, h: 16 };
-        case "cima":
-          return { x: j.x - 10, y: j.y - 30, w: 20, h: 16 };
-        default:
-          return { x: j.x - 10, y: j.y - 6, w: 20, h: 16 };
-      }
+      const [vx, vy] = VETOR[j.dir];
+      const cx = j.x + vx * 12;
+      const cy = j.y + vy * 12;
+      return { x: cx - 10, y: cy - 10, w: 20, h: 20 };
     }
     caixaJogadora() {
       const j = this.mundo.jogador;
-      return { x: j.x - 5, y: j.y - 15, w: 10, h: 15 };
+      return { x: j.x - 6, y: j.y - 6, w: 12, h: 12 };
     }
     // movimento extra da jogadora (esquiva e empurrao); devolve true se a esquiva controla o movimento
     moverJogadora(dt) {
@@ -3104,14 +3262,14 @@
       this.ky = ny * 170;
       this.mundo.tremor = Math.max(this.mundo.tremor, 0.18);
       this.jogo.som.efeito("dano");
-      for (let k = 0; k < 6; k++) this.particula(j.x, j.y - 10, (Math.random() - 0.5) * 60, -Math.random() * 50, "#e5675b", 0.4);
+      for (let k = 0; k < 6; k++) this.particula(j.x, j.y, (Math.random() - 0.5) * 60, -Math.random() * 50, "#e5675b", 0.4, 14);
       if (e.vida <= 0) this.jogo.desmaiar();
     }
     ferirInimigo(i, dano, ox, oy, fonte) {
       if (i.morto) return;
       if (!i.vulneravel()) {
         this.jogo.som.efeito("escudo");
-        for (let k = 0; k < 4; k++) this.particula(ox, oy, (Math.random() - 0.5) * 60, -Math.random() * 40, "#fff6c8", 0.25);
+        for (let k = 0; k < 4; k++) this.particula(ox, oy, (Math.random() - 0.5) * 60, -Math.random() * 40, "#fff6c8", 0.25, 16);
         if (fonte === "golpe") {
           const j = this.mundo.jogador;
           const [nx, ny] = normal(j.x - i.x, j.y - i.y);
@@ -3129,7 +3287,7 @@
         i.ky = ny * 140;
       }
       this.jogo.som.efeito("acerto");
-      for (let k = 0; k < 5; k++) this.particula(i.x, i.y - 8, (Math.random() - 0.5) * 70, -Math.random() * 60, "#d6dcf5", 0.35);
+      for (let k = 0; k < 5; k++) this.particula(i.x, i.y, (Math.random() - 0.5) * 70, -Math.random() * 60, "#d6dcf5", 0.35, 10);
       if (i.vida <= 0) this.derrotar(i);
     }
     derrotar(i) {
@@ -3139,9 +3297,9 @@
       const n = i.chefe ? 40 : 12;
       for (let k = 0; k < n; k++) {
         const cor = k % 3 === 0 ? "#7c7e90" : ["#7fe3f0", "#ffd98a", "#8fe08a", "#e58fd6"][k % 4];
-        this.particula(i.x, i.y - t.caixa[1] / 2, (Math.random() - 0.5) * (i.chefe ? 160 : 90), -Math.random() * (i.chefe ? 120 : 80), cor, 0.7 + Math.random() * 0.5);
+        this.particula(i.x, i.y, (Math.random() - 0.5) * (i.chefe ? 160 : 90), -Math.random() * (i.chefe ? 120 : 80), cor, 0.7 + Math.random() * 0.5, i.chefe ? 26 : 10);
       }
-      this.texto(i.x, i.y - t.caixa[1] - 6, t.maquina ? "Restaurado!" : "Dissipado!", "#8fe08a");
+      this.texto(i.x, i.y, t.maquina ? "Restaurado!" : "Dissipado!", "#8fe08a", i.chefe ? 56 : 26);
       if (i.chefe) {
         this.mundo.tremor = 0.8;
         this.jogo.flash = 0.8;
@@ -3157,11 +3315,14 @@
     soltar(x, y, tipo, mat) {
       this.quedas.push({ x, y, tipo, mat, t: 0, vy: -50, z: 0 });
     }
-    particula(x, y, vx, vy, cor, vida) {
-      this.particulas.push({ x, y, vx, vy, cor, vida, max: vida });
+    // particulas e textos ficam em coordenadas de TELA (x, y da grade + altura z)
+    particula(x, y, vx, vy, cor, vida, z = 8) {
+      const p = iso(x, y);
+      this.particulas.push({ x: p.x, y: p.y - z, vx, vy, cor, vida, max: vida });
     }
-    texto(x, y, s, cor) {
-      this.textos.push({ x, y, s, cor, t: 0 });
+    texto(x, y, s, cor, z = 26) {
+      const p = iso(x, y);
+      this.textos.push({ x: p.x, y: p.y - z, s, cor, t: 0 });
     }
     // ---------------------------------------------------------------- laco
     atualizar(dt) {
@@ -3186,7 +3347,7 @@
           if (this.golpe.atingidos.has(i)) continue;
           if (intersecta2(cg, i.corpo())) {
             this.golpe.atingidos.add(i);
-            this.ferirInimigo(i, 1, j.x, j.y - 8, "golpe");
+            this.ferirInimigo(i, 1, j.x, j.y, "golpe");
           }
         }
         if (this.golpe && this.golpe.t >= this.golpe.dur) this.golpe = null;
@@ -3197,7 +3358,7 @@
         if (i.morto) continue;
         const ci = i.caixa();
         const toque = { x: ci.x - 2, y: ci.y - 2, w: ci.w + 4, h: ci.h + 4 };
-        if (intersecta2(toque, cj)) this.ferirJogadora(i.t.dano || 1, i.x, i.y - 4);
+        if (intersecta2(toque, cj)) this.ferirJogadora(i.t.dano || 1, i.x, i.y);
       }
       for (const p of this.projeteis) {
         p.x += p.vx * dt;
@@ -3216,9 +3377,9 @@
           this.ferirJogadora(p.dano, p.x - p.vx, p.y - p.vy);
           p.vida = 0;
         }
-        if (p.vida > 0 && this.bateParede(p.x, p.y + (p.dono === "jogadora" ? 8 : 6))) {
+        if (p.vida > 0 && this.bateParede(p.x, p.y)) {
           p.vida = 0;
-          for (let k = 0; k < 3; k++) this.particula(p.x, p.y, (Math.random() - 0.5) * 40, (Math.random() - 0.5) * 40, p.dono === "jogadora" ? "#7fe3f0" : "#ffb04a", 0.25);
+          for (let k = 0; k < 3; k++) this.particula(p.x, p.y, (Math.random() - 0.5) * 40, (Math.random() - 0.5) * 40, p.dono === "jogadora" ? "#7fe3f0" : "#ffb04a", 0.25, p.z ?? 10);
         }
       }
       this.projeteis = this.projeteis.filter((p) => p.vida > 0);
@@ -3248,14 +3409,14 @@
       const e = this.estado;
       if (q.tipo === "coracao") {
         e.vida = Math.min(e.vidaMax, e.vida + 2);
-        this.texto(q.x, q.y - 12, "+1 cora\xE7\xE3o", "#e5675b");
+        this.texto(q.x, q.y, "+1 cora\xE7\xE3o", "#e5675b", 18);
       } else if (q.tipo === "energia") {
         this.energia = Math.min(ENERGIA_MAX, this.energia + 2);
-        this.texto(q.x, q.y - 12, "+2 energia", "#7fe3f0");
+        this.texto(q.x, q.y, "+2 energia", "#7fe3f0", 18);
       } else {
         e.coletar(q.mat, 1);
         const nome = this.jogo.rec.dados.materiais.materiais[q.mat]?.nome || q.mat;
-        this.texto(q.x, q.y - 12, `+1 ${nome}`, "#ffd98a");
+        this.texto(q.x, q.y, `+1 ${nome}`, "#ffd98a", 18);
       }
       this.jogo.som.efeito("brilho");
     }
@@ -3336,7 +3497,7 @@
             }
           } else if (i.timer <= 0) {
             const v = t.projetil_vel || 85;
-            this.projeteis.push({ x: i.x, y: i.y - 10, vx: nx * v, vy: ny * v, vida: 2.2, dono: "inimigo", dano: t.dano || 1, sprite: "fx_faisca" });
+            this.projeteis.push({ x: i.x, y: i.y, z: t.voa ? 16 : 10, vx: nx * v, vy: ny * v, vida: 2.2, dono: "inimigo", dano: t.dano || 1, sprite: "fx_faisca" });
             this.jogo.som.efeito("faisca");
             i.estado = "manter";
             i.recarga = (t.recarga || 2.4) * (0.8 + Math.random() * 0.4);
@@ -3362,7 +3523,7 @@
           if (i.estado === "investir") {
             const v = (t.investida_vel || 150) * (this.leve() ? 0.8 : 1);
             const bateu = this.mover(i, i.dirMov[0] * v * dt, i.dirMov[1] * v * dt);
-            if (Math.random() < dt * 20) this.particula(i.x, i.y - 2, (Math.random() - 0.5) * 20, -10, "#8a8c9a", 0.3);
+            if (Math.random() < dt * 20) this.particula(i.x, i.y, (Math.random() - 0.5) * 20, -10, "#8a8c9a", 0.3, 2);
             if (bateu) {
               i.estado = "tonto";
               i.timer = t.tonto || 1.4;
@@ -3391,7 +3552,7 @@
           const oy = i.y;
           this.mundo.mover(i, 0, i.vq[1] * vel * dt, i);
           if (Math.abs(i.y - oy - i.vq[1] * vel * dt) > 0.01) i.vq[1] *= -1;
-          if (Math.random() < dt * 6) this.particula(i.x, i.y - 5, (Math.random() - 0.5) * 30, -Math.random() * 30, "#ffd98a", 0.2);
+          if (Math.random() < dt * 6) this.particula(i.x, i.y, (Math.random() - 0.5) * 30, -Math.random() * 30, "#ffd98a", 0.2, 5);
           break;
         }
         case "chefe_gerador":
@@ -3418,7 +3579,7 @@
         i.invocou = true;
         for (const [ox, oy] of [[-40, 10], [40, 10]]) this.inimigos.push(new Inimigo(this, "faisca", {}, i.x + ox, i.y + oy));
         this.jogo.som.efeito("tremor");
-        this.texto(i.x, i.y - 54, "Sobrecarga!", "#ffb04a");
+        this.texto(i.x, i.y, "Sobrecarga!", "#ffb04a", 60);
       }
       if (i.estado === "vagar") {
         i.estado = "blindado";
@@ -3429,11 +3590,11 @@
         i.rajada -= dt;
         if (i.rajada <= 0) {
           const n = metade ? 5 : 3;
-          const [nx, ny] = normal(dx, dy + 8);
+          const [nx, ny] = normal(dx, dy);
           const base = Math.atan2(ny, nx);
           for (let k = 0; k < n; k++) {
             const a = base + (k - (n - 1) / 2) * 0.22;
-            this.projeteis.push({ x: i.x, y: i.y - 24, vx: Math.cos(a) * 80, vy: Math.sin(a) * 80, vida: 3, dono: "inimigo", dano: 1, sprite: "fx_faisca" });
+            this.projeteis.push({ x: i.x, y: i.y, z: 20, vx: Math.cos(a) * 80, vy: Math.sin(a) * 80, vida: 3, dono: "inimigo", dano: 1, sprite: "fx_faisca" });
           }
           this.jogo.som.efeito("faisca");
           i.rajada = 9;
@@ -3444,14 +3605,14 @@
           this.jogo.som.efeito("aviso");
         }
       } else if (i.estado === "carregando") {
-        if (Math.random() < dt * 30) this.particula(i.x + (Math.random() - 0.5) * 40, i.y - 24 + (Math.random() - 0.5) * 30, 0, -20, "#7fe3f0", 0.3);
+        if (Math.random() < dt * 30) this.particula(i.x + (Math.random() - 0.5) * 30, i.y + (Math.random() - 0.5) * 20, 0, -20, "#7fe3f0", 0.3, 20 + Math.random() * 20);
         if (i.timer <= 0) {
           i.estado = "anel";
           const n = metade ? 12 : 8;
           const giro = Math.random() * Math.PI;
           for (let k = 0; k < n; k++) {
             const a = giro + k * Math.PI * 2 / n;
-            this.projeteis.push({ x: i.x, y: i.y - 22, vx: Math.cos(a) * 70, vy: Math.sin(a) * 70, vida: 3.2, dono: "inimigo", dano: 1, sprite: "fx_faisca" });
+            this.projeteis.push({ x: i.x, y: i.y, z: 18, vx: Math.cos(a) * 70, vy: Math.sin(a) * 70, vida: 3.2, dono: "inimigo", dano: 1, sprite: "fx_faisca" });
           }
           this.jogo.som.efeito("turbina");
           i.timer = 0.5;
@@ -3461,10 +3622,10 @@
           i.estado = "superaquecido";
           i.timer = (quarto ? 2 : 2.7) * (this.leve() ? 1.3 : 1);
           this.jogo.som.efeito("vapor");
-          this.texto(i.x, i.y - 54, "N\xFAcleo exposto!", "#ffd98a");
+          this.texto(i.x, i.y, "N\xFAcleo exposto!", "#ffd98a", 60);
         }
       } else if (i.estado === "superaquecido") {
-        if (Math.random() < dt * 25) this.particula(i.x + (Math.random() - 0.5) * 36, i.y - 40, (Math.random() - 0.5) * 10, -30, "#d8dce6", 0.6);
+        if (Math.random() < dt * 25) this.particula(i.x + (Math.random() - 0.5) * 30, i.y + (Math.random() - 0.5) * 20, (Math.random() - 0.5) * 10, -30, "#d8dce6", 0.6, 40);
         if (i.timer <= 0) {
           i.estado = "blindado";
           i.timer = metade ? 1.8 : 2.2;
@@ -3478,34 +3639,37 @@
       const lista = [];
       for (const i of this.inimigos) {
         lista.push({
-          o: i.y,
+          o: i.x + i.y,
           d: () => {
             const tt = i.t;
             const sw = tt.w;
             const sh = tt.h;
-            const voo = tt.voa ? Math.round(Math.sin(i.anim * 4) * 2) - 6 : 0;
-            if (!i.chefe) dd.img("ui_sombra", i.x - 6, i.y - 4);
+            const p = iso(i.x, i.y);
+            const voo = tt.voa ? Math.round(Math.sin(i.anim * 4) * 2) - 8 : 0;
+            if (!i.chefe) dd.img("ui_sombra", p.x - 6, p.y - 3);
             let tremer = 0;
             if ((i.estado === "mirar" || i.estado === "carregando") && Math.floor(t * 20) % 2) tremer = 1;
-            const x = Math.round(i.x - sw / 2 + tremer);
-            const y = Math.round(i.y - sh + voo);
-            const opc = { sx: i.quadro() * sw, sw, sh, espelhar: !i.chefe && this.mundo.jogador.x < i.x && tt.espelhar !== false };
+            const x = Math.round(p.x - sw / 2 + tremer);
+            const y = Math.round(p.y - sh + (i.chefe ? 10 : 2) + voo);
+            const jx = iso(this.mundo.jogador.x, this.mundo.jogador.y).x;
+            const opc = { sx: i.quadro() * sw, sw, sh, espelhar: !i.chefe && jx < p.x && tt.espelhar !== false };
             if (i.flash > 0) dd.imgBranca("obj_" + tt.sprite, x, y, opc);
             else dd.img("obj_" + tt.sprite, x, y, opc);
-            if (i.estado === "mirar" && tt.ia === "investida") dd.texto("!", i.x, y - 9, "#e5675b", { alinhar: "centro", sombra: true });
-            if (i.estado === "tonto") for (let k = 0; k < 3; k++) dd.ret(i.x - 6 + k * 5 + Math.round(Math.sin(t * 6 + k) * 2), y - 4, 2, 2, "#ffd98a");
+            if (i.estado === "mirar" && tt.ia === "investida") dd.texto("!", p.x, y - 9, "#e5675b", { alinhar: "centro", sombra: true });
+            if (i.estado === "tonto") for (let k = 0; k < 3; k++) dd.ret(p.x - 6 + k * 5 + Math.round(Math.sin(t * 6 + k) * 2), y - 4, 2, 2, "#ffd98a");
           }
         });
       }
       for (const q of this.quedas) {
         if (q.t > 11 && Math.floor(q.t * 8) % 2) continue;
         lista.push({
-          o: q.y,
+          o: q.x + q.y,
           d: () => {
+            const p = iso(q.x, q.y);
             const bob = q.z + Math.round(Math.sin(q.t * 5) * 1);
             const nome = q.tipo === "coracao" ? "drop_coracao" : q.tipo === "energia" ? "drop_energia" : "mat_" + q.mat;
-            if (q.tipo === "mat") dd.img(nome, q.x - 8, q.y - 16 + bob);
-            else dd.img(nome, q.x - 4, q.y - 10 + bob);
+            if (q.tipo === "mat") dd.img(nome, p.x - 8, p.y - 14 + bob);
+            else dd.img(nome, p.x - 4, p.y - 9 + bob);
           }
         });
       }
@@ -3513,13 +3677,16 @@
     }
     desenharSobre(dd, t) {
       const j = this.mundo.jogador;
+      const pj = iso(j.x, j.y);
       if (this.golpe) {
         const p = this.golpe.t / this.golpe.dur;
-        const base = { dir: 0, baixo: Math.PI / 2, esq: Math.PI, cima: -Math.PI / 2 }[j.dir];
+        const v = VETOR[j.dir];
+        const sv = iso(v[0], v[1]);
+        const base = Math.atan2(sv.y, sv.x);
         const a = base - 1.1 + p * 2.2;
-        const r = 11;
-        const cx = j.x + Math.cos(a) * r;
-        const cy = j.y - 11 + Math.sin(a) * r;
+        const r = 12;
+        const cx = pj.x + Math.cos(a) * r;
+        const cy = pj.y - 14 + Math.sin(a) * r * 0.7;
         const c = dd.ctx;
         c.save();
         c.translate(Math.round(cx), Math.round(cy));
@@ -3529,13 +3696,15 @@
         c.strokeStyle = "rgba(255,255,255,0.55)";
         c.lineWidth = 2;
         c.beginPath();
-        c.arc(Math.round(j.x), Math.round(j.y - 11), 15, base - 1.1, a);
+        c.ellipse(Math.round(pj.x), Math.round(pj.y - 14), 16, 11, 0, base - 1.1, a);
         c.stroke();
       }
       for (const p of this.projeteis) {
         const q = Math.floor(t * 12) % 2;
         const s = p.sprite === "fx_pulso" ? 8 : 6;
-        dd.img(p.sprite, p.x - s / 2, p.y - s / 2, { sx: q * s, sw: s, sh: s });
+        const ps = iso(p.x, p.y);
+        dd.img("ui_sombra", ps.x - 6, ps.y - 3, { alpha: 0.5 });
+        dd.img(p.sprite, ps.x - s / 2, ps.y - (p.z ?? 10) - s / 2, { sx: q * s, sw: s, sh: s });
       }
       for (const p of this.particulas) {
         dd.ctx.globalAlpha = Math.max(0, p.vida / p.max);

@@ -3,7 +3,7 @@
 // A protagonista golpeia com a chave inglesa (Espaço), dispara o pulso do Revisor (X)
 // e se esquiva (Shift). Os inimigos sao criaturas do Esquecimento e maquinas tomadas
 // por ele. Cada tipo de inimigo esta descrito em dados/inimigos.json.
-import { TILE, clamp } from "./base.js";
+import { TILE, clamp, iso } from "./base.js";
 import { VETOR } from "./mundo.js";
 
 const ENERGIA_MAX = 5;
@@ -46,15 +46,14 @@ export class Inimigo {
 
   caixa() {
     const [w, h] = this.t.caixa;
-    return { x: this.x - w / 2, y: this.y - h, w, h };
+    return { x: this.x - w / 2, y: this.y - h / 2, w, h };
   }
 
   // area que recebe golpes e disparos: cobre boa parte do desenho, nao so os pes
   corpo() {
-    const [w, h] = this.t.caixa;
-    const alt = Math.max(h, Math.round(this.t.h * (this.t.voa ? 0.9 : 0.75)));
-    const voo = this.t.voa ? 6 : 0;
-    return { x: this.x - w / 2 - 1, y: this.y - alt - voo, w: w + 2, h: alt + voo };
+    const c = this.caixa();
+    const m = this.t.voa ? 5 : 3;
+    return { x: c.x - m, y: c.y - m, w: c.w + 2 * m, h: c.h + 2 * m };
   }
 
   vulneravel() {
@@ -119,7 +118,7 @@ export class Combate {
     void vida;
     for (const { def, cx, cy } of defs) {
       if (def.se && !this.estado.condicao(def.se)) continue;
-      this.inimigos.push(new Inimigo(this, def.inimigo, def, cx * TILE + 8, cy * TILE + 14));
+      this.inimigos.push(new Inimigo(this, def.inimigo, def, cx * TILE + 8, cy * TILE + 8));
     }
   }
 
@@ -136,16 +135,18 @@ export class Combate {
     if (this.estado.v("arma_pulso") <= 0 || this.cdPulso > 0) return false;
     if (this.energia < 1) {
       this.jogo.som.efeito("erro");
-      this.texto(this.mundo.jogador.x, this.mundo.jogador.y - 28, "sem energia", "#9aa3c7");
+      this.texto(this.mundo.jogador.x, this.mundo.jogador.y, "sem energia", "#9aa3c7", 40);
       this.cdPulso = 0.4;
       return true;
     }
     const j = this.mundo.jogador;
     const [vx, vy] = VETOR[j.dir];
+    const gx = vx * 165;
+    const gy = vy * 165;
     this.energia -= 1;
     this.recargaEnergia = 0;
     this.cdPulso = 0.28;
-    this.projeteis.push({ x: j.x + vx * 8, y: j.y - 8 + vy * 6, vx: vx * 175, vy: vy * 175, vida: 0.75, dono: "jogadora", dano: 1, sprite: "fx_pulso" });
+    this.projeteis.push({ x: j.x + vx * 8, y: j.y + vy * 8, z: 12, vx: gx, vy: gy, vida: 0.8, dono: "jogadora", dano: 1, sprite: "fx_pulso" });
     this.jogo.som.efeito("disparo");
     return true;
   }
@@ -157,23 +158,21 @@ export class Combate {
     this.esquiva = { t: 0, dur: 0.17, vx: vx * 210, vy: vy * 210 };
     this.cdEsquiva = 0.6;
     this.jogo.som.efeito("esquiva");
-    for (let k = 0; k < 4; k++) this.particula(j.x, j.y - 4, -vx * 20 + (Math.random() - 0.5) * 20, -vy * 20 - Math.random() * 10, "#c8d0e0", 0.3);
+    for (let k = 0; k < 4; k++) this.particula(j.x, j.y, (Math.random() - 0.5) * 30, -Math.random() * 15, "#c8d0e0", 0.3, 4);
     return true;
   }
 
   caixaGolpe() {
     const j = this.mundo.jogador;
-    switch (j.dir) {
-      case "dir": return { x: j.x + 1, y: j.y - 17, w: 17, h: 16 };
-      case "esq": return { x: j.x - 18, y: j.y - 17, w: 17, h: 16 };
-      case "cima": return { x: j.x - 10, y: j.y - 30, w: 20, h: 16 };
-      default: return { x: j.x - 10, y: j.y - 6, w: 20, h: 16 };
-    }
+    const [vx, vy] = VETOR[j.dir];
+    const cx = j.x + vx * 12;
+    const cy = j.y + vy * 12;
+    return { x: cx - 10, y: cy - 10, w: 20, h: 20 };
   }
 
   caixaJogadora() {
     const j = this.mundo.jogador;
-    return { x: j.x - 5, y: j.y - 15, w: 10, h: 15 };
+    return { x: j.x - 6, y: j.y - 6, w: 12, h: 12 };
   }
 
   // movimento extra da jogadora (esquiva e empurrao); devolve true se a esquiva controla o movimento
@@ -210,7 +209,7 @@ export class Combate {
     this.ky = ny * 170;
     this.mundo.tremor = Math.max(this.mundo.tremor, 0.18);
     this.jogo.som.efeito("dano");
-    for (let k = 0; k < 6; k++) this.particula(j.x, j.y - 10, (Math.random() - 0.5) * 60, -Math.random() * 50, "#e5675b", 0.4);
+    for (let k = 0; k < 6; k++) this.particula(j.x, j.y, (Math.random() - 0.5) * 60, -Math.random() * 50, "#e5675b", 0.4, 14);
     if (e.vida <= 0) this.jogo.desmaiar();
   }
 
@@ -218,7 +217,7 @@ export class Combate {
     if (i.morto) return;
     if (!i.vulneravel()) {
       this.jogo.som.efeito("escudo");
-      for (let k = 0; k < 4; k++) this.particula(ox, oy, (Math.random() - 0.5) * 60, -Math.random() * 40, "#fff6c8", 0.25);
+      for (let k = 0; k < 4; k++) this.particula(ox, oy, (Math.random() - 0.5) * 60, -Math.random() * 40, "#fff6c8", 0.25, 16);
       if (fonte === "golpe") {
         const j = this.mundo.jogador;
         const [nx, ny] = normal(j.x - i.x, j.y - i.y);
@@ -236,7 +235,7 @@ export class Combate {
       i.ky = ny * 140;
     }
     this.jogo.som.efeito("acerto");
-    for (let k = 0; k < 5; k++) this.particula(i.x, i.y - 8, (Math.random() - 0.5) * 70, -Math.random() * 60, "#d6dcf5", 0.35);
+    for (let k = 0; k < 5; k++) this.particula(i.x, i.y, (Math.random() - 0.5) * 70, -Math.random() * 60, "#d6dcf5", 0.35, 10);
     if (i.vida <= 0) this.derrotar(i);
   }
 
@@ -247,9 +246,9 @@ export class Combate {
     const n = i.chefe ? 40 : 12;
     for (let k = 0; k < n; k++) {
       const cor = k % 3 === 0 ? "#7c7e90" : ["#7fe3f0", "#ffd98a", "#8fe08a", "#e58fd6"][k % 4];
-      this.particula(i.x, i.y - t.caixa[1] / 2, (Math.random() - 0.5) * (i.chefe ? 160 : 90), -Math.random() * (i.chefe ? 120 : 80), cor, 0.7 + Math.random() * 0.5);
+      this.particula(i.x, i.y, (Math.random() - 0.5) * (i.chefe ? 160 : 90), -Math.random() * (i.chefe ? 120 : 80), cor, 0.7 + Math.random() * 0.5, i.chefe ? 26 : 10);
     }
-    this.texto(i.x, i.y - t.caixa[1] - 6, t.maquina ? "Restaurado!" : "Dissipado!", "#8fe08a");
+    this.texto(i.x, i.y, t.maquina ? "Restaurado!" : "Dissipado!", "#8fe08a", i.chefe ? 56 : 26);
     if (i.chefe) {
       this.mundo.tremor = 0.8;
       this.jogo.flash = 0.8;
@@ -268,12 +267,15 @@ export class Combate {
     this.quedas.push({ x, y, tipo, mat, t: 0, vy: -50, z: 0 });
   }
 
-  particula(x, y, vx, vy, cor, vida) {
-    this.particulas.push({ x, y, vx, vy, cor, vida, max: vida });
+  // particulas e textos ficam em coordenadas de TELA (x, y da grade + altura z)
+  particula(x, y, vx, vy, cor, vida, z = 8) {
+    const p = iso(x, y);
+    this.particulas.push({ x: p.x, y: p.y - z, vx, vy, cor, vida, max: vida });
   }
 
-  texto(x, y, s, cor) {
-    this.textos.push({ x, y, s, cor, t: 0 });
+  texto(x, y, s, cor, z = 26) {
+    const p = iso(x, y);
+    this.textos.push({ x: p.x, y: p.y - z, s, cor, t: 0 });
   }
 
   // ---------------------------------------------------------------- laco
@@ -300,7 +302,7 @@ export class Combate {
         if (this.golpe.atingidos.has(i)) continue;
         if (intersecta(cg, i.corpo())) {
           this.golpe.atingidos.add(i);
-          this.ferirInimigo(i, 1, j.x, j.y - 8, "golpe");
+          this.ferirInimigo(i, 1, j.x, j.y, "golpe");
         }
       }
       if (this.golpe && this.golpe.t >= this.golpe.dur) this.golpe = null;
@@ -312,7 +314,7 @@ export class Combate {
       if (i.morto) continue;
       const ci = i.caixa();
       const toque = { x: ci.x - 2, y: ci.y - 2, w: ci.w + 4, h: ci.h + 4 };
-      if (intersecta(toque, cj)) this.ferirJogadora(i.t.dano || 1, i.x, i.y - 4);
+      if (intersecta(toque, cj)) this.ferirJogadora(i.t.dano || 1, i.x, i.y);
     }
     // projeteis
     for (const p of this.projeteis) {
@@ -332,9 +334,9 @@ export class Combate {
         this.ferirJogadora(p.dano, p.x - p.vx, p.y - p.vy);
         p.vida = 0;
       }
-      if (p.vida > 0 && this.bateParede(p.x, p.y + (p.dono === "jogadora" ? 8 : 6))) {
+      if (p.vida > 0 && this.bateParede(p.x, p.y)) {
         p.vida = 0;
-        for (let k = 0; k < 3; k++) this.particula(p.x, p.y, (Math.random() - 0.5) * 40, (Math.random() - 0.5) * 40, p.dono === "jogadora" ? "#7fe3f0" : "#ffb04a", 0.25);
+        for (let k = 0; k < 3; k++) this.particula(p.x, p.y, (Math.random() - 0.5) * 40, (Math.random() - 0.5) * 40, p.dono === "jogadora" ? "#7fe3f0" : "#ffb04a", 0.25, p.z ?? 10);
       }
     }
     this.projeteis = this.projeteis.filter((p) => p.vida > 0);
@@ -368,14 +370,14 @@ export class Combate {
     const e = this.estado;
     if (q.tipo === "coracao") {
       e.vida = Math.min(e.vidaMax, e.vida + 2);
-      this.texto(q.x, q.y - 12, "+1 coração", "#e5675b");
+      this.texto(q.x, q.y, "+1 coração", "#e5675b", 18);
     } else if (q.tipo === "energia") {
       this.energia = Math.min(ENERGIA_MAX, this.energia + 2);
-      this.texto(q.x, q.y - 12, "+2 energia", "#7fe3f0");
+      this.texto(q.x, q.y, "+2 energia", "#7fe3f0", 18);
     } else {
       e.coletar(q.mat, 1);
       const nome = this.jogo.rec.dados.materiais.materiais[q.mat]?.nome || q.mat;
-      this.texto(q.x, q.y - 12, `+1 ${nome}`, "#ffd98a");
+      this.texto(q.x, q.y, `+1 ${nome}`, "#ffd98a", 18);
     }
     this.jogo.som.efeito("brilho");
   }
@@ -453,7 +455,7 @@ export class Combate {
           }
         } else if (i.timer <= 0) {
           const v = t.projetil_vel || 85;
-          this.projeteis.push({ x: i.x, y: i.y - 10, vx: nx * v, vy: ny * v, vida: 2.2, dono: "inimigo", dano: t.dano || 1, sprite: "fx_faisca" });
+          this.projeteis.push({ x: i.x, y: i.y, z: t.voa ? 16 : 10, vx: nx * v, vy: ny * v, vida: 2.2, dono: "inimigo", dano: t.dano || 1, sprite: "fx_faisca" });
           this.jogo.som.efeito("faisca");
           i.estado = "manter";
           i.recarga = (t.recarga || 2.4) * (0.8 + Math.random() * 0.4);
@@ -476,7 +478,7 @@ export class Combate {
         if (i.estado === "investir") {
           const v = (t.investida_vel || 150) * (this.leve() ? 0.8 : 1);
           const bateu = this.mover(i, i.dirMov[0] * v * dt, i.dirMov[1] * v * dt);
-          if (Math.random() < dt * 20) this.particula(i.x, i.y - 2, (Math.random() - 0.5) * 20, -10, "#8a8c9a", 0.3);
+          if (Math.random() < dt * 20) this.particula(i.x, i.y, (Math.random() - 0.5) * 20, -10, "#8a8c9a", 0.3, 2);
           if (bateu) {
             i.estado = "tonto";
             i.timer = t.tonto || 1.4;
@@ -505,7 +507,7 @@ export class Combate {
         const oy = i.y;
         this.mundo.mover(i, 0, i.vq[1] * vel * dt, i);
         if (Math.abs(i.y - oy - i.vq[1] * vel * dt) > 0.01) i.vq[1] *= -1;
-        if (Math.random() < dt * 6) this.particula(i.x, i.y - 5, (Math.random() - 0.5) * 30, -Math.random() * 30, "#ffd98a", 0.2);
+        if (Math.random() < dt * 6) this.particula(i.x, i.y, (Math.random() - 0.5) * 30, -Math.random() * 30, "#ffd98a", 0.2, 5);
         break;
       }
       case "chefe_gerador":
@@ -535,7 +537,7 @@ export class Combate {
       i.invocou = true;
       for (const [ox, oy] of [[-40, 10], [40, 10]]) this.inimigos.push(new Inimigo(this, "faisca", {}, i.x + ox, i.y + oy));
       this.jogo.som.efeito("tremor");
-      this.texto(i.x, i.y - 54, "Sobrecarga!", "#ffb04a");
+      this.texto(i.x, i.y, "Sobrecarga!", "#ffb04a", 60);
     }
     if (i.estado === "vagar") {
       i.estado = "blindado";
@@ -546,11 +548,11 @@ export class Combate {
       i.rajada -= dt;
       if (i.rajada <= 0) {
         const n = metade ? 5 : 3;
-        const [nx, ny] = normal(dx, dy + 8);
+        const [nx, ny] = normal(dx, dy);
         const base = Math.atan2(ny, nx);
         for (let k = 0; k < n; k++) {
           const a = base + (k - (n - 1) / 2) * 0.22;
-          this.projeteis.push({ x: i.x, y: i.y - 24, vx: Math.cos(a) * 80, vy: Math.sin(a) * 80, vida: 3, dono: "inimigo", dano: 1, sprite: "fx_faisca" });
+          this.projeteis.push({ x: i.x, y: i.y, z: 20, vx: Math.cos(a) * 80, vy: Math.sin(a) * 80, vida: 3, dono: "inimigo", dano: 1, sprite: "fx_faisca" });
         }
         this.jogo.som.efeito("faisca");
         i.rajada = 9;
@@ -561,14 +563,14 @@ export class Combate {
         this.jogo.som.efeito("aviso");
       }
     } else if (i.estado === "carregando") {
-      if (Math.random() < dt * 30) this.particula(i.x + (Math.random() - 0.5) * 40, i.y - 24 + (Math.random() - 0.5) * 30, 0, -20, "#7fe3f0", 0.3);
+      if (Math.random() < dt * 30) this.particula(i.x + (Math.random() - 0.5) * 30, i.y + (Math.random() - 0.5) * 20, 0, -20, "#7fe3f0", 0.3, 20 + Math.random() * 20);
       if (i.timer <= 0) {
         i.estado = "anel";
         const n = metade ? 12 : 8;
         const giro = Math.random() * Math.PI;
         for (let k = 0; k < n; k++) {
           const a = giro + (k * Math.PI * 2) / n;
-          this.projeteis.push({ x: i.x, y: i.y - 22, vx: Math.cos(a) * 70, vy: Math.sin(a) * 70, vida: 3.2, dono: "inimigo", dano: 1, sprite: "fx_faisca" });
+          this.projeteis.push({ x: i.x, y: i.y, z: 18, vx: Math.cos(a) * 70, vy: Math.sin(a) * 70, vida: 3.2, dono: "inimigo", dano: 1, sprite: "fx_faisca" });
         }
         this.jogo.som.efeito("turbina");
         i.timer = 0.5;
@@ -578,10 +580,10 @@ export class Combate {
         i.estado = "superaquecido";
         i.timer = (quarto ? 2.0 : 2.7) * (this.leve() ? 1.3 : 1);
         this.jogo.som.efeito("vapor");
-        this.texto(i.x, i.y - 54, "Núcleo exposto!", "#ffd98a");
+        this.texto(i.x, i.y, "Núcleo exposto!", "#ffd98a", 60);
       }
     } else if (i.estado === "superaquecido") {
-      if (Math.random() < dt * 25) this.particula(i.x + (Math.random() - 0.5) * 36, i.y - 40, (Math.random() - 0.5) * 10, -30, "#d8dce6", 0.6);
+      if (Math.random() < dt * 25) this.particula(i.x + (Math.random() - 0.5) * 30, i.y + (Math.random() - 0.5) * 20, (Math.random() - 0.5) * 10, -30, "#d8dce6", 0.6, 40);
       if (i.timer <= 0) {
         i.estado = "blindado";
         i.timer = metade ? 1.8 : 2.2;
@@ -596,34 +598,37 @@ export class Combate {
     const lista = [];
     for (const i of this.inimigos) {
       lista.push({
-        o: i.y,
+        o: i.x + i.y,
         d: () => {
           const tt = i.t;
           const sw = tt.w;
           const sh = tt.h;
-          const voo = tt.voa ? Math.round(Math.sin(i.anim * 4) * 2) - 6 : 0;
-          if (!i.chefe) dd.img("ui_sombra", i.x - 6, i.y - 4);
+          const p = iso(i.x, i.y);
+          const voo = tt.voa ? Math.round(Math.sin(i.anim * 4) * 2) - 8 : 0;
+          if (!i.chefe) dd.img("ui_sombra", p.x - 6, p.y - 3);
           let tremer = 0;
           if ((i.estado === "mirar" || i.estado === "carregando") && Math.floor(t * 20) % 2) tremer = 1;
-          const x = Math.round(i.x - sw / 2 + tremer);
-          const y = Math.round(i.y - sh + voo);
-          const opc = { sx: i.quadro() * sw, sw, sh, espelhar: !i.chefe && this.mundo.jogador.x < i.x && tt.espelhar !== false };
+          const x = Math.round(p.x - sw / 2 + tremer);
+          const y = Math.round(p.y - sh + (i.chefe ? 10 : 2) + voo);
+          const jx = iso(this.mundo.jogador.x, this.mundo.jogador.y).x;
+          const opc = { sx: i.quadro() * sw, sw, sh, espelhar: !i.chefe && jx < p.x && tt.espelhar !== false };
           if (i.flash > 0) dd.imgBranca("obj_" + tt.sprite, x, y, opc);
           else dd.img("obj_" + tt.sprite, x, y, opc);
-          if (i.estado === "mirar" && tt.ia === "investida") dd.texto("!", i.x, y - 9, "#e5675b", { alinhar: "centro", sombra: true });
-          if (i.estado === "tonto") for (let k = 0; k < 3; k++) dd.ret(i.x - 6 + k * 5 + Math.round(Math.sin(t * 6 + k) * 2), y - 4, 2, 2, "#ffd98a");
+          if (i.estado === "mirar" && tt.ia === "investida") dd.texto("!", p.x, y - 9, "#e5675b", { alinhar: "centro", sombra: true });
+          if (i.estado === "tonto") for (let k = 0; k < 3; k++) dd.ret(p.x - 6 + k * 5 + Math.round(Math.sin(t * 6 + k) * 2), y - 4, 2, 2, "#ffd98a");
         },
       });
     }
     for (const q of this.quedas) {
       if (q.t > 11 && Math.floor(q.t * 8) % 2) continue;
       lista.push({
-        o: q.y,
+        o: q.x + q.y,
         d: () => {
+          const p = iso(q.x, q.y);
           const bob = q.z + Math.round(Math.sin(q.t * 5) * 1);
           const nome = q.tipo === "coracao" ? "drop_coracao" : q.tipo === "energia" ? "drop_energia" : "mat_" + q.mat;
-          if (q.tipo === "mat") dd.img(nome, q.x - 8, q.y - 16 + bob);
-          else dd.img(nome, q.x - 4, q.y - 10 + bob);
+          if (q.tipo === "mat") dd.img(nome, p.x - 8, p.y - 14 + bob);
+          else dd.img(nome, p.x - 4, p.y - 9 + bob);
         },
       });
     }
@@ -632,14 +637,17 @@ export class Combate {
 
   desenharSobre(dd, t) {
     const j = this.mundo.jogador;
-    // golpe da chave inglesa: a ferramenta gira num arco na frente da jogadora
+    const pj = iso(j.x, j.y);
+    // golpe da chave inglesa: a ferramenta gira num arco na frente da jogadora (na tela)
     if (this.golpe) {
       const p = this.golpe.t / this.golpe.dur;
-      const base = { dir: 0, baixo: Math.PI / 2, esq: Math.PI, cima: -Math.PI / 2 }[j.dir];
+      const v = VETOR[j.dir];
+      const sv = iso(v[0], v[1]);
+      const base = Math.atan2(sv.y, sv.x);
       const a = base - 1.1 + p * 2.2;
-      const r = 11;
-      const cx = j.x + Math.cos(a) * r;
-      const cy = j.y - 11 + Math.sin(a) * r;
+      const r = 12;
+      const cx = pj.x + Math.cos(a) * r;
+      const cy = pj.y - 14 + Math.sin(a) * r * 0.7;
       const c = dd.ctx;
       c.save();
       c.translate(Math.round(cx), Math.round(cy));
@@ -649,13 +657,15 @@ export class Combate {
       c.strokeStyle = "rgba(255,255,255,0.55)";
       c.lineWidth = 2;
       c.beginPath();
-      c.arc(Math.round(j.x), Math.round(j.y - 11), 15, base - 1.1, a);
+      c.ellipse(Math.round(pj.x), Math.round(pj.y - 14), 16, 11, 0, base - 1.1, a);
       c.stroke();
     }
     for (const p of this.projeteis) {
       const q = Math.floor(t * 12) % 2;
       const s = p.sprite === "fx_pulso" ? 8 : 6;
-      dd.img(p.sprite, p.x - s / 2, p.y - s / 2, { sx: q * s, sw: s, sh: s });
+      const ps = iso(p.x, p.y);
+      dd.img("ui_sombra", ps.x - 6, ps.y - 3, { alpha: 0.5 });
+      dd.img(p.sprite, ps.x - s / 2, ps.y - (p.z ?? 10) - s / 2, { sx: q * s, sw: s, sh: s });
     }
     for (const p of this.particulas) {
       dd.ctx.globalAlpha = Math.max(0, p.vida / p.max);

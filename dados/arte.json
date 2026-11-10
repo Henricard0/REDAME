@@ -779,6 +779,43 @@
   "fonte",
   "fx_faisca",
   "fx_pulso",
+  "iso_andaime",
+  "iso_arquivo",
+  "iso_banca",
+  "iso_bancada",
+  "iso_banco",
+  "iso_blocos",
+  "iso_caixa_antiga",
+  "iso_caixa_obra",
+  "iso_caixas",
+  "iso_carro_preto_d",
+  "iso_carro_preto_e",
+  "iso_carro_verde_d",
+  "iso_carro_verde_e",
+  "iso_carro_vinho_d",
+  "iso_carro_vinho_e",
+  "iso_chafariz",
+  "iso_chao",
+  "iso_estante",
+  "iso_flores",
+  "iso_gerador",
+  "iso_mesa",
+  "iso_mesa_moderna",
+  "iso_mesa_projeto",
+  "iso_painel",
+  "iso_ponto_bonde",
+  "iso_porta_comando",
+  "iso_predio_casa_amarela",
+  "iso_predio_casa_azul",
+  "iso_predio_casa_rosa",
+  "iso_predio_casa_verde",
+  "iso_predio_colegio",
+  "iso_predio_departamento",
+  "iso_predio_ufpr",
+  "iso_servidor",
+  "iso_terminal",
+  "iso_tijolos",
+  "iso_turbina",
   "item_capacete",
   "item_chave",
   "item_diploma",
@@ -885,6 +922,10 @@
   "pers_operario_usina",
   "pers_professor",
   "pers_protagonista",
+  "pers_protagonista_industrial",
+  "pers_protagonista_jaleco",
+  "pers_protagonista_noir",
+  "pers_protagonista_vapor",
   "pers_ze",
   "pers_zelador",
   "ret_antonio",
@@ -895,6 +936,10 @@
   "ret_jornaleiro",
   "ret_professor",
   "ret_protagonista",
+  "ret_protagonista_industrial",
+  "ret_protagonista_jaleco",
+  "ret_protagonista_noir",
+  "ret_protagonista_vapor",
   "ret_revisor",
   "ret_ze",
   "ret_zelador",
@@ -915,5 +960,1154 @@
   "ui_raio",
   "ui_seta",
   "ui_sombra"
- ]
+ ],
+ "iso": {
+  "terminal": {
+   "tipo": "caixa",
+   "sprite": "iso_terminal",
+   "pegada": [
+    2,
+    1
+   ],
+   "ancora": [
+    16,
+    28
+   ],
+   "w": 48,
+   "h": 54,
+   "quadros": 2,
+   "col": [
+    1,
+    1,
+    30,
+    14
+   ]
+  },
+  "painel": {
+   "tipo": "caixa",
+   "sprite": "iso_painel",
+   "pegada": [
+    2,
+    1
+   ],
+   "ancora": [
+    16,
+    24
+   ],
+   "w": 48,
+   "h": 50,
+   "quadros": 2,
+   "col": [
+    1,
+    1,
+    30,
+    14
+   ]
+  },
+  "servidor": {
+   "tipo": "caixa",
+   "sprite": "iso_servidor",
+   "pegada": [
+    1,
+    1
+   ],
+   "ancora": [
+    16,
+    36
+   ],
+   "w": 32,
+   "h": 54,
+   "quadros": 2,
+   "col": [
+    1,
+    1,
+    14,
+    14
+   ]
+  },
+  "turbina": {
+   "tipo": "caixa",
+   "sprite": "iso_turbina",
+   "pegada": [
+    2,
+    2
+   ],
+   "ancora": [
+    32,
+    22
+   ],
+   "w": 64,
+   "h": 56,
+   "quadros": 4,
+   "col": [
+    3,
+    3,
+    26,
+    26
+   ]
+  },
+  "gerador": {
+   "tipo": "caixa",
+   "sprite": "iso_gerador",
+   "pegada": [
+    1,
+    1
+   ],
+   "ancora": [
+    16,
+    26
+   ],
+   "w": 32,
+   "h": 44,
+   "quadros": 1,
+   "col": [
+    1,
+    1,
+    14,
+    14
+   ]
+  },
+  "bancada": {
+   "tipo": "caixa",
+   "sprite": "iso_bancada",
+   "pegada": [
+    2,
+    1
+   ],
+   "ancora": [
+    16,
+    22
+   ],
+   "w": 48,
+   "h": 48,
+   "quadros": 1,
+   "col": [
+    1,
+    1,
+    30,
+    14
+   ]
+  },
+  "mesa": {
+   "tipo": "caixa",
+   "sprite": "iso_mesa",
+   "pegada": [
+    2,
+    1
+   ],
+   "ancora": [
+    16,
+    16
+   ],
+   "w": 48,
+   "h": 42,
+   "quadros": 1,
+   "col": [
+    1,
+    1,
+    30,
+    14
+   ]
+  },
+  "mesa_moderna": {
+   "tipo": "caixa",
+   "sprite": "iso_mesa_moderna",
+   "pegada": [
+    2,
+    1
+   ],
+   "ancora": [
+    16,
+    22
+   ],
+   "w": 48,
+   "h": 48,
+   "quadros": 1,
+   "col": [
+    1,
+    1,
+    30,
+    14
+   ]
+  },
+  "mesa_projeto": {
+   "tipo": "caixa",
+   "sprite": "iso_mesa_projeto",
+   "pegada": [
+    2,
+    1
+   ],
+   "ancora": [
+    16,
+    16
+   ],
+   "w": 48,
+   "h": 42,
+   "quadros": 1,
+   "col": [
+    1,
+    1,
+    30,
+    14
+   ]
+  },
+  "estante": {
+   "tipo": "caixa",
+   "sprite": "iso_estante",
+   "pegada": [
+    2,
+    1
+   ],
+   "ancora": [
+    16,
+    38
+   ],
+   "w": 48,
+   "h": 64,
+   "quadros": 1,
+   "col": [
+    1,
+    1,
+    30,
+    14
+   ]
+  },
+  "arquivo": {
+   "tipo": "caixa",
+   "sprite": "iso_arquivo",
+   "pegada": [
+    1,
+    1
+   ],
+   "ancora": [
+    16,
+    26
+   ],
+   "w": 32,
+   "h": 44,
+   "quadros": 1,
+   "col": [
+    1,
+    1,
+    14,
+    14
+   ]
+  },
+  "caixas": {
+   "tipo": "caixa",
+   "sprite": "iso_caixas",
+   "pegada": [
+    1,
+    1
+   ],
+   "ancora": [
+    16,
+    20
+   ],
+   "w": 32,
+   "h": 38,
+   "quadros": 1,
+   "col": [
+    1,
+    1,
+    14,
+    14
+   ]
+  },
+  "caixa_antiga": {
+   "tipo": "caixa",
+   "sprite": "iso_caixa_antiga",
+   "pegada": [
+    1,
+    1
+   ],
+   "ancora": [
+    16,
+    12
+   ],
+   "w": 32,
+   "h": 30,
+   "quadros": 1,
+   "col": [
+    1,
+    1,
+    14,
+    14
+   ]
+  },
+  "caixa_obra": {
+   "tipo": "caixa",
+   "sprite": "iso_caixa_obra",
+   "pegada": [
+    1,
+    1
+   ],
+   "ancora": [
+    16,
+    14
+   ],
+   "w": 32,
+   "h": 32,
+   "quadros": 1,
+   "col": [
+    1,
+    1,
+    14,
+    14
+   ]
+  },
+  "tijolos": {
+   "tipo": "caixa",
+   "sprite": "iso_tijolos",
+   "pegada": [
+    1,
+    1
+   ],
+   "ancora": [
+    16,
+    10
+   ],
+   "w": 32,
+   "h": 28,
+   "quadros": 1,
+   "col": [
+    1,
+    1,
+    14,
+    14
+   ]
+  },
+  "banco": {
+   "tipo": "caixa",
+   "sprite": "iso_banco",
+   "pegada": [
+    2,
+    1
+   ],
+   "ancora": [
+    16,
+    14
+   ],
+   "w": 48,
+   "h": 40,
+   "quadros": 1,
+   "col": [
+    0,
+    4,
+    32,
+    8
+   ]
+  },
+  "flores": {
+   "tipo": "caixa",
+   "sprite": "iso_flores",
+   "pegada": [
+    2,
+    1
+   ],
+   "ancora": [
+    16,
+    10
+   ],
+   "w": 48,
+   "h": 36,
+   "quadros": 1,
+   "col": [
+    1,
+    1,
+    30,
+    14
+   ]
+  },
+  "banca": {
+   "tipo": "caixa",
+   "sprite": "iso_banca",
+   "pegada": [
+    2,
+    2
+   ],
+   "ancora": [
+    32,
+    34
+   ],
+   "w": 64,
+   "h": 68,
+   "quadros": 1,
+   "col": [
+    1,
+    1,
+    30,
+    30
+   ]
+  },
+  "ponto_bonde": {
+   "tipo": "caixa",
+   "sprite": "iso_ponto_bonde",
+   "pegada": [
+    2,
+    1
+   ],
+   "ancora": [
+    16,
+    32
+   ],
+   "w": 48,
+   "h": 58,
+   "quadros": 1,
+   "col": [
+    2,
+    6,
+    28,
+    5
+   ]
+  },
+  "chafariz": {
+   "tipo": "caixa",
+   "sprite": "iso_chafariz",
+   "pegada": [
+    3,
+    2
+   ],
+   "ancora": [
+    32,
+    26
+   ],
+   "w": 80,
+   "h": 68,
+   "quadros": 1,
+   "col": [
+    10,
+    2,
+    28,
+    28
+   ]
+  },
+  "andaime": {
+   "tipo": "caixa",
+   "sprite": "iso_andaime",
+   "pegada": [
+    3,
+    1
+   ],
+   "ancora": [
+    16,
+    46
+   ],
+   "w": 64,
+   "h": 80,
+   "quadros": 1,
+   "col": [
+    0,
+    2,
+    48,
+    13
+   ]
+  },
+  "porta_comando": {
+   "tipo": "caixa",
+   "sprite": "iso_porta_comando",
+   "pegada": [
+    1,
+    1
+   ],
+   "ancora": [
+    16,
+    32
+   ],
+   "w": 32,
+   "h": 50,
+   "quadros": 1,
+   "col": [
+    1,
+    1,
+    14,
+    14
+   ]
+  },
+  "carro_preto_d": {
+   "tipo": "caixa",
+   "sprite": "iso_carro_preto_d",
+   "pegada": [
+    2,
+    1
+   ],
+   "ancora": [
+    16,
+    18
+   ],
+   "w": 48,
+   "h": 44,
+   "quadros": 1,
+   "col": null
+  },
+  "carro_preto_e": {
+   "tipo": "caixa",
+   "sprite": "iso_carro_preto_e",
+   "pegada": [
+    2,
+    1
+   ],
+   "ancora": [
+    16,
+    18
+   ],
+   "w": 48,
+   "h": 44,
+   "quadros": 1,
+   "col": null
+  },
+  "carro_vinho_d": {
+   "tipo": "caixa",
+   "sprite": "iso_carro_vinho_d",
+   "pegada": [
+    2,
+    1
+   ],
+   "ancora": [
+    16,
+    18
+   ],
+   "w": 48,
+   "h": 44,
+   "quadros": 1,
+   "col": null
+  },
+  "carro_vinho_e": {
+   "tipo": "caixa",
+   "sprite": "iso_carro_vinho_e",
+   "pegada": [
+    2,
+    1
+   ],
+   "ancora": [
+    16,
+    18
+   ],
+   "w": 48,
+   "h": 44,
+   "quadros": 1,
+   "col": null
+  },
+  "carro_verde_d": {
+   "tipo": "caixa",
+   "sprite": "iso_carro_verde_d",
+   "pegada": [
+    2,
+    1
+   ],
+   "ancora": [
+    16,
+    18
+   ],
+   "w": 48,
+   "h": 44,
+   "quadros": 1,
+   "col": null
+  },
+  "carro_verde_e": {
+   "tipo": "caixa",
+   "sprite": "iso_carro_verde_e",
+   "pegada": [
+    2,
+    1
+   ],
+   "ancora": [
+    16,
+    18
+   ],
+   "w": 48,
+   "h": 44,
+   "quadros": 1,
+   "col": null
+  },
+  "araucaria": {
+   "tipo": "billboard",
+   "sprite": "obj_araucaria",
+   "pegada": [
+    1,
+    1
+   ],
+   "w": 32,
+   "h": 64,
+   "quadros": 1,
+   "col": [
+    4,
+    4,
+    8,
+    8
+   ]
+  },
+  "arvore": {
+   "tipo": "billboard",
+   "sprite": "obj_arvore",
+   "pegada": [
+    1,
+    1
+   ],
+   "w": 32,
+   "h": 40,
+   "quadros": 1,
+   "col": [
+    3,
+    3,
+    10,
+    10
+   ]
+  },
+  "arbusto": {
+   "tipo": "billboard",
+   "sprite": "obj_arbusto",
+   "pegada": [
+    1,
+    1
+   ],
+   "w": 16,
+   "h": 16,
+   "quadros": 1,
+   "col": [
+    3,
+    3,
+    10,
+    10
+   ]
+  },
+  "poste": {
+   "tipo": "billboard",
+   "sprite": "obj_poste",
+   "pegada": [
+    1,
+    1
+   ],
+   "w": 16,
+   "h": 40,
+   "quadros": 1,
+   "col": [
+    6,
+    6,
+    4,
+    4
+   ]
+  },
+  "placa": {
+   "tipo": "billboard",
+   "sprite": "obj_placa",
+   "pegada": [
+    1,
+    1
+   ],
+   "w": 16,
+   "h": 24,
+   "quadros": 1,
+   "col": [
+    6,
+    6,
+    4,
+    4
+   ]
+  },
+  "revisor": {
+   "tipo": "billboard",
+   "sprite": "obj_revisor",
+   "pegada": [
+    1,
+    1
+   ],
+   "w": 16,
+   "h": 24,
+   "quadros": 2,
+   "col": [
+    2,
+    2,
+    12,
+    12
+   ]
+  },
+  "vaso": {
+   "tipo": "billboard",
+   "sprite": "obj_vaso",
+   "pegada": [
+    1,
+    1
+   ],
+   "w": 16,
+   "h": 24,
+   "quadros": 1,
+   "col": [
+    4,
+    4,
+    8,
+    8
+   ]
+  },
+  "cadeira": {
+   "tipo": "billboard",
+   "sprite": "obj_cadeira",
+   "pegada": [
+    1,
+    1
+   ],
+   "w": 16,
+   "h": 16,
+   "quadros": 1,
+   "col": null
+  },
+  "valvula": {
+   "tipo": "billboard",
+   "sprite": "obj_valvula",
+   "pegada": [
+    1,
+    1
+   ],
+   "w": 16,
+   "h": 16,
+   "quadros": 1,
+   "col": [
+    3,
+    3,
+    10,
+    10
+   ]
+  },
+  "cano_v": {
+   "tipo": "billboard",
+   "sprite": "obj_cano_v",
+   "pegada": [
+    1,
+    1
+   ],
+   "w": 16,
+   "h": 16,
+   "quadros": 1,
+   "col": [
+    4,
+    4,
+    8,
+    8
+   ]
+  },
+  "cano_h": {
+   "tipo": "billboard",
+   "sprite": "obj_cano_h",
+   "pegada": [
+    1,
+    1
+   ],
+   "w": 16,
+   "h": 16,
+   "quadros": 1,
+   "col": null
+  },
+  "lampada": {
+   "tipo": "billboard",
+   "sprite": "obj_lampada",
+   "pegada": [
+    1,
+    1
+   ],
+   "w": 16,
+   "h": 16,
+   "quadros": 1,
+   "col": null
+  },
+  "placa_perigo": {
+   "tipo": "billboard",
+   "sprite": "obj_placa_perigo",
+   "pegada": [
+    1,
+    1
+   ],
+   "w": 16,
+   "h": 16,
+   "quadros": 1,
+   "col": null
+  },
+  "monte_areia": {
+   "tipo": "billboard",
+   "sprite": "obj_monte_areia",
+   "pegada": [
+    1,
+    1
+   ],
+   "w": 32,
+   "h": 16,
+   "quadros": 1,
+   "col": [
+    1,
+    1,
+    14,
+    14
+   ]
+  },
+  "carrinho": {
+   "tipo": "billboard",
+   "sprite": "obj_carrinho",
+   "pegada": [
+    1,
+    1
+   ],
+   "w": 16,
+   "h": 16,
+   "quadros": 1,
+   "col": [
+    2,
+    2,
+    12,
+    12
+   ]
+  },
+  "cerca": {
+   "tipo": "billboard",
+   "sprite": "obj_cerca",
+   "pegada": [
+    1,
+    1
+   ],
+   "w": 16,
+   "h": 16,
+   "quadros": 1,
+   "col": [
+    0,
+    6,
+    16,
+    4
+   ]
+  },
+  "sucata": {
+   "tipo": "billboard",
+   "sprite": "obj_sucata",
+   "pegada": [
+    1,
+    1
+   ],
+   "w": 16,
+   "h": 16,
+   "quadros": 1,
+   "col": [
+    2,
+    2,
+    12,
+    12
+   ]
+  },
+  "bobina": {
+   "tipo": "billboard",
+   "sprite": "obj_bobina",
+   "pegada": [
+    1,
+    1
+   ],
+   "w": 16,
+   "h": 16,
+   "quadros": 1,
+   "col": [
+    2,
+    2,
+    12,
+    12
+   ]
+  },
+  "pneus": {
+   "tipo": "billboard",
+   "sprite": "obj_pneus",
+   "pegada": [
+    1,
+    1
+   ],
+   "w": 16,
+   "h": 16,
+   "quadros": 1,
+   "col": [
+    2,
+    2,
+    12,
+    12
+   ]
+  },
+  "caixa_parafusos": {
+   "tipo": "billboard",
+   "sprite": "obj_caixa_parafusos",
+   "pegada": [
+    1,
+    1
+   ],
+   "w": 16,
+   "h": 16,
+   "quadros": 1,
+   "col": [
+    2,
+    2,
+    12,
+    12
+   ]
+  },
+  "lousa_usina": {
+   "tipo": "billboard",
+   "sprite": "obj_lousa_usina",
+   "pegada": [
+    1,
+    1
+   ],
+   "w": 32,
+   "h": 24,
+   "quadros": 1,
+   "col": [
+    2,
+    6,
+    12,
+    4
+   ]
+  },
+  "placa_usina": {
+   "tipo": "billboard",
+   "sprite": "obj_placa_usina",
+   "pegada": [
+    1,
+    1
+   ],
+   "w": 128,
+   "h": 24,
+   "quadros": 1,
+   "col": null
+  },
+  "placa_oficina": {
+   "tipo": "billboard",
+   "sprite": "obj_placa_oficina",
+   "pegada": [
+    1,
+    1
+   ],
+   "w": 48,
+   "h": 24,
+   "quadros": 1,
+   "col": null
+  },
+  "placa_condutos": {
+   "tipo": "billboard",
+   "sprite": "obj_placa_condutos",
+   "pegada": [
+    1,
+    1
+   ],
+   "w": 96,
+   "h": 24,
+   "quadros": 1,
+   "col": null
+  },
+  "placa_casa_forca": {
+   "tipo": "billboard",
+   "sprite": "obj_placa_casa_forca",
+   "pegada": [
+    1,
+    1
+   ],
+   "w": 80,
+   "h": 24,
+   "quadros": 1,
+   "col": null
+  },
+  "placa_ventilacao": {
+   "tipo": "billboard",
+   "sprite": "obj_placa_ventilacao",
+   "pegada": [
+    1,
+    1
+   ],
+   "w": 64,
+   "h": 24,
+   "quadros": 1,
+   "col": null
+  },
+  "placa_deposito": {
+   "tipo": "billboard",
+   "sprite": "obj_placa_deposito",
+   "pegada": [
+    1,
+    1
+   ],
+   "w": 48,
+   "h": 24,
+   "quadros": 1,
+   "col": null
+  },
+  "placa_comando": {
+   "tipo": "billboard",
+   "sprite": "obj_placa_comando",
+   "pegada": [
+    1,
+    1
+   ],
+   "w": 96,
+   "h": 24,
+   "quadros": 1,
+   "col": null
+  },
+  "placa_canteiro": {
+   "tipo": "billboard",
+   "sprite": "obj_placa_canteiro",
+   "pegada": [
+    1,
+    1
+   ],
+   "w": 96,
+   "h": 24,
+   "quadros": 1,
+   "col": null
+  },
+  "placa_santos_andrade": {
+   "tipo": "billboard",
+   "sprite": "obj_placa_santos_andrade",
+   "pegada": [
+    1,
+    1
+   ],
+   "w": 112,
+   "h": 24,
+   "quadros": 1,
+   "col": null
+  },
+  "placa_redame": {
+   "tipo": "billboard",
+   "sprite": "obj_placa_redame",
+   "pegada": [
+    1,
+    1
+   ],
+   "w": 80,
+   "h": 24,
+   "quadros": 1,
+   "col": null
+  },
+  "placa_acervo": {
+   "tipo": "billboard",
+   "sprite": "obj_placa_acervo",
+   "pegada": [
+    1,
+    1
+   ],
+   "w": 96,
+   "h": 24,
+   "quadros": 1,
+   "col": null
+  }
+ },
+ "iso_chao": {
+  "chao": {
+   "grama": 0,
+   "grama2": 1,
+   "grama3": 2,
+   "grama_flor": 3,
+   "rua": 4,
+   "rua2": 5,
+   "calcada": 6,
+   "calcada2": 7,
+   "praca": 8,
+   "terra": 9,
+   "areia": 10,
+   "agua": 11,
+   "agua2": 12,
+   "madeira": 13,
+   "madeira2": 14,
+   "tapete": 15,
+   "azulejo": 16,
+   "parede": 17,
+   "parede_topo": 18,
+   "parede_moderna": 19,
+   "rocha": 20,
+   "rocha_face": 21,
+   "concreto": 22,
+   "grade": 23,
+   "vazio": 24,
+   "canteiro": 25,
+   "trilho": 26,
+   "chapa": 27,
+   "cabo_h": 28,
+   "cabo_v": 29
+  },
+  "colunas": 8,
+  "blocos": {
+   "#": {
+    "i": 0,
+    "altura": 30
+   },
+   "+": {
+    "i": 1,
+    "altura": 30
+   },
+   "m": {
+    "i": 2,
+    "altura": 30
+   },
+   "&": {
+    "i": 3,
+    "altura": 34
+   },
+   "%": {
+    "i": 4,
+    "altura": 34
+   },
+   " ": {
+    "i": 5,
+    "altura": 34
+   }
+  },
+  "blocos_altura": 34,
+  "predios": {
+   "ufpr": {
+    "altura": 56,
+    "tipos": [
+     "liso",
+     "janela",
+     "porta"
+    ]
+   },
+   "colegio": {
+    "altura": 46,
+    "tipos": [
+     "liso",
+     "janela",
+     "porta"
+    ]
+   },
+   "departamento": {
+    "altura": 40,
+    "tipos": [
+     "liso",
+     "janela",
+     "porta"
+    ]
+   },
+   "casa_azul": {
+    "altura": 36,
+    "tipos": [
+     "liso",
+     "janela",
+     "porta"
+    ]
+   },
+   "casa_rosa": {
+    "altura": 36,
+    "tipos": [
+     "liso",
+     "janela",
+     "porta"
+    ]
+   },
+   "casa_amarela": {
+    "altura": 36,
+    "tipos": [
+     "liso",
+     "janela",
+     "porta"
+    ]
+   },
+   "casa_verde": {
+    "altura": 36,
+    "tipos": [
+     "liso",
+     "janela",
+     "porta"
+    ]
+   }
+  }
+ }
 }

@@ -25,6 +25,8 @@ export class Dialogo extends Camada {
     super(jogo);
     const pers = jogo.rec.dados.personagens;
     this.p = pers[quem] || pers.narrador;
+    const traje = jogo.mundo?.def?.traje;
+    if (quem === "protagonista" && traje && jogo.rec.img["ret_protagonista_" + traje]) this.p = { ...this.p, retrato: "protagonista_" + traje };
     this.quem = quem;
     this.emocao = emocao;
     this.icone = opc.icone || null;
@@ -347,7 +349,7 @@ export class Titulo extends Camada {
     if (!this.iniciado) {
       if (Math.floor(t * 2) % 2 === 0) d.texto(this.jogo.ent.usouToque ? "Toque para começar" : "Clique ou pressione Enter para começar", LARG / 2, 132, COR.texto, { alinhar: "centro", sombra: true });
     } else this.menu.desenhar(d, t);
-    const dica = this.jogo.ent.usouToque ? "Direcional: andar   A: agir/golpe   B: pulso   Esquiva   Menu" : "Setas: andar   Espaço: agir/golpe   X: pulso   Shift: esquiva   Esc: menu";
+    const dica = this.jogo.ent.usouToque ? "Direcional: andar   A: agir/golpe   B: pulso   Esquiva   Menu" : "Setas: andar na grade   Espaço: agir/golpe   X: pulso   Shift: esquiva";
     d.texto(dica, LARG / 2, ALT - 11, "#6c7299", { alinhar: "centro" });
   }
 }
@@ -446,7 +448,7 @@ export class EntradaNome extends Camada {
   desenhar(d, t) {
     d.ret(0, 0, LARG, ALT, "#14121e");
     d.painel(40, 6, 240, 168);
-    d.retrato("protagonista", "feliz", 52, 12);
+    d.retrato("protagonista_jaleco", "feliz", 52, 12);
     d.texto("Qual é o seu nome?", 112, 18, COR.titulo, { sombra: true });
     d.texto("A estudante do projeto REDAME", 112, 30, COR.fraco);
     d.painel(110, 40, 160, 16, "ui_papel");

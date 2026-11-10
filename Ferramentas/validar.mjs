@@ -106,6 +106,9 @@ for (const [id, m] of Object.entries(mapas)) {
         if (!INIMIGOS[e.inimigo]) erro(`${onde}: inimigo desconhecido "${e.inimigo}"`);
         if (e.roteiro_derrota) refRoteiro(e.roteiro_derrota, onde);
         break;
+      case "predio":
+        if (!arte.iso_chao.predios[e.estilo]) erro(`${onde}: estilo de prédio desconhecido "${e.estilo}"`);
+        break;
       case "portal":
       case "gatilho":
       case "inspecao":
@@ -119,6 +122,20 @@ for (const [id, m] of Object.entries(mapas)) {
     if (e.dir && !DIRS.has(e.dir)) erro(`${onde}: direção inválida "${e.dir}"`);
   }
   refVariantes(m.ao_entrar, `Mapa ${id} ao_entrar`);
+  if (m.traje && !arquivos.has("pers_protagonista_" + m.traje)) erro(`Mapa ${id}: traje desconhecido "${m.traje}"`);
+  // nada pode ficar preso dentro de um predio
+  const L = m.linhas.map((l) => [...l]);
+  L.forEach((l, cy) => l.forEach((ch, cx) => {
+    const e = m.legenda[ch];
+    if (!e || e.tipo !== "predio") return;
+    for (let ty = cy - (e.prof || 1) + 1; ty <= cy; ty++) {
+      for (let tx = cx; tx < cx + (e.larg || 1); tx++) {
+        if (tx === cx && ty === cy) continue;
+        const o = m.legenda[L[ty]?.[tx]];
+        if (o) erro(`Mapa ${id}: "${o.tipo}" em ${tx},${ty} ficou dentro do prédio ${e.estilo}`);
+      }
+    }
+  }));
   if (m.ao_desmaiar) refRoteiro(m.ao_desmaiar, `Mapa ${id} ao_desmaiar`);
   if (m.nome) checarTexto(m.nome, `mapa ${id}`);
 }

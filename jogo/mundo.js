@@ -1,5 +1,9 @@
-// REDAME - mundo: mapas feitos de texto, entidades, colisao, camera e desenho.
-import { TILE, LARG, ALT, clamp, hash2 } from "./base.js";
+// REDAME - mundo isometrico: mapas feitos de texto, entidades, colisao, camera e desenho.
+//
+// A logica do jogo continua numa grade vista de cima (1 tile = 16 unidades): colisao,
+// roteiros e combate nao mudam. So o desenho e projetado em isometrico:
+//   tela_x = x - y      tela_y = (x + y) / 2
+import { TILE, LARG, ALT, clamp, hash2, iso } from "./base.js";
 
 // Legenda dos tiles do chao. "solido" bloqueia a passagem.
 export const TILES = {
@@ -29,12 +33,29 @@ export const TILES = {
   v: { t: ["cabo_v"] },
 };
 
+const R = Math.SQRT1_2;
 const LINHA_DIR = { baixo: 0, cima: 1, dir: 2, esq: 2 };
+// As setas andam ao longo da grade (como nos isometricos classicos):
+//   cima = -y (sobe para a direita na tela)   baixo = +y (desce para a esquerda)
+//   dir  = +x (desce para a direita)          esq   = -x (sobe para a esquerda)
+// Assim corredores e ruas, que seguem a grade, ficam faceis de percorrer.
 export const VETOR = { baixo: [0, 1], cima: [0, -1], esq: [-1, 0], dir: [1, 0] };
 export const OPOSTA = { baixo: "cima", cima: "baixo", esq: "dir", dir: "esq" };
+const TELA_DIR = { baixo: [0, 1], cima: [0, -1], esq: [-1, 0], dir: [1, 0] };
 
 function intersecta(a, b) {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
+// converte um deslocamento na tela em deslocamento na grade logica
+export function telaParaGrade(sx, sy) {
+  return [(sx + 2 * sy) / 2, (2 * sy - sx) / 2];
+}
+
+// direcao dominante de um deslocamento na grade
+export function direcaoDe(dx, dy) {
+  if (Math.abs(dx) >= Math.abs(dy)) return dx < 0 ? "esq" : "dir";
+  return dy < 0 ? "cima" : "baixo";
 }
 
 export class Ator {
@@ -49,7 +70,7 @@ export class Ator {
   }
 
   caixa() {
-    return { x: this.x - 5, y: this.y - 5, w: 10, h: 5 };
+    return { x: this.x - 5, y: this.y - 5, w: 10, h: 10 };
   }
 
   quadro() {
@@ -58,13 +79,17 @@ export class Ator {
   }
 
   desenhar(d) {
-    const linha = LINHA_DIR[this.dir];
-    d.img("ui_sombra", this.x - 6, this.y - 4);
-    d.img("pers_" + this.sprite, this.x - 8, this.y - 22, {
-      sx: this.quadro() * 16,
-      sy: linha * 24,
-      sw: 16,
-      sh: 24,
+    const im = d.rec.img["pers_" + this.sprite];
+    if (!im) return;
+    const fw = im.width / 3;
+    const fh = im.height / 3;
+    const p = iso(this.x, this.y);
+    d.img("ui_sombra", p.x - 6, p.y - 3);
+    d.img("pers_" + this.sprite, p.x - fw / 2, p.y - fh + 1, {
+      sx: this.quadro() * fw,
+      sy: LINHA_DIR[this.dir] * fh,
+      sw: fw,
+      sh: fh,
       espelhar: this.dir === "esq",
     });
   }
@@ -86,18 +111,33 @@ export class Ent {
       const meta = mundo.arte.objetos[def.obj];
       if (!meta) throw new Error(`Objeto desconhecido no mapa: ${def.obj}`);
       this.meta = meta;
-      const c = meta.col;
-      if (c && def.solido !== false) this.col = { x: this.x + c[0], y: this.base - c[1] - c[3], w: c[2], h: c[3] };
+      this.iso = mundo.arte.iso[def.obj] || null;
+      this.parede = mundo.tileSolido(cx, cy) && (!this.iso || this.iso.tipo !== "caixa");
+      const [w, d] = this.iso ? this.iso.pegada : [1, 1];
+      this.x0 = cx * TILE + dx;
+      this.y0 = (cy - d + 1) * TILE + dy;
+      this.W = w * TILE;
+      this.D = d * TILE;
+      this.centro = { x: this.x0 + this.W / 2, y: this.y0 + this.D / 2 };
+      let col = this.iso ? this.iso.col : meta.col ? [4, 4, 8, 8] : null;
+      if (col && def.solido !== false && !this.parede) this.col = { x: this.x0 + col[0], y: this.y0 + col[1], w: col[2], h: col[3] };
+    }
+    if (tipo === "predio") {
+      this.x0 = cx * TILE;
+      this.y0 = (cy - (def.prof || 1) + 1) * TILE;
+      this.W = (def.larg || 1) * TILE;
+      this.D = (def.prof || 1) * TILE;
     }
     if (tipo === "npc") {
-      this.ator = new Ator(def.sprite, cx * TILE + 8 + dx, cy * TILE + 14 + dy, def.dir || "baixo");
+      this.ator = new Ator(def.sprite, cx * TILE + 8 + dx, cy * TILE + 8 + dy, def.dir || "baixo");
       this.casa = { x: this.ator.x, y: this.ator.y };
       this.vagarT = Math.random() * 2;
     }
     if (tipo === "carro") {
-      this.cx0 = this.x;
       this.vel = def.vel || 40;
       this.sentido = def.sentido || 1;
+      this.y0 = cy * TILE;
+      this.iso = mundo.arte.iso[def.obj + (this.sentido > 0 ? "_d" : "_e")];
     }
   }
 
@@ -114,17 +154,19 @@ export class Ent {
     }
     if (this.tipo === "obj" || this.tipo === "coleta") return this.col || null;
     if (this.tipo === "npc") return this.ator.caixa();
-    if (this.tipo === "carro") return { x: this.x + 2, y: this.base - 8, w: 28, h: 8 };
+    if (this.tipo === "carro") return { x: this.x + 2, y: this.y0 + 3, w: 28, h: 10 };
     return null;
   }
 
   // Area onde a protagonista pode interagir.
   caixaInteracao() {
-    if (this.tipo === "npc") return { x: this.ator.x - 8, y: this.ator.y - 14, w: 16, h: 16 };
+    if (this.tipo === "npc") return { x: this.ator.x - 9, y: this.ator.y - 9, w: 18, h: 18 };
     if (this.tipo === "obj" || this.tipo === "coleta") {
-      if (this.col) return { x: this.col.x - 3, y: this.col.y - 3, w: this.col.w + 6, h: this.col.h + 6 };
-      return { x: this.x, y: this.base - Math.min(this.meta.h, 24), w: this.meta.w, h: Math.min(this.meta.h, 24) };
+      if (this.parede) return { x: this.cx * TILE - 3, y: this.cy * TILE - 3, w: TILE + 6, h: TILE + 6 };
+      if (this.col) return { x: this.col.x - 4, y: this.col.y - 4, w: this.col.w + 8, h: this.col.h + 8 };
+      return { x: this.x0 - 2, y: this.y0 - 2, w: this.W + 4, h: this.D + 4 };
     }
+    if (this.tipo === "predio") return { x: this.x0 - 4, y: this.y0 - 4, w: this.W + 8, h: this.D + 8 };
     if (this.tipo === "item" || this.tipo === "inspecao" || this.tipo === "barreira") {
       const w = (this.def.larg || 1) * TILE;
       const h = (this.def.alt || 1) * TILE;
@@ -135,43 +177,91 @@ export class Ent {
 
   interativa() {
     if (!this.visivel()) return false;
-    if (["npc", "item", "inspecao", "barreira"].includes(this.tipo)) return !!this.def.roteiro;
-    if (this.tipo === "obj") return !!this.def.roteiro;
+    if (["npc", "item", "inspecao", "barreira", "obj", "predio"].includes(this.tipo)) return !!this.def.roteiro;
     if (this.tipo === "coleta") return true;
     return false;
   }
 
   ordem() {
-    if (this.def.camada === "fundo") return -1e6 + this.base;
     if (this.def.camada === "chao") return -1e7;
-    if (this.tipo === "npc") return this.ator.y;
-    return this.base;
+    if (this.tipo === "npc") return this.ator.x + this.ator.y;
+    if (this.tipo === "carro") return this.x + 16 + this.y0 + 8;
+    if (this.parede) return (this.cx + this.cy + 1) * TILE + 2;
+    if (this.centro) return this.centro.x + this.centro.y - (this.def.camada === "fundo" ? 8 : 0);
+    return this.x + 8 + this.base - 8;
+  }
+
+  // ponto de ancoragem na parede (objetos presos em blocos)
+  pontoParede() {
+    const m = this.mundo;
+    let px = (this.cx + 1) * TILE;
+    let py = (this.cy + 1) * TILE;
+    if (!m.tileSolido(this.cx, this.cy + 1)) px = (this.cx + 0.5) * TILE; // face voltada para +y
+    else if (!m.tileSolido(this.cx + 1, this.cy)) py = (this.cy + 0.5) * TILE; // face voltada para +x
+    const b = iso(px, py);
+    const h = m.alturaBloco(this.cx, this.cy);
+    return { x: b.x, y: b.y - h * 0.5 };
   }
 
   topo() {
-    if (this.tipo === "npc") return { x: this.ator.x, y: this.ator.y - 30 };
-    if (this.tipo === "obj" || this.tipo === "coleta") return { x: this.x + this.meta.w / 2, y: this.base - this.meta.h - 6 };
-    if (this.tipo === "item") return { x: this.x + 8, y: this.base - 22 };
+    if (this.tipo === "npc") {
+      const p = iso(this.ator.x, this.ator.y);
+      return { x: p.x, y: p.y - 40 };
+    }
+    if (this.tipo === "obj" || this.tipo === "coleta") {
+      if (this.parede) {
+        const p = this.pontoParede();
+        return { x: p.x, y: p.y - this.meta.h / 2 - 6 };
+      }
+      const p = iso(this.centro.x, this.centro.y);
+      if (this.iso && this.iso.tipo === "caixa") {
+        const o = iso(this.x0, this.y0);
+        return { x: p.x, y: o.y - this.iso.ancora[1] - 4 };
+      }
+      return { x: p.x, y: p.y - this.meta.h - 4 };
+    }
+    if (this.tipo === "predio") {
+      const p = iso(this.x0 + this.W / 2, this.y0 + this.D);
+      return { x: p.x, y: p.y - 20 };
+    }
     const w = (this.def.larg || 1) * TILE;
     const h = (this.def.alt || 1) * TILE;
-    return { x: this.x + w / 2, y: this.base - h - 6 };
+    const p = iso(this.x + w / 2, this.base - h / 2);
+    return { x: p.x, y: p.y - 24 };
   }
 
   desenhar(d, t) {
     if (this.tipo === "obj" || this.tipo === "coleta") {
       const m = this.meta;
+      const I = this.iso;
+      if (this.parede) {
+        const p = this.pontoParede();
+        const q = m.quadros > 1 ? Math.floor(t * (this.def.fps || 4)) % m.quadros : 0;
+        d.img("obj_" + this.def.obj, p.x - m.w / 2, p.y - m.h / 2, { sx: q * m.w, sw: m.w, sh: m.h });
+        return;
+      }
+      if (I && I.tipo === "caixa") {
+        const q = I.quadros > 1 ? Math.floor(t * (this.def.fps || 4)) % I.quadros : 0;
+        const o = iso(this.x0, this.y0);
+        d.img(I.sprite, o.x - I.ancora[0], o.y - I.ancora[1], { sx: q * I.w, sw: I.w, sh: I.h });
+        return;
+      }
       const q = m.quadros > 1 ? Math.floor(t * (this.def.fps || 4)) % m.quadros : 0;
-      d.img("obj_" + this.def.obj, this.x, this.base - m.h, { sx: q * m.w, sw: m.w, sh: m.h, espelhar: this.def.espelhar });
-      if (this.tipo === "coleta" && Math.floor(t * 2 + this.cx) % 3 === 0) d.img("ui_brilho", this.x + m.w - 5, this.base - m.h - 1);
+      const p = iso(this.centro.x, this.centro.y);
+      d.img("obj_" + this.def.obj, p.x - m.w / 2, p.y - m.h + 2, { sx: q * m.w, sw: m.w, sh: m.h, espelhar: this.def.espelhar });
+      if (this.tipo === "coleta" && Math.floor(t * 2 + this.cx) % 3 === 0) d.img("ui_brilho", p.x + m.w / 2 - 5, p.y - m.h);
     } else if (this.tipo === "npc") {
       this.ator.desenhar(d);
     } else if (this.tipo === "item") {
       const bob = Math.round(Math.sin(t * 3) * 1.5);
-      d.img("ui_sombra", this.x + 2, this.base - 5);
-      d.img("item_" + this.def.item, this.x, this.base - 18 + bob);
-      if (Math.floor(t * 2) % 3 === 0) d.img("ui_brilho", this.x + 11, this.base - 19 + bob);
-    } else if (this.tipo === "carro") {
-      d.img("obj_" + this.def.obj, this.x, this.base - 20, { espelhar: this.sentido < 0 });
+      const p = iso(this.x + 8, this.base - 8);
+      d.img("ui_sombra", p.x - 6, p.y - 3);
+      d.img("item_" + this.def.item, p.x - 8, p.y - 18 + bob);
+      if (Math.floor(t * 2) % 3 === 0) d.img("ui_brilho", p.x + 3, p.y - 19 + bob);
+    } else if (this.tipo === "carro" && this.iso) {
+      const I = this.iso;
+      const o = iso(this.x, this.y0);
+      d.img(I.sprite, o.x - I.ancora[0], o.y - I.ancora[1]);
     }
   }
 }
@@ -203,30 +293,76 @@ export class Mundo {
   carregar(def) {
     this.def = def;
     this.h = def.linhas.length;
-    this.w = Math.max(...def.linhas.map((l) => l.length));
+    this.w = Math.max(...def.linhas.map((l) => [...l].length));
     this.chao = [];
     this.solido = new Uint8Array(this.w * this.h);
     this.ents = [];
     this.spawns = {};
     this.defsInimigos = [];
+    const pendentes = [];
     for (let cy = 0; cy < this.h; cy++) {
+      const linha = [...def.linhas[cy]];
       for (let cx = 0; cx < this.w; cx++) {
-        const ch = def.linhas[cy][cx] ?? def.chao;
+        const ch = linha[cx] ?? def.chao;
         let tch = ch;
         if (!TILES[ch]) {
           const e = def.legenda?.[ch];
           tch = (e && e.chao) || def.chao;
-          if (e) this.criarEnt(e, cx, cy);
+          if (e) pendentes.push([e, cx, cy]);
           else console.warn(`Caractere sem legenda no mapa ${def.id}: "${ch}"`);
         }
         this.chao.push(tch);
         if (TILES[tch]?.solido) this.solido[cy * this.w + cx] = 1;
       }
     }
+    // predios primeiro: marcam a pegada como solida (objetos de parede dependem disso)
+    this.predios = [];
+    for (const [e, cx, cy] of pendentes) if (e.tipo === "predio") this.criarPredio(e, cx, cy);
+    for (const [e, cx, cy] of pendentes) if (e.tipo !== "predio") this.criarEnt(e, cx, cy);
+    this.blocos = [];
+    const B = this.arte.iso_chao.blocos;
+    for (let cy = 0; cy < this.h; cy++) {
+      for (let cx = 0; cx < this.w; cx++) {
+        const ch = this.chao[cy * this.w + cx];
+        if (B[ch] && !this.predioEm(cx, cy)) this.blocos.push({ cx, cy, i: B[ch].i, h: B[ch].altura });
+      }
+    }
+    this.jogador.sprite = def.traje && this.jogo.rec.img["pers_protagonista_" + def.traje] ? "protagonista_" + def.traje : "protagonista";
     this.preRenderizar();
     if (this.jogo.combate) this.jogo.combate.carregarMapa(this.defsInimigos);
     this.memoriaVista = this.memoria();
     this.ultimoTile = null;
+  }
+
+  criarPredio(e, cx, cy) {
+    const ent = new Ent(this, "predio", e, cx, cy);
+    this.ents.push(ent);
+    const larg = e.larg || 1;
+    const prof = e.prof || 1;
+    const tipos = this.arte.iso_chao.predios[e.estilo].tipos;
+    const H = this.arte.iso_chao.predios[e.estilo].altura;
+    for (let ty = cy - prof + 1; ty <= cy; ty++) {
+      for (let tx = cx; tx < cx + larg; tx++) {
+        this.solido[ty * this.w + tx] = 1;
+        // face esquerda = lado +y (frente, com a porta); face direita = lado +x
+        let esq = "liso";
+        let dir = "liso";
+        if (ty === cy) esq = tx - cx === e.porta ? "porta" : "janela";
+        if (tx === cx + larg - 1) dir = "janela";
+        this.predios.push({ cx: tx, cy: ty, estilo: e.estilo, cel: tipos.indexOf(esq) * 3 + tipos.indexOf(dir), h: H });
+      }
+    }
+  }
+
+  predioEm(cx, cy) {
+    return this.predios.some((p) => p.cx === cx && p.cy === cy);
+  }
+
+  alturaBloco(cx, cy) {
+    const p = this.predios.find((q) => q.cx === cx && q.cy === cy);
+    if (p) return p.h;
+    const b = this.arte.iso_chao.blocos[this.chao[cy * this.w + cx]];
+    return b ? b.altura : 0;
   }
 
   criarEnt(e, cx, cy) {
@@ -243,17 +379,18 @@ export class Mundo {
 
   preRenderizar() {
     const cv = document.createElement("canvas");
-    cv.width = this.w * TILE;
-    cv.height = this.h * TILE;
+    this.OX = this.h * TILE;
+    cv.width = (this.w + this.h) * TILE;
+    cv.height = (this.w + this.h) * 8 + 16;
     const c = cv.getContext("2d");
-    const atlas = this.jogo.rec.img.tiles;
-    const cols = this.arte.tiles_colunas;
+    const atlas = this.jogo.rec.img.iso_chao;
+    const IC = this.arte.iso_chao;
     for (let cy = 0; cy < this.h; cy++) {
       for (let cx = 0; cx < this.w; cx++) {
         const def = TILES[this.chao[cy * this.w + cx]] || TILES["."];
         const nome = def.t[Math.floor(hash2(cx, cy) * def.t.length)];
-        const k = this.arte.tiles[nome];
-        c.drawImage(atlas, (k % cols) * TILE, Math.floor(k / cols) * TILE, TILE, TILE, cx * TILE, cy * TILE, TILE, TILE);
+        const k = IC.chao[nome];
+        c.drawImage(atlas, (k % IC.colunas) * 32, Math.floor(k / IC.colunas) * 16, 32, 16, this.OX + (cx - cy) * TILE - 16, (cx + cy) * 8, 32, 16);
       }
     }
     this.chaoCanvas = cv;
@@ -272,13 +409,13 @@ export class Mundo {
       return;
     }
     this.jogador.x = s.cx * TILE + 8;
-    this.jogador.y = s.cy * TILE + 14;
+    this.jogador.y = s.cy * TILE + 8;
     this.jogador.dir = s.dir;
     this.ultimoTile = this.tileDe(this.jogador);
   }
 
   tileDe(a) {
-    return Math.floor(a.x / TILE) + "," + Math.floor((a.y - 2) / TILE);
+    return Math.floor(a.x / TILE) + "," + Math.floor(a.y / TILE);
   }
 
   npc(id) {
@@ -372,9 +509,9 @@ export class Mundo {
     if (j.movendo) {
       if (dx && !dy) j.dir = dx < 0 ? "esq" : "dir";
       else if (dy && !dx) j.dir = dy < 0 ? "cima" : "baixo";
-      else if (!(VETOR[j.dir][0] === dx || VETOR[j.dir][1] === dy)) j.dir = dy < 0 ? "cima" : "baixo";
-      const vel = (ent.segurando("correr") ? 112 : 72) * (cb && cb.golpe ? 0.45 : 1) * dt;
-      const n = dx && dy ? Math.SQRT1_2 : 1;
+      else if (!(TELA_DIR[j.dir][0] === dx || TELA_DIR[j.dir][1] === dy)) j.dir = dy < 0 ? "cima" : "baixo";
+      const vel = (ent.segurando("correr") ? 100 : 64) * (cb && cb.golpe ? 0.45 : 1) * dt;
+      const n = dx && dy ? R : 1;
       this.mover(j, dx * vel * n, dy * vel * n);
       j.anim += dt * (ent.segurando("correr") ? 1.4 : 1);
     } else j.anim = 0;
@@ -397,8 +534,8 @@ export class Mundo {
   procurarAlvo() {
     const j = this.jogador;
     const [vx, vy] = VETOR[j.dir];
-    const px = j.x + vx * 11;
-    const py = j.y - 3 + vy * 10;
+    const px = j.x + vx * 12;
+    const py = j.y + vy * 12;
     let melhor = null;
     let dist = 1e9;
     for (const e of this.ents) {
@@ -408,7 +545,7 @@ export class Mundo {
       const cx = clamp(px, r.x, r.x + r.w);
       const cy = clamp(py, r.y, r.y + r.h);
       const d = Math.hypot(cx - px, cy - py);
-      if (d <= 5 && d < dist) {
+      if (d <= 6 && d < dist) {
         dist = d;
         melhor = e;
       }
@@ -462,7 +599,6 @@ export class Mundo {
 
   // ---------------------------------------------------------------- mundo vivo
   atualizar(dt, livre) {
-    const t = this.jogo.t;
     for (const e of this.ents) {
       if (e.tipo === "npc") this.atualizarNpc(e, dt, livre);
       if (e.tipo === "carro") this.atualizarCarro(e, dt);
@@ -480,7 +616,6 @@ export class Mundo {
     if (this.tremor > 0) this.tremor = Math.max(0, this.tremor - dt);
     if (this.coletando) this.coletando.t += dt;
     this.camera();
-    void t;
   }
 
   atualizarRota(a, dt) {
@@ -492,11 +627,11 @@ export class Mundo {
     a.movendo = true;
     a.anim += dt;
     if (Math.abs(dx) > 0.5) {
-      a.dir = dx < 0 ? "esq" : "dir";
+      a.dir = direcaoDe(dx, 0);
       a.x += clamp(dx, -vel, vel);
     } else if (Math.abs(dy) > 0.5) {
       a.x = r.x;
-      a.dir = dy < 0 ? "cima" : "baixo";
+      a.dir = direcaoDe(0, dy);
       a.y += clamp(dy, -vel, vel);
     } else {
       a.x = r.x;
@@ -511,7 +646,7 @@ export class Mundo {
 
   andar(a, cx, cy, vel) {
     return new Promise((fim) => {
-      a.rota = { x: cx * TILE + 8, y: cy * TILE + 14, vel, fim };
+      a.rota = { x: cx * TILE + 8, y: cy * TILE + 8, vel, fim };
     });
   }
 
@@ -537,8 +672,8 @@ export class Mundo {
     if (e.passo) {
       const [vx, vy] = VETOR[e.passo];
       const raio = e.def.vagar * TILE;
-      const nx = a.x + vx * 28 * dt;
-      const ny = a.y + vy * 28 * dt;
+      const nx = a.x + vx * 26 * dt;
+      const ny = a.y + vy * 26 * dt;
       if (Math.abs(nx - e.casa.x) > raio || Math.abs(ny - e.casa.y) > raio) {
         e.passo = null;
         a.movendo = false;
@@ -546,7 +681,7 @@ export class Mundo {
       }
       const ox = a.x;
       const oy = a.y;
-      this.mover(a, vx * 28 * dt, vy * 28 * dt, e);
+      this.mover(a, vx * 26 * dt, vy * 26 * dt, e);
       a.movendo = ox !== a.x || oy !== a.y;
       a.anim += dt;
     } else a.movendo = false;
@@ -554,7 +689,7 @@ export class Mundo {
 
   atualizarCarro(e, dt) {
     const j = this.jogador;
-    const frente = e.sentido > 0 ? { x: e.x + 30, y: e.base - 10, w: 22, h: 12 } : { x: e.x - 20, y: e.base - 10, w: 22, h: 12 };
+    const frente = e.sentido > 0 ? { x: e.x + 32, y: e.y0 + 1, w: 22, h: 14 } : { x: e.x - 22, y: e.y0 + 1, w: 22, h: 14 };
     if (intersecta(frente, j.caixa())) return;
     e.x += e.sentido * e.vel * dt;
     const lw = this.w * TILE;
@@ -563,11 +698,20 @@ export class Mundo {
   }
 
   camera() {
-    const j = this.jogador;
-    const lw = this.w * TILE;
-    const lh = this.h * TILE;
-    this.camX = lw <= LARG ? Math.floor((lw - LARG) / 2) : Math.round(clamp(j.x - LARG / 2, 0, lw - LARG));
-    this.camY = lh <= ALT ? Math.floor((lh - ALT) / 2) : Math.round(clamp(j.y - 12 - ALT / 2, 0, lh - ALT));
+    const p = iso(this.jogador.x, this.jogador.y);
+    const alt = this.arte.iso_chao.blocos_altura;
+    const minX = -this.h * TILE;
+    const maxX = this.w * TILE;
+    const minY = -alt;
+    const maxY = (this.w + this.h) * 8 + 8;
+    this.camX = maxX - minX <= LARG ? Math.floor((minX + maxX - LARG) / 2) : Math.round(clamp(p.x - LARG / 2, minX, maxX - LARG));
+    this.camY = maxY - minY <= ALT ? Math.floor((minY + maxY - ALT) / 2) : Math.round(clamp(p.y - 16 - ALT / 2, minY, maxY - ALT));
+  }
+
+  // posicao de tela (ja sem a camera) de um ponto logico a uma certa altura
+  tela(x, y, z = 0) {
+    const p = iso(x, y);
+    return { x: p.x - this.camX, y: p.y - z - this.camY };
   }
 
   // ---------------------------------------------------------------- luz
@@ -608,32 +752,41 @@ export class Mundo {
         lc.fillRect(x - r, y - r, r * 2, r * 2);
       };
       const j = this.jogador;
-      furo(j.x - this.camX, j.y - 10 - this.camY, L.jogadora || 58, 0.95);
+      const pj = this.tela(j.x, j.y, 14);
+      furo(pj.x, pj.y, L.jogadora || 60, 0.95);
       for (const e of this.ents) {
         if (e.tipo !== "obj" || !e.visivel()) continue;
         const nome = e.def.obj;
-        const x = e.x + e.meta.w / 2 - this.camX;
-        const y = e.base - e.meta.h / 2 - this.camY;
+        let p;
+        if (e.parede) {
+          const q = e.pontoParede();
+          p = { x: q.x - this.camX, y: q.y - this.camY };
+        } else p = this.tela(e.centro.x, e.centro.y, 14);
         if (nome === "lampada") {
-          const r = 50 + Math.sin(t * 7 + e.cx) * 1.5;
-          furo(x, y + 6, r, 1);
-          brilhos.push([x, y + 6, 40, "255,190,110", 0.16]);
+          const r = 52 + Math.sin(t * 7 + e.cx) * 1.5;
+          furo(p.x, p.y + 8, r, 1);
+          brilhos.push([p.x, p.y + 8, 42, "255,190,110", 0.16]);
         } else if (nome === "painel" || nome === "terminal" || nome === "servidor") {
-          furo(x, y, 34, 0.85);
-          brilhos.push([x, y, 26, "90,230,140", 0.14]);
+          furo(p.x, p.y, 36, 0.85);
+          brilhos.push([p.x, p.y, 28, "90,230,140", 0.14]);
         }
       }
       const cb = this.jogo.combate;
       if (cb) {
-        for (const p of cb.projeteis) {
-          furo(p.x - this.camX, p.y - this.camY, 22, 0.9);
-          brilhos.push([p.x - this.camX, p.y - this.camY, 14, p.dono === "jogadora" ? "120,230,250" : "255,170,80", 0.3]);
+        for (const pr of cb.projeteis) {
+          const p = this.tela(pr.x, pr.y, pr.z ?? 10);
+          furo(p.x, p.y, 22, 0.9);
+          brilhos.push([p.x, p.y, 14, pr.dono === "jogadora" ? "120,230,250" : "255,170,80", 0.3]);
         }
         for (const i of cb.inimigos) {
           if (i.chefe && i.estado === "superaquecido") {
-            furo(i.x - this.camX, i.y - 24 - this.camY, 70, 1);
-            brilhos.push([i.x - this.camX, i.y - 24 - this.camY, 50, "255,150,60", 0.25]);
-          } else if (i.t.brilho) furo(i.x - this.camX, i.y - 8 - this.camY, 26, 0.7);
+            const p = this.tela(i.x, i.y, 24);
+            furo(p.x, p.y, 70, 1);
+            brilhos.push([p.x, p.y, 50, "255,150,60", 0.25]);
+          } else if (i.t.brilho) {
+            const p = this.tela(i.x, i.y, 8);
+            furo(p.x, p.y, 26, 0.7);
+          }
         }
       }
       c.drawImage(this.luzCanvas, 0, 0);
@@ -651,6 +804,10 @@ export class Mundo {
   }
 
   // ---------------------------------------------------------------- desenho
+  visivelNaTela(px, py, margem = 80) {
+    return px > this.camX - margem && px < this.camX + LARG + margem && py > this.camY - margem && py < this.camY + ALT + margem * 1.5;
+  }
+
   desenhar(ctxFinal, d, t, mostrarAlvo) {
     const c = this.camadaCtx;
     const dd = Object.create(d);
@@ -665,15 +822,43 @@ export class Mundo {
     }
     c.save();
     c.translate(-this.camX + sx, -this.camY + sy);
-    c.drawImage(this.chaoCanvas, 0, 0);
+    c.drawImage(this.chaoCanvas, -this.OX, 0);
     const lista = [];
+    // blocos de parede e rocha
+    const imgB = this.jogo.rec.img.iso_blocos;
+    const altB = this.arte.iso_chao.blocos_altura;
+    const j0 = this.jogador;
+    const pj0 = iso(j0.x, j0.y);
+    const profJ = j0.x + j0.y;
+    // um bloco que fica na frente da protagonista e cobre o desenho dela fica translucido
+    const cobre = (o, p, h) => o > profJ + 4 && Math.abs(p.x - pj0.x) < 26 && pj0.y - 34 < p.y + 16 && pj0.y > p.y - h;
+    const blocoFn = (im, sx, w, h, p, alpha) => () => {
+      if (alpha < 1) c.globalAlpha = alpha;
+      c.drawImage(im, sx, 0, w, 16 + h, p.x - 16, p.y - h, w, 16 + h);
+      c.globalAlpha = 1;
+    };
+    for (const b of this.blocos) {
+      const p = iso(b.cx * TILE, b.cy * TILE);
+      if (!this.visivelNaTela(p.x, p.y)) continue;
+      const o = (b.cx + b.cy + 1) * TILE;
+      lista.push({ o, d: blocoFn(imgB, b.i * 32, 32, altB, p, cobre(o, p, altB) ? 0.35 : 1) });
+    }
+    // predios
+    for (const b of this.predios) {
+      const p = iso(b.cx * TILE, b.cy * TILE);
+      if (!this.visivelNaTela(p.x, p.y, 120)) continue;
+      const im = this.jogo.rec.img["iso_predio_" + b.estilo];
+      const o = (b.cx + b.cy + 1) * TILE;
+      lista.push({ o, d: blocoFn(im, b.cel * 32, 32, b.h, p, cobre(o, p, b.h) ? 0.4 : 1) });
+    }
     for (const e of this.ents) {
-      if (["portal", "gatilho", "inspecao", "barreira"].includes(e.tipo)) continue;
+      if (["portal", "gatilho", "inspecao", "barreira", "predio"].includes(e.tipo)) continue;
       if (!e.visivel()) continue;
       lista.push({ o: e.ordem(), d: () => e.desenhar(dd, t) });
     }
     const cb = this.jogo.combate;
-    if (!this.jogo.esconderJogador && (!cb || cb.jogadoraVisivel(t))) lista.push({ o: this.jogador.y, d: () => this.jogador.desenhar(dd) });
+    const j = this.jogador;
+    if (!this.jogo.esconderJogador && (!cb || cb.jogadoraVisivel(t))) lista.push({ o: j.x + j.y, d: () => j.desenhar(dd) });
     if (cb) lista.push(...cb.itensDesenho(dd, t));
     lista.sort((a, b) => a.o - b.o);
     for (const it of lista) it.d();

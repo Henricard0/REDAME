@@ -1,10 +1,13 @@
 # REDAME: O Resgate do Legado
 
-Action RPG em pixel art para navegador. Uma estudante de engenharia encontra o **Revisor de Épocas**, um aparelho que liga o presente ao passado, e viaja no tempo para resgatar a história de 15 engenheiras pioneiras que o **Esquecimento** está apagando.
+Action RPG isométrico em pixel art para navegador. Uma estudante de engenharia encontra o **Revisor de Épocas**, um aparelho que liga o presente ao passado, e viaja no tempo para resgatar a história de 15 engenheiras pioneiras que o **Esquecimento** está apagando.
 
 Roda em qualquer navegador (computador ou celular), sem instalar nada.
 
 ## O que já está pronto
+
+- **Visão isométrica:** chão em losangos, paredes, rochas e prédios em blocos com altura, objetos em 3D (consoles, turbinas, estantes, carros). Paredes ficam translúcidas quando a protagonista passa atrás delas.
+- **Protagonista com traje por época:** pele levemente parda, cabelo cacheado castanho escuro e óculos. Usa jaleco nos dias atuais, sobretudo noir em Curitiba e capa amarela com bandana e óculos de proteção na usina. O traje steampunk já está pronto para épocas futuras.
 
 - **Prólogo:** o acervo da universidade nos dias atuais, a Profa. Helena e a descoberta do Revisor de Épocas.
 - **Época 1, Curitiba (anos 1940), com Enedina Alves Marques:**
@@ -28,7 +31,7 @@ Roda em qualquer navegador (computador ou celular), sem instalar nada.
 
 | Ação | Teclado | Celular |
 |---|---|---|
-| Andar | Setas ou WASD | Direcional |
+| Andar (as setas seguem a grade: ↑ sobe para a direita, → desce para a direita) | Setas ou WASD | Direcional |
 | Falar, pegar, confirmar, golpear | Espaço, Enter, Z ou E | A |
 | Pulso do Revisor (disparo), voltar | X ou K | B |
 | Esquiva (tocar) e correr (segurar) | Shift ou L | Esquiva |
@@ -142,7 +145,10 @@ Letras maiúsculas, números e outros símbolos são entidades definidas em `leg
 
 Inimigos entram no mapa como `{"tipo": "inimigo", "inimigo": "drone"}`. Um chefe usa ainda `flag` (marcada ao vencer), `roteiro_derrota` e só age enquanto a variável `chefe_ativo` estiver ligada (troque com `ativar`).
 
+Prédios entram como `{"tipo": "predio", "estilo": "ufpr", "larg": 11, "prof": 5, "porta": 5}`: o marcador fica no canto da frente à esquerda, `larg` cresce para a direita da grade e `prof` para trás. Estilos: `ufpr`, `colegio`, `departamento`, `casa_azul`, `casa_rosa`, `casa_amarela` e `casa_verde`. Objetos colocados sobre uma parede (lâmpadas, quadros, placas) aparecem presos na face da parede.
+
 Outras opções do mapa:
+- `traje`: roupa da protagonista no mapa (`jaleco`, `noir`, `industrial` ou `vapor`).
 - `luz`: deixa o mapa escuro, por exemplo `{"escuridao": 0.6, "jogadora": 60}`.
 - `renascer`: ponto de chegada para onde a protagonista volta ao desmaiar.
 - `ao_desmaiar`: roteiro que roda nesse momento (por exemplo, para desligar a arena do chefe). O campo `se` define quando a entidade aparece. O campo `roteiro` pode ser um nome ou uma lista de variantes com condição.
@@ -164,9 +170,10 @@ O validador gera 300 tabuleiros de cada nível e confere se todos têm solução
 
 ### Arte
 
-Toda a arte é provisória e foi gerada por `Ferramentas/gerar_arte.py`. Para trocar por arte feita à mão, substitua o PNG em `arte/` mantendo o mesmo nome e tamanho:
+Toda a arte é provisória e foi gerada por `Ferramentas/gerar_arte.py` (a parte isométrica e os personagens ficam em `Ferramentas/gerar_iso.py`). Para trocar por arte feita à mão, substitua o PNG em `arte/` mantendo o mesmo nome e tamanho:
 
-- Personagens: folha de 48×72, com 3 quadros (parado, passo, passo) × 3 direções (frente, costas, lado direito).
+- Personagens: folha de 60×102, com 3 quadros de 20×34 (parado, passo, passo) × 3 direções (frente, costas, lado direito). A protagonista tem uma folha por traje: `pers_protagonista_jaleco.png`, `_noir`, `_industrial` e `_vapor`.
+- Objetos isométricos: `arte/iso_*.png` (o ponto de encaixe de cada um está em `dados/arte.json`, campo `iso`).
 - Retratos: 48×48 por emoção, 7 emoções lado a lado.
 - Tiles: `arte/tiles.png`, grade de 16×16.
 

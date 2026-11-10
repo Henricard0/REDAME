@@ -519,7 +519,7 @@ R = 48
 
 
 def retrato(nome, pele, cabelo="curto", cor_cabelo="preto", topo="branco", gola=None, oculos=False,
-            chapeu=None, cor_chapeu="cinza", bigode=False, rugas=False, cor_fundo=None):
+            chapeu=None, cor_chapeu="cinza", bigode=False, rugas=False, cor_fundo=None, goggles=False):
     ps = PELES[pele]
     sh = escurecer(ps, 0.84)
     hc = CABELOS[cor_cabelo]
@@ -545,6 +545,12 @@ def retrato(nome, pele, cabelo="curto", cor_cabelo="preto", topo="branco", gola=
             t.elipse(24, 5, 6, 5, hc)
         elif cabelo == "curto":
             t.elipse(24, 17, 13, 12, hc)
+        elif cabelo == "cacheado":
+            for (cx, cy, r) in [(24, 15, 15), (12, 21, 8), (36, 21, 8), (10, 30, 7.5), (38, 30, 7.5), (13, 37, 6),
+                                (35, 37, 6), (17, 7, 8), (31, 7, 8)]:
+                t.elipse(cx, cy, r, r, hc)
+            for (x, y) in [(8, 26), (40, 26), (10, 34), (38, 34), (12, 40), (36, 40)]:
+                t.p(x, y, hl); t.p(x + 1, y, hl)
         # corpo
         t.elipse(24, 52, 21, 14, tc)
         for j in range(40, 48):
@@ -609,6 +615,16 @@ def retrato(nome, pele, cabelo="curto", cor_cabelo="preto", topo="branco", gola=
                         t.p(i, j, hc)
             for i in range(16, 22):
                 t.p(i, 7, hl)
+        elif cabelo == "cacheado":
+            for i in range(12, 37):
+                limite = 13 + int(1.6 * math.sin(i * 0.9)) + (2 if i < 15 or i > 33 else 0)
+                for j in range(4, limite):
+                    if t.get(i, j)[3]:
+                        t.p(i, j, hc)
+            for (x, y) in [(15, 7), (20, 5), (27, 6), (32, 8), (13, 12), (35, 13)]:
+                t.p(x, y, hl); t.p(x + 1, y, hl)
+            for (x, y) in [(18, 10), (24, 9), (30, 10)]:
+                t.p(x, y, hs)
         # sobrancelhas
         brow = {
             "neutro": [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0)],
@@ -706,6 +722,21 @@ def retrato(nome, pele, cabelo="curto", cor_cabelo="preto", topo="branco", gola=
                 t.ret(14, 3, 20, 9, xc)
                 t.ret(14, 9, 20, 2, xs)
                 t.ret(7, 11, 34, 3, xc)
+            elif chapeu == "bandana":
+                for j in range(3, 12):
+                    for i in range(8, 41):
+                        if ((i + 0.5 - 24) / 15.5) ** 2 + ((j + 0.5 - 13) / 10.5) ** 2 <= 1 and t.get(i, j)[3]:
+                            t.p(i, j, xc)
+                t.ret(11, 10, 27, 2, xs)
+                for (x, y) in [(16, 6), (22, 4), (29, 6), (34, 8), (19, 9)]:
+                    t.p(x, y, c(250, 240, 230))
+                t.elipse(38, 6, 3, 2.5, xc); t.ret(40, 7, 3, 4, xs)
+        if goggles:
+            t.ret(10, 13, 29, 2, c(70, 52, 40))
+            for x0 in (13, 26):
+                t.elipse(x0 + 4.5, 14, 5, 3.5, c(70, 74, 80))
+                t.elipse(x0 + 4.5, 14, 3.5, 2.2, c(150, 214, 200))
+                t.p(x0 + 3, 13, c(230, 250, 245))
         t.contorno()
         folha.colar(t, k * R, 0)
     folha.salvar("ret_" + nome)
@@ -1988,9 +2019,13 @@ def main():
     gerar_combate()
     gerar_ui_industrial()
     gerar_fonte()
+    import sys
+    import gerar_iso
+    gerar_iso.ga = sys.modules[__name__]  # compartilha TILES e OBJETOS desta execucao
+    gerar_iso.gerar()
     arquivos = sorted(f[:-4] for f in os.listdir(SAIDA) if f.endswith(".png"))
     meta = {"tiles": indice, "tiles_colunas": 8, "objetos": OBJETOS, "itens": itens, "emocoes": EMOCOES,
-            "arquivos": arquivos}
+            "arquivos": arquivos, "iso": gerar_iso.ISO, "iso_chao": gerar_iso.ISO_CHAO}
     with open(os.path.join(DADOS, "arte.json"), "w", encoding="utf-8") as fp:
         json.dump(meta, fp, ensure_ascii=False, indent=1)
     print("Arte gerada em", SAIDA)
