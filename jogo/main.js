@@ -6,6 +6,7 @@ import { Mundo } from "./mundo.js";
 import { Roteirista } from "./roteiro.js";
 import { Dialogo, Escolha, Menu, Hud, Titulo, EntradaNome, Inventario, Caderneta, Gravacao, Seletor, FimDemo, Bancada } from "./ui.js";
 import { MiniCanos } from "./canos.js";
+import { Combate } from "./combate.js";
 
 class Jogo {
   constructor(canvas) {
@@ -35,7 +36,7 @@ class Jogo {
   async carregar(progresso) {
     const r = this.rec;
     r.dados.config = await r.json("config");
-    await r.carregar(["arte", "fonte", "personagens", "itens", "pioneiras", "materiais"], progresso);
+    await r.carregar(["arte", "fonte", "personagens", "itens", "pioneiras", "materiais", "inimigos"], progresso);
     r.dados.mapas = {};
     for (const m of r.dados.config.mapas) r.dados.mapas[m] = await r.json("mapas/" + m);
     r.dados.minigames = {};
@@ -43,6 +44,7 @@ class Jogo {
     this.roteirista = new Roteirista(this);
     for (const f of r.dados.config.roteiros) this.roteirista.adicionar(await r.json("roteiros/" + f));
     this.d = new Desenho(this.ctx, r);
+    this.combate = new Combate(this);
     this.mundo = new Mundo(this);
     this.hud = new Hud(this);
     this.ui = {
@@ -106,6 +108,7 @@ class Jogo {
         await this.fade(1, 0.35);
       } else this.fadeA = 1;
       this.carregarMapa(id, chegada);
+      this.estado.vida = this.estado.vidaMax;
       this.salvar(false);
       await this.fade(0, 0.4);
       const def = this.mundo.def;
@@ -116,6 +119,30 @@ class Jogo {
       if (def.ao_entrar) await this.rodarRoteiro(this.mundo.escolherRoteiro(def.ao_entrar));
     } finally {
       this.ocupado--;
+    }
+  }
+
+  // Vida zerada: a protagonista desmaia e volta para a entrada do mapa, com tudo o que ja conquistou.
+  async desmaiar() {
+    if (this.desmaiando) return;
+    this.desmaiando = true;
+    this.ocupado++;
+    try {
+      this.mundo.jogador.movendo = false;
+      this.som.efeito("tremor");
+      await this.esperar(0.4);
+      await this.fade(1, 0.7);
+      const def = this.mundo.def;
+      if (def.ao_desmaiar) await this.rodarRoteiro(def.ao_desmaiar);
+      this.estado.vida = this.estado.vidaMax;
+      this.carregarMapa(def.id, def.renascer || Object.keys(this.mundo.spawns)[0]);
+      if (def.musica) this.som.tocarMusica(def.musica, true);
+      this.salvar(false);
+      await this.fade(0, 0.6);
+      await this.ui.falar("revisor", "neutro", "Você desmaiou... Eu trouxe você de volta para a entrada. Seus materiais e seu progresso continuam com você.");
+    } finally {
+      this.ocupado--;
+      this.desmaiando = false;
     }
   }
 
@@ -138,6 +165,7 @@ class Jogo {
     j.dir = dados.dir || "baixo";
     this.mundo.ultimoTile = this.mundo.tileDe(j);
     this.mundo.camera();
+    this.combate.energia = 5;
   }
 
   async abrirMinigame(id) {
@@ -236,6 +264,7 @@ class Jogo {
       { texto: `Música: ${s.musicaLigada ? "ligada" : "desligada"}`, acao: (m) => { s.alternarMusica(); m.opcoes[3].texto = `Música: ${s.musicaLigada ? "ligada" : "desligada"}`; } },
       { texto: `Efeitos: ${s.efeitosLigados ? "ligados" : "desligados"}`, acao: (m) => { s.alternarEfeitos(); m.opcoes[4].texto = `Efeitos: ${s.efeitosLigados ? "ligados" : "desligados"}`; } },
       { texto: "Tela cheia", acao: () => this.telaCheia() },
+      { texto: `Batalhas: ${this.estado.v("dificuldade_leve") ? "leves" : "normais"}`, acao: (m) => { const e = this.estado; e.definir("dificuldade_leve", e.v("dificuldade_leve") ? 0 : 1); m.opcoes[6].texto = `Batalhas: ${e.v("dificuldade_leve") ? "leves" : "normais"}`; } },
       { texto: "Salvar jogo", acao: (m) => { this.salvar(true); m.fechar(); } },
       { texto: "Salvar e voltar ao título", acao: (m) => { this.salvar(false); m.fechar(); this.telaTitulo(); } },
     ];
@@ -279,6 +308,7 @@ class Jogo {
     }
     if (this.mundo.def && (this.ocupado > 0 || topo) && !this.mundo.jogador.rota) this.mundo.jogador.movendo = false;
     if (this.mundo.def && !cobre) this.mundo.atualizar(dt, this.ocupado === 0 && !topo);
+    if (this.mundo.def && !cobre && this.ocupado === 0 && !topo && this.fadeA < 0.5) this.combate.atualizar(dt);
     this.hud.atualizar(dt);
 
     if (this.fadeA !== this.fadeAlvo) {
@@ -304,7 +334,9 @@ class Jogo {
     if (this.mundo.def && !cobre) {
       const livre = this.ocupado === 0 && this.camadas.length === 0;
       this.mundo.desenhar(c, d, this.t, livre);
-      this.hud.desenharObjetivo(d, this.t, this.camadas.length === 0 || this.camadas[0] instanceof Dialogo);
+      const mostrar = this.camadas.length === 0 || this.camadas[0] instanceof Dialogo;
+      const dy = mostrar ? this.combate.desenharHud(d, this.t) : 0;
+      this.hud.desenharObjetivo(d, this.t, mostrar, dy);
     }
     for (let i = inicio; i < this.camadas.length; i++) this.camadas[i].desenhar(d, this.t);
     this.hud.desenharAvisos(d, this.t);

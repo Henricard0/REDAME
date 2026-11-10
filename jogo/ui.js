@@ -244,15 +244,15 @@ export class Hud {
     this.brilhoObjetivo = Math.max(0, this.brilhoObjetivo - dt);
   }
 
-  desenharObjetivo(d, t, mostrarObjetivo) {
+  desenharObjetivo(d, t, mostrarObjetivo, dy = 0) {
     const e = this.jogo.estado;
     if (mostrarObjetivo && e.objetivo) {
       const linhas = d.quebrar(e.objetivo, 150);
       const h = 14 + linhas.length * 9;
-      d.painel(3, 3, 170, h);
+      d.painel(3, 3 + dy, 170, h);
       const corT = this.brilhoObjetivo > 0 && Math.floor(t * 6) % 2 === 0 ? COR.destaque : COR.titulo;
-      d.texto(this.brilhoObjetivo > 0 ? "NOVO OBJETIVO" : "OBJETIVO", 10, 7, corT, { sombra: true });
-      linhas.forEach((l, i) => d.texto(l, 10, 17 + i * 9, COR.texto, { sombra: true }));
+      d.texto(this.brilhoObjetivo > 0 ? "NOVO OBJETIVO" : "OBJETIVO", 10, 7 + dy, corT, { sombra: true });
+      linhas.forEach((l, i) => d.texto(l, 10, 17 + dy + i * 9, COR.texto, { sombra: true }));
     }
     if (mostrarObjetivo && e.itens.length) {
       const n = e.itens.length;
@@ -286,10 +286,12 @@ export class Hud {
       const f = this.faixa;
       const a = f.t < 0.4 ? f.t / 0.4 : f.t > 2.8 ? Math.max(0, (3.4 - f.t) / 0.6) : 1;
       d.ctx.globalAlpha = a;
-      d.ret(0, 62, LARG, 34, "rgba(14,12,26,0.78)");
-      d.ret(0, 62, LARG, 1, COR.titulo);
-      d.ret(0, 95, LARG, 1, COR.titulo);
-      d.texto(f.texto, LARG / 2, 70, COR.titulo, { alinhar: "centro", escala: 2, sombra: true });
+      const w = Math.min(LARG - 16, d.medir(f.texto, 2) + 36);
+      const x = Math.round((LARG - w) / 2);
+      d.ret(x + 10, 92, 4, 14, "#46301c");
+      d.ret(x + w - 14, 92, 4, 14, "#46301c");
+      d.painel(x, 62, w, 32, "ui_madeira");
+      d.texto(f.texto, LARG / 2, 70, "#f4e6c4", { alinhar: "centro", escala: 2, sombra: "#2a1a0c" });
       d.ctx.globalAlpha = 1;
     }
   }
@@ -345,7 +347,7 @@ export class Titulo extends Camada {
     if (!this.iniciado) {
       if (Math.floor(t * 2) % 2 === 0) d.texto(this.jogo.ent.usouToque ? "Toque para começar" : "Clique ou pressione Enter para começar", LARG / 2, 132, COR.texto, { alinhar: "centro", sombra: true });
     } else this.menu.desenhar(d, t);
-    const dica = this.jogo.ent.usouToque ? "Direcional: andar   A: agir   B: correr/voltar   Menu: pausa" : "Setas/WASD: andar   Espaço/Enter: agir   Shift: correr   Esc: menu";
+    const dica = this.jogo.ent.usouToque ? "Direcional: andar   A: agir/golpe   B: pulso   Esquiva   Menu" : "Setas: andar   Espaço: agir/golpe   X: pulso   Shift: esquiva   Esc: menu";
     d.texto(dica, LARG / 2, ALT - 11, "#6c7299", { alinhar: "centro" });
   }
 }

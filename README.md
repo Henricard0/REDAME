@@ -1,6 +1,6 @@
 # REDAME: O Resgate do Legado
 
-Aventura em pixel art para navegador. Uma estudante de engenharia encontra o **Revisor de Épocas**, um aparelho que liga o presente ao passado, e viaja no tempo para resgatar a história de 15 engenheiras pioneiras que o **Esquecimento** está apagando.
+Action RPG em pixel art para navegador. Uma estudante de engenharia encontra o **Revisor de Épocas**, um aparelho que liga o presente ao passado, e viaja no tempo para resgatar a história de 15 engenheiras pioneiras que o **Esquecimento** está apagando.
 
 Roda em qualquer navegador (computador ou celular), sem instalar nada.
 
@@ -14,6 +14,12 @@ Roda em qualquer navegador (computador ou celular), sem instalar nada.
   - Usina Capivari-Cachoeira: inspeção das galerias subterrâneas, coleta de materiais (sucata de ferro, fio de cobre, borracha, parafusos), bancada de montagem para fabricar as peças que abrem a sala de comando.
   - Minigame das tubulações com 5 níveis: vazamentos, pontas (tampões), peças travadas, medidor de pressão com tempo, dicas, e níveis 3 a 5 gerados por algoritmo (um tabuleiro novo a cada tentativa, sempre com solução).
   - Discurso final da Enedina, cerimônia do nome gravado no Dispositivo REDAME e página na Caderneta.
+- **Combate em tempo real:** chave inglesa (golpe), pulso do Revisor (disparo com energia que recarrega), esquiva e corações.
+  - Inimigos do Esquecimento: borrões de tinta cinza que perseguem, drones corrompidos que atiram faíscas (com aviso antes), robôs de manutenção que dão investidas e ficam tontos ao bater na parede (dano em dobro), e faíscas de curto-circuito que quicam.
+  - Chefe: o **Gerador Esquecido**, na casa de força. Blindado, ele só leva dano quando o núcleo superaquece. Na metade da vida, invoca faíscas. Vencer dá +1 coração.
+  - Inimigos soltam corações, energia e materiais. Se a vida acabar, você volta para a entrada do mapa sem perder nada.
+  - Opção "Batalhas: leves" no menu, que reduz o dano e deixa os inimigos mais lentos.
+- **Visual industrial:** iluminação dinâmica nas áreas escuras (lâmpadas, telas verdes, disparos e a própria protagonista), placas de madeira com o nome dos lugares, painéis metálicos.
 - **Caderneta REDAME** com as 15 pioneiras (páginas reveladas conforme o resgate).
 - **Revisor de Épocas** para escolher épocas (as outras 14 aparecem como "em breve").
 - Salvamento automático no navegador, música e efeitos sonoros gerados pelo próprio jogo, controles de toque no celular e suporte a controle (gamepad).
@@ -23,8 +29,9 @@ Roda em qualquer navegador (computador ou celular), sem instalar nada.
 | Ação | Teclado | Celular |
 |---|---|---|
 | Andar | Setas ou WASD | Direcional |
-| Falar, pegar, confirmar | Espaço, Enter, Z ou E | A |
-| Correr, voltar | Shift ou X | B |
+| Falar, pegar, confirmar, golpear | Espaço, Enter, Z ou E | A |
+| Pulso do Revisor (disparo), voltar | X ou K | B |
+| Esquiva (tocar) e correr (segurar) | Shift ou L | Esquiva |
 | Menu (Caderneta, itens, som, salvar) | Esc | Menu |
 | Girar cano ao contrário (minigame) | Q | — |
 | Dica (minigame) | H | Botão "Dica" |
@@ -58,6 +65,7 @@ Quase tudo é texto, em `dados/`:
 | `dados/itens.json` | Nome e descrição dos itens. |
 | `dados/pioneiras.json` | As 15 pioneiras e o texto das páginas da Caderneta. |
 | `dados/materiais.json` | Materiais, peças e receitas da bancada de montagem. |
+| `dados/inimigos.json` | Tipos de inimigo: vida, dano, velocidade, comportamento e o que soltam. |
 | `dados/minigames/*.json` | Os níveis do minigame das tubulações. |
 
 Depois de editar, rode o validador. Ele aponta roteiro inexistente, personagem errado, letra que a fonte não tem, puzzle sem solução etc.:
@@ -89,6 +97,7 @@ Cada roteiro é uma lista de comandos:
 | `dar <item>` / `tirar <item>` | `dar teodolito` |
 | `coletar <material> [n]` / `gastar <material> [n]` | `gastar valvula 2` |
 | `bancada` | abre a bancada de montagem |
+| `coracao` / `curar` | +1 coração máximo / recupera vida e energia |
 | `objetivo <texto>` | `objetivo Encontre o Zé. Operários: {v:apoio}/3` |
 | `se <condição> => <roteiro> \| <senão>` | `se apoio>=3 item:plantas => pronta \| ainda_nao` |
 | `rodar <roteiro>` | `rodar objetivo_fase1` |
@@ -127,8 +136,16 @@ Cada caractere de `linhas` é um quadrado de 16×16 pixels:
 | `~` | água (sólida) | `k` | canteiro |
 | `w` | madeira | `r` | trilho de bonde |
 | `t` | tapete | `z` | azulejo |
+| `p` | chapa de aço | `y` / `v` | cabo amarelo no chão (horizontal / vertical) |
 
-Letras maiúsculas, números e outros símbolos são entidades definidas em `legenda`: `npc`, `obj`, `item`, `coleta` (ponto de coleta de material, com `mat`, `qtd` e o sprite `obj`), `carro`, `spawn` (ponto de chegada), `portal`, `gatilho`, `inspecao` e `barreira`. No mapa, `ao_coletar` roda um roteiro a cada coleta (útil para atualizar o objetivo). O campo `se` define quando a entidade aparece. O campo `roteiro` pode ser um nome ou uma lista de variantes com condição.
+Letras maiúsculas, números e outros símbolos são entidades definidas em `legenda`: `npc`, `obj`, `item`, `coleta` (ponto de coleta de material, com `mat`, `qtd` e o sprite `obj`), `carro`, `spawn` (ponto de chegada), `portal`, `gatilho`, `inspecao` e `barreira`. No mapa, `ao_coletar` roda um roteiro a cada coleta (útil para atualizar o objetivo).
+
+Inimigos entram no mapa como `{"tipo": "inimigo", "inimigo": "drone"}`. Um chefe usa ainda `flag` (marcada ao vencer), `roteiro_derrota` e só age enquanto a variável `chefe_ativo` estiver ligada (troque com `ativar`).
+
+Outras opções do mapa:
+- `luz`: deixa o mapa escuro, por exemplo `{"escuridao": 0.6, "jogadora": 60}`.
+- `renascer`: ponto de chegada para onde a protagonista volta ao desmaiar.
+- `ao_desmaiar`: roteiro que roda nesse momento (por exemplo, para desligar a arena do chefe). O campo `se` define quando a entidade aparece. O campo `roteiro` pode ser um nome ou uma lista de variantes com condição.
 
 ### Níveis do minigame das tubulações
 

@@ -24,6 +24,9 @@ export const TILES = {
   " ": { t: ["vazio"], solido: true },
   k: { t: ["canteiro"] },
   r: { t: ["trilho"] },
+  p: { t: ["chapa"] },
+  y: { t: ["cabo_h"] },
+  v: { t: ["cabo_v"] },
 };
 
 const LINHA_DIR = { baixo: 0, cima: 1, dir: 2, esq: 2 };
@@ -205,6 +208,7 @@ export class Mundo {
     this.solido = new Uint8Array(this.w * this.h);
     this.ents = [];
     this.spawns = {};
+    this.defsInimigos = [];
     for (let cy = 0; cy < this.h; cy++) {
       for (let cx = 0; cx < this.w; cx++) {
         const ch = def.linhas[cy][cx] ?? def.chao;
@@ -220,6 +224,7 @@ export class Mundo {
       }
     }
     this.preRenderizar();
+    if (this.jogo.combate) this.jogo.combate.carregarMapa(this.defsInimigos);
     this.memoriaVista = this.memoria();
     this.ultimoTile = null;
   }
@@ -227,6 +232,10 @@ export class Mundo {
   criarEnt(e, cx, cy) {
     if (e.tipo === "spawn") {
       this.spawns[e.nome] = { cx, cy, dir: e.dir || "baixo" };
+      return;
+    }
+    if (e.tipo === "inimigo") {
+      this.defsInimigos.push({ def: e, cx, cy });
       return;
     }
     this.ents.push(new Ent(this, e.tipo, e, cx, cy));
@@ -298,6 +307,9 @@ export class Mundo {
       if (c && e.visivel() && intersecta(r, c)) return true;
     }
     if (ignorar !== this.jogador && intersecta(r, this.jogador.caixa())) return true;
+    if (ignorar === this.jogador && this.jogo.combate) {
+      for (const i of this.jogo.combate.inimigos) if (i.solido && intersecta(r, i.caixa())) return true;
+    }
     return false;
   }
 
@@ -349,12 +361,19 @@ export class Mundo {
     if (ent.segurando("dir")) dx += 1;
     if (ent.segurando("cima")) dy -= 1;
     if (ent.segurando("baixo")) dy += 1;
+    const cb = this.jogo.combate;
+    if (cb && cb.moverJogadora(dt)) {
+      j.movendo = true;
+      j.anim += dt * 2;
+      return;
+    }
+    if (cb && ent.apertou("correr") && cb.ativo() && cb.esquivar(dx, dy)) return;
     j.movendo = dx !== 0 || dy !== 0;
     if (j.movendo) {
       if (dx && !dy) j.dir = dx < 0 ? "esq" : "dir";
       else if (dy && !dx) j.dir = dy < 0 ? "cima" : "baixo";
       else if (!(VETOR[j.dir][0] === dx || VETOR[j.dir][1] === dy)) j.dir = dy < 0 ? "cima" : "baixo";
-      const vel = (ent.segurando("correr") || ent.segurando("voltar") ? 112 : 72) * dt;
+      const vel = (ent.segurando("correr") ? 112 : 72) * (cb && cb.golpe ? 0.45 : 1) * dt;
       const n = dx && dy ? Math.SQRT1_2 : 1;
       this.mover(j, dx * vel * n, dy * vel * n);
       j.anim += dt * (ent.segurando("correr") ? 1.4 : 1);
@@ -366,6 +385,8 @@ export class Mundo {
       this.interagir(this.alvo);
       return;
     }
+    if (cb && ent.apertou("acao")) cb.atacar();
+    if (cb && ent.apertou("voltar")) cb.disparar();
     const tile = this.tileDe(j);
     if (tile !== this.ultimoTile) {
       this.ultimoTile = tile;
@@ -549,6 +570,86 @@ export class Mundo {
     this.camY = lh <= ALT ? Math.floor((lh - ALT) / 2) : Math.round(clamp(j.y - 12 - ALT / 2, 0, lh - ALT));
   }
 
+  // ---------------------------------------------------------------- luz
+  // Mapas com "luz": {"escuridao": 0.6} ficam escuros, com luz em volta de lampadas,
+  // telas, disparos e da propria protagonista. Todos os mapas ganham uma vinheta suave.
+  desenharLuz(c, t) {
+    if (!this.vinheta) {
+      this.vinheta = document.createElement("canvas");
+      this.vinheta.width = LARG;
+      this.vinheta.height = ALT;
+      const v = this.vinheta.getContext("2d");
+      const g = v.createRadialGradient(LARG / 2, ALT / 2, ALT * 0.45, LARG / 2, ALT / 2, LARG * 0.62);
+      g.addColorStop(0, "rgba(0,0,0,0)");
+      g.addColorStop(1, "rgba(4,4,10,0.42)");
+      v.fillStyle = g;
+      v.fillRect(0, 0, LARG, ALT);
+      this.luzCanvas = document.createElement("canvas");
+      this.luzCanvas.width = LARG;
+      this.luzCanvas.height = ALT;
+      this.luzCtx = this.luzCanvas.getContext("2d");
+    }
+    const L = this.def.luz;
+    if (L) {
+      const lc = this.luzCtx;
+      lc.globalCompositeOperation = "source-over";
+      lc.clearRect(0, 0, LARG, ALT);
+      lc.fillStyle = `rgba(5,7,14,${L.escuridao ?? 0.6})`;
+      lc.fillRect(0, 0, LARG, ALT);
+      lc.globalCompositeOperation = "destination-out";
+      const brilhos = [];
+      const furo = (x, y, r, forca = 1) => {
+        if (x < -r || y < -r || x > LARG + r || y > ALT + r) return;
+        const g = lc.createRadialGradient(x, y, 0, x, y, r);
+        g.addColorStop(0, `rgba(0,0,0,${forca})`);
+        g.addColorStop(0.55, `rgba(0,0,0,${forca * 0.7})`);
+        g.addColorStop(1, "rgba(0,0,0,0)");
+        lc.fillStyle = g;
+        lc.fillRect(x - r, y - r, r * 2, r * 2);
+      };
+      const j = this.jogador;
+      furo(j.x - this.camX, j.y - 10 - this.camY, L.jogadora || 58, 0.95);
+      for (const e of this.ents) {
+        if (e.tipo !== "obj" || !e.visivel()) continue;
+        const nome = e.def.obj;
+        const x = e.x + e.meta.w / 2 - this.camX;
+        const y = e.base - e.meta.h / 2 - this.camY;
+        if (nome === "lampada") {
+          const r = 50 + Math.sin(t * 7 + e.cx) * 1.5;
+          furo(x, y + 6, r, 1);
+          brilhos.push([x, y + 6, 40, "255,190,110", 0.16]);
+        } else if (nome === "painel" || nome === "terminal" || nome === "servidor") {
+          furo(x, y, 34, 0.85);
+          brilhos.push([x, y, 26, "90,230,140", 0.14]);
+        }
+      }
+      const cb = this.jogo.combate;
+      if (cb) {
+        for (const p of cb.projeteis) {
+          furo(p.x - this.camX, p.y - this.camY, 22, 0.9);
+          brilhos.push([p.x - this.camX, p.y - this.camY, 14, p.dono === "jogadora" ? "120,230,250" : "255,170,80", 0.3]);
+        }
+        for (const i of cb.inimigos) {
+          if (i.chefe && i.estado === "superaquecido") {
+            furo(i.x - this.camX, i.y - 24 - this.camY, 70, 1);
+            brilhos.push([i.x - this.camX, i.y - 24 - this.camY, 50, "255,150,60", 0.25]);
+          } else if (i.t.brilho) furo(i.x - this.camX, i.y - 8 - this.camY, 26, 0.7);
+        }
+      }
+      c.drawImage(this.luzCanvas, 0, 0);
+      c.globalCompositeOperation = "lighter";
+      for (const [x, y, r, cor, a] of brilhos) {
+        const g = c.createRadialGradient(x, y, 0, x, y, r);
+        g.addColorStop(0, `rgba(${cor},${a})`);
+        g.addColorStop(1, `rgba(${cor},0)`);
+        c.fillStyle = g;
+        c.fillRect(x - r, y - r, r * 2, r * 2);
+      }
+      c.globalCompositeOperation = "source-over";
+    }
+    c.drawImage(this.vinheta, 0, 0);
+  }
+
   // ---------------------------------------------------------------- desenho
   desenhar(ctxFinal, d, t, mostrarAlvo) {
     const c = this.camadaCtx;
@@ -571,9 +672,12 @@ export class Mundo {
       if (!e.visivel()) continue;
       lista.push({ o: e.ordem(), d: () => e.desenhar(dd, t) });
     }
-    if (!this.jogo.esconderJogador) lista.push({ o: this.jogador.y, d: () => this.jogador.desenhar(dd) });
+    const cb = this.jogo.combate;
+    if (!this.jogo.esconderJogador && (!cb || cb.jogadoraVisivel(t))) lista.push({ o: this.jogador.y, d: () => this.jogador.desenhar(dd) });
+    if (cb) lista.push(...cb.itensDesenho(dd, t));
     lista.sort((a, b) => a.o - b.o);
     for (const it of lista) it.d();
+    if (cb) cb.desenharSobre(dd, t);
     if (this.coletando) {
       const k = this.coletando;
       const p = k.ent.topo();
@@ -586,6 +690,7 @@ export class Mundo {
       dd.img(this.alvo.tipo === "npc" ? "ui_balao_fala" : "ui_balao", p.x - 6, p.y - 12 + bob);
     }
     c.restore();
+    this.desenharLuz(c, t);
 
     // O Esquecimento: cores somem, nevoa cinza passa pela tela.
     const cinza = 1 - this.memoriaVista / 100;

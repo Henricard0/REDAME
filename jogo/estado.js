@@ -19,6 +19,8 @@ export class Estado {
     this.dir = "frente";
     this.resgatadas = [];
     this.tempo = 0;
+    this.vidaMax = 6;
+    this.vida = 6;
   }
 
   v(nome) {
@@ -99,6 +101,8 @@ export class Estado {
       dir: this.dir,
       resgatadas: this.resgatadas,
       tempo: this.tempo,
+      vida: this.vida,
+      vidaMax: this.vidaMax,
     };
   }
 
@@ -116,6 +120,8 @@ export class Estado {
       dir: d.dir || "frente",
       resgatadas: d.resgatadas || [],
       tempo: d.tempo || 0,
+      vidaMax: d.vidaMax || 6,
+      vida: d.vida || d.vidaMax || 6,
     });
   }
 

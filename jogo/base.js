@@ -180,6 +180,27 @@ export class Desenho {
     if (opc.alpha !== undefined) c.globalAlpha = 1;
   }
 
+  // desenha a imagem como silhueta branca (inimigo atingido)
+  imgBranca(nome, x, y, opc = {}) {
+    if (!this.brancas) this.brancas = new Map();
+    let cv = this.brancas.get(nome);
+    if (!cv) {
+      const im = this.rec.img[nome];
+      if (!im) return;
+      cv = document.createElement("canvas");
+      cv.width = im.width;
+      cv.height = im.height;
+      const c = cv.getContext("2d");
+      c.drawImage(im, 0, 0);
+      c.globalCompositeOperation = "source-in";
+      c.fillStyle = "#ffffff";
+      c.fillRect(0, 0, cv.width, cv.height);
+      this.brancas.set(nome, cv);
+      this.rec.img["__branca_" + nome] = cv;
+    }
+    this.img("__branca_" + nome, x, y, opc);
+  }
+
   painel(x, y, w, h, nome = "ui_painel", b = 8) {
     const im = this.rec.img[nome];
     const c = this.ctx;
@@ -216,7 +237,7 @@ const TECLAS = {
   ArrowLeft: "esq", KeyA: "esq",
   ArrowRight: "dir", KeyD: "dir",
   Space: "acao", Enter: "acao", KeyZ: "acao", KeyE: "acao", NumpadEnter: "acao",
-  KeyX: "voltar", Backspace: "voltar", ShiftLeft: "correr", ShiftRight: "correr",
+  KeyX: "voltar", Backspace: "voltar", KeyK: "voltar", ShiftLeft: "correr", ShiftRight: "correr", KeyL: "correr",
   Escape: "menu", KeyP: "menu", Tab: "menu",
   KeyQ: "girarEsq",
   KeyH: "dica",

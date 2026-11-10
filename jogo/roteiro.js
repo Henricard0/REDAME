@@ -24,6 +24,8 @@ export const COMANDOS = {
   coletar: { min: 1 },
   gastar: { min: 1 },
   bancada: { min: 0 },
+  coracao: { min: 0 },
+  curar: { min: 0 },
   objetivo: { min: 1 },
   rodar: { min: 1 },
   se: { min: 3 },
@@ -153,6 +155,16 @@ export class Roteirista {
         break;
       case "bancada":
         await j.abrirBancada();
+        break;
+      case "coracao":
+        e.vidaMax += 2;
+        e.vida = e.vidaMax;
+        j.som.efeito("sucesso");
+        j.ui.aviso("Coração de Engenheira: +1 coração!");
+        break;
+      case "curar":
+        e.vida = e.vidaMax;
+        if (j.combate) j.combate.energia = 5;
         break;
       case "objetivo":
         e.objetivo = resto === "-" ? "" : this.texto(resto);

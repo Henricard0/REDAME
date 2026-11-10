@@ -15,19 +15,19 @@
  "chao": "+",
  "linhas": [
   "++++++++++++++++++++++++",
-  "+mmmmmmmmmmmmmm+mmmmmmm+",
-  "+mmmmAmBmmmmmmm+mmmmmmm+",
+  "+mmSmmmmmmmmSmm+mmSmmSm+",
+  "+mmmmAmBmTmmmmm+Ummmmmm+",
   "+wwwwwwwwwwwwww+wwwwwww+",
   "+CwCwwwwwwCwCwD+EFFGwwF+",
   "+wwwwwwwwwwwwww+wwwwwww+",
   "+wwwwwwwwwwwwwwwwwwwwww+",
   "+wwwwwwwHwwwwwwwwwwwwww+",
   "+wIwwwwwwwwwwww+wwwwwww+",
-  "+wwwwtttttwwwww+wwwwwww+",
+  "+wwwwtttttwwwww+Wwwwwww+",
   "+wwwwtJtttwwwww+wwwwKLw+",
   "+wwwwMttMtwwwww+wwwwwww+",
   "+wNwwwwwwwwwwww+wwwOwwF+",
-  "+wwwPwwQwwwwwww+wFwwwww+",
+  "+wwwPwwQwwwVwww+wFwwwww+",
   "+RwwwwwwwwwwwwR+wwwwwwF+",
   "++++++++++++++++++++++++"
  ],
@@ -178,6 +178,44 @@
    "tipo": "obj",
    "obj": "vaso",
    "chao": "w"
+  },
+  "S": {
+   "tipo": "obj",
+   "obj": "lampada",
+   "camada": "fundo",
+   "solido": false,
+   "chao": "m"
+  },
+  "T": {
+   "tipo": "obj",
+   "obj": "placa_redame",
+   "camada": "fundo",
+   "solido": false,
+   "chao": "m"
+  },
+  "U": {
+   "tipo": "obj",
+   "obj": "placa_acervo",
+   "camada": "fundo",
+   "solido": false,
+   "chao": "m"
+  },
+  "V": {
+   "tipo": "obj",
+   "obj": "terminal",
+   "fps": 2,
+   "roteiro": "terminal_acervo",
+   "chao": "w"
+  },
+  "W": {
+   "tipo": "obj",
+   "obj": "servidor",
+   "fps": 3,
+   "chao": "w"
   }
+ },
+ "luz": {
+  "escuridao": 0.32,
+  "jogadora": 70
  }
 }

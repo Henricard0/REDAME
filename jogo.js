@@ -159,6 +159,26 @@
       } else c.drawImage(im, sx, sy, sw, sh, x, y, sw * esc, sh * esc);
       if (opc.alpha !== void 0) c.globalAlpha = 1;
     }
+    // desenha a imagem como silhueta branca (inimigo atingido)
+    imgBranca(nome, x, y, opc = {}) {
+      if (!this.brancas) this.brancas = /* @__PURE__ */ new Map();
+      let cv = this.brancas.get(nome);
+      if (!cv) {
+        const im = this.rec.img[nome];
+        if (!im) return;
+        cv = document.createElement("canvas");
+        cv.width = im.width;
+        cv.height = im.height;
+        const c = cv.getContext("2d");
+        c.drawImage(im, 0, 0);
+        c.globalCompositeOperation = "source-in";
+        c.fillStyle = "#ffffff";
+        c.fillRect(0, 0, cv.width, cv.height);
+        this.brancas.set(nome, cv);
+        this.rec.img["__branca_" + nome] = cv;
+      }
+      this.img("__branca_" + nome, x, y, opc);
+    }
     painel(x, y, w, h, nome = "ui_painel", b = 8) {
       const im = this.rec.img[nome];
       const c = this.ctx;
@@ -202,8 +222,10 @@
     NumpadEnter: "acao",
     KeyX: "voltar",
     Backspace: "voltar",
+    KeyK: "voltar",
     ShiftLeft: "correr",
     ShiftRight: "correr",
+    KeyL: "correr",
     Escape: "menu",
     KeyP: "menu",
     Tab: "menu",
@@ -354,6 +376,13 @@
         { onda: "triangle", vol: 0.1, notas: "D2 D3 D2 D3 D2 D3 D2 D3 | C2 C3 C2 C3 C2 C3 C2 C3 | Bb1 Bb2 Bb1 Bb2 Bb1 Bb2 Bb1 Bb2 | A1 A2 A1 A2 A1 A2 C#3 A2 | D2 D3 D2 D3 D2 D3 D2 D3 | F2 F3 F2 F3 G2 G3 G2 G3 | Bb1 Bb2 A1 A2 A1 A2 A1 A2 | D2 D3 D2 D3 D2 D3 D2 D3" }
       ]
     },
+    chefe: {
+      bpm: 148,
+      canais: [
+        { onda: "square", vol: 0.04, notas: "E5 . E5 G5 . E5 D5 . | C5 . C5 D5 . E5 B4 . | E5 . E5 G5 . A5 G5 . | F#5 . E5 D5 . B4 . . | E5 . G5 . B5 . A5 G5 | F#5 . D5 . E5 . B4 . | C5 . E5 . G5 . F#5 E5 | D#5 - - - B4 - - -" },
+        { onda: "triangle", vol: 0.1, notas: "E2 E3 E2 E3 E2 E3 E2 E3 | C2 C3 C2 C3 D2 D3 D2 D3 | E2 E3 E2 E3 E2 E3 E2 E3 | B1 B2 B1 B2 B1 B2 D#2 D#3 | E2 E3 E2 E3 G2 G3 G2 G3 | D2 D3 D2 D3 B1 B2 B1 B2 | C2 C3 C2 C3 A1 A2 A1 A2 | B1 B2 B1 B2 B1 B2 B1 B2" }
+      ]
+    },
     revisor: {
       bpm: 70,
       canais: [
@@ -502,6 +531,46 @@
         case "passo":
           this.ruido(t, 0.03, 0.02, 500);
           break;
+        case "golpe":
+          this.ruido(t, 0.09, 0.06, 2400);
+          this.nota(420, t, 0.08, "triangle", 0.04, null, 0.6);
+          break;
+        case "acerto":
+          this.nota(180, t, 0.08, "square", 0.06, null, 0.5);
+          this.ruido(t, 0.06, 0.06, 1800);
+          break;
+        case "dano":
+          this.nota(300, t, 0.2, "sawtooth", 0.06, null, 0.4);
+          break;
+        case "disparo":
+          this.nota(900, t, 0.12, "sine", 0.05, null, 2.2);
+          this.nota(600, t, 0.1, "square", 0.02, null, 1.8);
+          break;
+        case "esquiva":
+          this.ruido(t, 0.12, 0.05, 900);
+          break;
+        case "escudo":
+          this.nota(1200, t, 0.06, "square", 0.04);
+          this.nota(1500, t + 0.03, 0.08, "square", 0.03);
+          break;
+        case "restaurado":
+          ["E5", "G5", "C6"].forEach((n, i) => this.nota(freq(n), t + i * 0.05, 0.1, "triangle", 0.05));
+          this.ruido(t, 0.15, 0.04, 3e3);
+          break;
+        case "aviso":
+          this.nota(1300, t, 0.05, "square", 0.03);
+          this.nota(1300, t + 0.09, 0.05, "square", 0.03);
+          break;
+        case "faisca":
+          this.ruido(t, 0.08, 0.05, 4e3);
+          this.nota(700, t, 0.08, "sawtooth", 0.025, null, 0.5);
+          break;
+        case "investida":
+          this.nota(90, t, 0.4, "sawtooth", 0.05, null, 2.5);
+          break;
+        case "vapor":
+          this.ruido(t, 0.8, 0.06, 1200);
+          break;
       }
     }
     tocarMusica(nome, forcar = false) {
@@ -553,6 +622,8 @@
       this.dir = "frente";
       this.resgatadas = [];
       this.tempo = 0;
+      this.vidaMax = 6;
+      this.vida = 6;
     }
     v(nome) {
       if (nome.startsWith("mat:")) return this.mat[nome.slice(4)] || 0;
@@ -621,7 +692,9 @@
         y: this.y,
         dir: this.dir,
         resgatadas: this.resgatadas,
-        tempo: this.tempo
+        tempo: this.tempo,
+        vida: this.vida,
+        vidaMax: this.vidaMax
       };
     }
     restaurar(d) {
@@ -637,7 +710,9 @@
         y: d.y,
         dir: d.dir || "frente",
         resgatadas: d.resgatadas || [],
-        tempo: d.tempo || 0
+        tempo: d.tempo || 0,
+        vidaMax: d.vidaMax || 6,
+        vida: d.vida || d.vidaMax || 6
       });
     }
     salvar() {
@@ -686,7 +761,10 @@
     g: { t: ["grade"] },
     " ": { t: ["vazio"], solido: true },
     k: { t: ["canteiro"] },
-    r: { t: ["trilho"] }
+    r: { t: ["trilho"] },
+    p: { t: ["chapa"] },
+    y: { t: ["cabo_h"] },
+    v: { t: ["cabo_v"] }
   };
   var LINHA_DIR = { baixo: 0, cima: 1, dir: 2, esq: 2 };
   var VETOR = { baixo: [0, 1], cima: [0, -1], esq: [-1, 0], dir: [1, 0] };
@@ -852,6 +930,7 @@
       this.solido = new Uint8Array(this.w * this.h);
       this.ents = [];
       this.spawns = {};
+      this.defsInimigos = [];
       for (let cy = 0; cy < this.h; cy++) {
         for (let cx = 0; cx < this.w; cx++) {
           const ch = def.linhas[cy][cx] ?? def.chao;
@@ -867,12 +946,17 @@
         }
       }
       this.preRenderizar();
+      if (this.jogo.combate) this.jogo.combate.carregarMapa(this.defsInimigos);
       this.memoriaVista = this.memoria();
       this.ultimoTile = null;
     }
     criarEnt(e, cx, cy) {
       if (e.tipo === "spawn") {
         this.spawns[e.nome] = { cx, cy, dir: e.dir || "baixo" };
+        return;
+      }
+      if (e.tipo === "inimigo") {
+        this.defsInimigos.push({ def: e, cx, cy });
         return;
       }
       this.ents.push(new Ent(this, e.tipo, e, cx, cy));
@@ -936,6 +1020,9 @@
         if (c && e.visivel() && intersecta(r, c)) return true;
       }
       if (ignorar !== this.jogador && intersecta(r, this.jogador.caixa())) return true;
+      if (ignorar === this.jogador && this.jogo.combate) {
+        for (const i of this.jogo.combate.inimigos) if (i.solido && intersecta(r, i.caixa())) return true;
+      }
       return false;
     }
     livre(a, x, y, ign) {
@@ -984,12 +1071,19 @@
       if (ent.segurando("dir")) dx += 1;
       if (ent.segurando("cima")) dy -= 1;
       if (ent.segurando("baixo")) dy += 1;
+      const cb = this.jogo.combate;
+      if (cb && cb.moverJogadora(dt)) {
+        j.movendo = true;
+        j.anim += dt * 2;
+        return;
+      }
+      if (cb && ent.apertou("correr") && cb.ativo() && cb.esquivar(dx, dy)) return;
       j.movendo = dx !== 0 || dy !== 0;
       if (j.movendo) {
         if (dx && !dy) j.dir = dx < 0 ? "esq" : "dir";
         else if (dy && !dx) j.dir = dy < 0 ? "cima" : "baixo";
         else if (!(VETOR[j.dir][0] === dx || VETOR[j.dir][1] === dy)) j.dir = dy < 0 ? "cima" : "baixo";
-        const vel = (ent.segurando("correr") || ent.segurando("voltar") ? 112 : 72) * dt;
+        const vel = (ent.segurando("correr") ? 112 : 72) * (cb && cb.golpe ? 0.45 : 1) * dt;
         const n = dx && dy ? Math.SQRT1_2 : 1;
         this.mover(j, dx * vel * n, dy * vel * n);
         j.anim += dt * (ent.segurando("correr") ? 1.4 : 1);
@@ -1000,6 +1094,8 @@
         this.interagir(this.alvo);
         return;
       }
+      if (cb && ent.apertou("acao")) cb.atacar();
+      if (cb && ent.apertou("voltar")) cb.disparar();
       const tile = this.tileDe(j);
       if (tile !== this.ultimoTile) {
         this.ultimoTile = tile;
@@ -1171,6 +1267,85 @@
       this.camX = lw <= LARG ? Math.floor((lw - LARG) / 2) : Math.round(clamp(j.x - LARG / 2, 0, lw - LARG));
       this.camY = lh <= ALT ? Math.floor((lh - ALT) / 2) : Math.round(clamp(j.y - 12 - ALT / 2, 0, lh - ALT));
     }
+    // ---------------------------------------------------------------- luz
+    // Mapas com "luz": {"escuridao": 0.6} ficam escuros, com luz em volta de lampadas,
+    // telas, disparos e da propria protagonista. Todos os mapas ganham uma vinheta suave.
+    desenharLuz(c, t) {
+      if (!this.vinheta) {
+        this.vinheta = document.createElement("canvas");
+        this.vinheta.width = LARG;
+        this.vinheta.height = ALT;
+        const v = this.vinheta.getContext("2d");
+        const g = v.createRadialGradient(LARG / 2, ALT / 2, ALT * 0.45, LARG / 2, ALT / 2, LARG * 0.62);
+        g.addColorStop(0, "rgba(0,0,0,0)");
+        g.addColorStop(1, "rgba(4,4,10,0.42)");
+        v.fillStyle = g;
+        v.fillRect(0, 0, LARG, ALT);
+        this.luzCanvas = document.createElement("canvas");
+        this.luzCanvas.width = LARG;
+        this.luzCanvas.height = ALT;
+        this.luzCtx = this.luzCanvas.getContext("2d");
+      }
+      const L = this.def.luz;
+      if (L) {
+        const lc = this.luzCtx;
+        lc.globalCompositeOperation = "source-over";
+        lc.clearRect(0, 0, LARG, ALT);
+        lc.fillStyle = `rgba(5,7,14,${L.escuridao ?? 0.6})`;
+        lc.fillRect(0, 0, LARG, ALT);
+        lc.globalCompositeOperation = "destination-out";
+        const brilhos = [];
+        const furo = (x, y, r, forca = 1) => {
+          if (x < -r || y < -r || x > LARG + r || y > ALT + r) return;
+          const g = lc.createRadialGradient(x, y, 0, x, y, r);
+          g.addColorStop(0, `rgba(0,0,0,${forca})`);
+          g.addColorStop(0.55, `rgba(0,0,0,${forca * 0.7})`);
+          g.addColorStop(1, "rgba(0,0,0,0)");
+          lc.fillStyle = g;
+          lc.fillRect(x - r, y - r, r * 2, r * 2);
+        };
+        const j = this.jogador;
+        furo(j.x - this.camX, j.y - 10 - this.camY, L.jogadora || 58, 0.95);
+        for (const e of this.ents) {
+          if (e.tipo !== "obj" || !e.visivel()) continue;
+          const nome = e.def.obj;
+          const x = e.x + e.meta.w / 2 - this.camX;
+          const y = e.base - e.meta.h / 2 - this.camY;
+          if (nome === "lampada") {
+            const r = 50 + Math.sin(t * 7 + e.cx) * 1.5;
+            furo(x, y + 6, r, 1);
+            brilhos.push([x, y + 6, 40, "255,190,110", 0.16]);
+          } else if (nome === "painel" || nome === "terminal" || nome === "servidor") {
+            furo(x, y, 34, 0.85);
+            brilhos.push([x, y, 26, "90,230,140", 0.14]);
+          }
+        }
+        const cb = this.jogo.combate;
+        if (cb) {
+          for (const p of cb.projeteis) {
+            furo(p.x - this.camX, p.y - this.camY, 22, 0.9);
+            brilhos.push([p.x - this.camX, p.y - this.camY, 14, p.dono === "jogadora" ? "120,230,250" : "255,170,80", 0.3]);
+          }
+          for (const i of cb.inimigos) {
+            if (i.chefe && i.estado === "superaquecido") {
+              furo(i.x - this.camX, i.y - 24 - this.camY, 70, 1);
+              brilhos.push([i.x - this.camX, i.y - 24 - this.camY, 50, "255,150,60", 0.25]);
+            } else if (i.t.brilho) furo(i.x - this.camX, i.y - 8 - this.camY, 26, 0.7);
+          }
+        }
+        c.drawImage(this.luzCanvas, 0, 0);
+        c.globalCompositeOperation = "lighter";
+        for (const [x, y, r, cor, a] of brilhos) {
+          const g = c.createRadialGradient(x, y, 0, x, y, r);
+          g.addColorStop(0, `rgba(${cor},${a})`);
+          g.addColorStop(1, `rgba(${cor},0)`);
+          c.fillStyle = g;
+          c.fillRect(x - r, y - r, r * 2, r * 2);
+        }
+        c.globalCompositeOperation = "source-over";
+      }
+      c.drawImage(this.vinheta, 0, 0);
+    }
     // ---------------------------------------------------------------- desenho
     desenhar(ctxFinal, d, t, mostrarAlvo) {
       const c = this.camadaCtx;
@@ -1193,9 +1368,12 @@
         if (!e.visivel()) continue;
         lista.push({ o: e.ordem(), d: () => e.desenhar(dd, t) });
       }
-      if (!this.jogo.esconderJogador) lista.push({ o: this.jogador.y, d: () => this.jogador.desenhar(dd) });
+      const cb = this.jogo.combate;
+      if (!this.jogo.esconderJogador && (!cb || cb.jogadoraVisivel(t))) lista.push({ o: this.jogador.y, d: () => this.jogador.desenhar(dd) });
+      if (cb) lista.push(...cb.itensDesenho(dd, t));
       lista.sort((a, b) => a.o - b.o);
       for (const it of lista) it.d();
+      if (cb) cb.desenharSobre(dd, t);
       if (this.coletando) {
         const k = this.coletando;
         const p = k.ent.topo();
@@ -1208,6 +1386,7 @@
         dd.img(this.alvo.tipo === "npc" ? "ui_balao_fala" : "ui_balao", p.x - 6, p.y - 12 + bob);
       }
       c.restore();
+      this.desenharLuz(c, t);
       const cinza = 1 - this.memoriaVista / 100;
       if (cinza > 0.01) {
         for (const n of this.nevoa) {
@@ -1322,6 +1501,16 @@
           break;
         case "bancada":
           await j.abrirBancada();
+          break;
+        case "coracao":
+          e.vidaMax += 2;
+          e.vida = e.vidaMax;
+          j.som.efeito("sucesso");
+          j.ui.aviso("Cora\xE7\xE3o de Engenheira: +1 cora\xE7\xE3o!");
+          break;
+        case "curar":
+          e.vida = e.vidaMax;
+          if (j.combate) j.combate.energia = 5;
           break;
         case "objetivo":
           e.objetivo = resto === "-" ? "" : this.texto(resto);
@@ -1641,15 +1830,15 @@
       }
       this.brilhoObjetivo = Math.max(0, this.brilhoObjetivo - dt);
     }
-    desenharObjetivo(d, t, mostrarObjetivo) {
+    desenharObjetivo(d, t, mostrarObjetivo, dy = 0) {
       const e = this.jogo.estado;
       if (mostrarObjetivo && e.objetivo) {
         const linhas = d.quebrar(e.objetivo, 150);
         const h = 14 + linhas.length * 9;
-        d.painel(3, 3, 170, h);
+        d.painel(3, 3 + dy, 170, h);
         const corT = this.brilhoObjetivo > 0 && Math.floor(t * 6) % 2 === 0 ? COR.destaque : COR.titulo;
-        d.texto(this.brilhoObjetivo > 0 ? "NOVO OBJETIVO" : "OBJETIVO", 10, 7, corT, { sombra: true });
-        linhas.forEach((l, i) => d.texto(l, 10, 17 + i * 9, COR.texto, { sombra: true }));
+        d.texto(this.brilhoObjetivo > 0 ? "NOVO OBJETIVO" : "OBJETIVO", 10, 7 + dy, corT, { sombra: true });
+        linhas.forEach((l, i) => d.texto(l, 10, 17 + dy + i * 9, COR.texto, { sombra: true }));
       }
       if (mostrarObjetivo && e.itens.length) {
         const n = e.itens.length;
@@ -1682,10 +1871,12 @@
         const f = this.faixa;
         const a = f.t < 0.4 ? f.t / 0.4 : f.t > 2.8 ? Math.max(0, (3.4 - f.t) / 0.6) : 1;
         d.ctx.globalAlpha = a;
-        d.ret(0, 62, LARG, 34, "rgba(14,12,26,0.78)");
-        d.ret(0, 62, LARG, 1, COR.titulo);
-        d.ret(0, 95, LARG, 1, COR.titulo);
-        d.texto(f.texto, LARG / 2, 70, COR.titulo, { alinhar: "centro", escala: 2, sombra: true });
+        const w = Math.min(LARG - 16, d.medir(f.texto, 2) + 36);
+        const x = Math.round((LARG - w) / 2);
+        d.ret(x + 10, 92, 4, 14, "#46301c");
+        d.ret(x + w - 14, 92, 4, 14, "#46301c");
+        d.painel(x, 62, w, 32, "ui_madeira");
+        d.texto(f.texto, LARG / 2, 70, "#f4e6c4", { alinhar: "centro", escala: 2, sombra: "#2a1a0c" });
         d.ctx.globalAlpha = 1;
       }
     }
@@ -1736,7 +1927,7 @@
       if (!this.iniciado) {
         if (Math.floor(t * 2) % 2 === 0) d.texto(this.jogo.ent.usouToque ? "Toque para come\xE7ar" : "Clique ou pressione Enter para come\xE7ar", LARG / 2, 132, COR.texto, { alinhar: "centro", sombra: true });
       } else this.menu.desenhar(d, t);
-      const dica = this.jogo.ent.usouToque ? "Direcional: andar   A: agir   B: correr/voltar   Menu: pausa" : "Setas/WASD: andar   Espa\xE7o/Enter: agir   Shift: correr   Esc: menu";
+      const dica = this.jogo.ent.usouToque ? "Direcional: andar   A: agir/golpe   B: pulso   Esquiva   Menu" : "Setas: andar   Espa\xE7o: agir/golpe   X: pulso   Shift: esquiva   Esc: menu";
       d.texto(dica, LARG / 2, ALT - 11, "#6c7299", { alinhar: "centro" });
     }
   };
@@ -2726,6 +2917,675 @@
     }
   };
 
+  // jogo/combate.js
+  var ENERGIA_MAX = 5;
+  function intersecta2(a, b) {
+    return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+  }
+  function normal(x, y) {
+    const n = Math.hypot(x, y) || 1;
+    return [x / n, y / n];
+  }
+  var Inimigo = class {
+    constructor(combate, tipo, def, x, y) {
+      this.c = combate;
+      this.id = tipo;
+      this.t = combate.tipos[tipo];
+      if (!this.t) throw new Error(`Inimigo desconhecido: ${tipo}`);
+      this.def = def;
+      this.x = x;
+      this.y = y;
+      this.casa = { x, y };
+      this.vida = this.t.vida;
+      this.estado = "vagar";
+      this.timer = Math.random() * 1.5;
+      this.recarga = (this.t.recarga || 2) * (0.5 + Math.random() * 0.5);
+      this.vx = 0;
+      this.vy = 0;
+      this.kx = 0;
+      this.ky = 0;
+      this.flash = 0;
+      this.anim = Math.random() * 3;
+      this.dirMov = normal(Math.random() - 0.5, Math.random() - 0.5);
+      this.solido = !!this.t.solido;
+      this.chefe = !!this.t.chefe;
+      this.fase = 0;
+      this.invocou = false;
+    }
+    caixa() {
+      const [w, h] = this.t.caixa;
+      return { x: this.x - w / 2, y: this.y - h, w, h };
+    }
+    // area que recebe golpes e disparos: cobre boa parte do desenho, nao so os pes
+    corpo() {
+      const [w, h] = this.t.caixa;
+      const alt = Math.max(h, Math.round(this.t.h * (this.t.voa ? 0.9 : 0.75)));
+      const voo = this.t.voa ? 6 : 0;
+      return { x: this.x - w / 2 - 1, y: this.y - alt - voo, w: w + 2, h: alt + voo };
+    }
+    vulneravel() {
+      return this.t.ia !== "chefe_gerador" || this.estado === "superaquecido";
+    }
+    quadro() {
+      const t = this.t;
+      if (t.ia === "chefe_gerador") return this.estado === "superaquecido" ? 1 : this.estado === "carregando" || this.estado === "anel" ? 2 : 0;
+      if (t.ia === "investida") return this.estado === "tonto" ? 2 : this.estado === "investir" || Math.floor(this.anim * 6) % 2 ? 1 : 0;
+      if (t.ia === "atirador" && this.estado === "mirar") return 2;
+      if (t.ia === "perseguir" && this.estado === "perseguir") return 2;
+      return Math.floor(this.anim * (t.fps || 4)) % 2;
+    }
+  };
+  var Combate = class {
+    constructor(jogo) {
+      this.jogo = jogo;
+      this.tipos = jogo.rec.dados.inimigos.tipos;
+      this.limpar();
+    }
+    limpar() {
+      this.inimigos = [];
+      this.projeteis = [];
+      this.quedas = [];
+      this.particulas = [];
+      this.textos = [];
+      this.golpe = null;
+      this.cdGolpe = 0;
+      this.cdPulso = 0;
+      this.esquiva = null;
+      this.cdEsquiva = 0;
+      this.inv = 0;
+      this.kx = 0;
+      this.ky = 0;
+      this.energia = ENERGIA_MAX;
+      this.recargaEnergia = 0;
+    }
+    get estado() {
+      return this.jogo.estado;
+    }
+    get mundo() {
+      return this.jogo.mundo;
+    }
+    ativo() {
+      return this.estado.v("arma_chave") > 0 || this.estado.v("arma_pulso") > 0;
+    }
+    leve() {
+      return this.estado.v("dificuldade_leve") > 0;
+    }
+    // chamado quando um mapa e carregado
+    carregarMapa(defs) {
+      const vida = this.estado.vida;
+      this.limpar();
+      for (const { def, cx, cy } of defs) {
+        if (def.se && !this.estado.condicao(def.se)) continue;
+        this.inimigos.push(new Inimigo(this, def.inimigo, def, cx * TILE + 8, cy * TILE + 14));
+      }
+    }
+    // ---------------------------------------------------------------- acoes da jogadora
+    atacar() {
+      if (this.estado.v("arma_chave") <= 0 || this.cdGolpe > 0 || this.esquiva) return false;
+      this.golpe = { t: 0, dur: 0.22, atingidos: /* @__PURE__ */ new Set() };
+      this.cdGolpe = 0.36;
+      this.jogo.som.efeito("golpe");
+      return true;
+    }
+    disparar() {
+      if (this.estado.v("arma_pulso") <= 0 || this.cdPulso > 0) return false;
+      if (this.energia < 1) {
+        this.jogo.som.efeito("erro");
+        this.texto(this.mundo.jogador.x, this.mundo.jogador.y - 28, "sem energia", "#9aa3c7");
+        this.cdPulso = 0.4;
+        return true;
+      }
+      const j = this.mundo.jogador;
+      const [vx, vy] = VETOR[j.dir];
+      this.energia -= 1;
+      this.recargaEnergia = 0;
+      this.cdPulso = 0.28;
+      this.projeteis.push({ x: j.x + vx * 8, y: j.y - 8 + vy * 6, vx: vx * 175, vy: vy * 175, vida: 0.75, dono: "jogadora", dano: 1, sprite: "fx_pulso" });
+      this.jogo.som.efeito("disparo");
+      return true;
+    }
+    esquivar(dx, dy) {
+      if (this.cdEsquiva > 0 || this.esquiva) return false;
+      const j = this.mundo.jogador;
+      let [vx, vy] = dx || dy ? normal(dx, dy) : VETOR[j.dir];
+      this.esquiva = { t: 0, dur: 0.17, vx: vx * 210, vy: vy * 210 };
+      this.cdEsquiva = 0.6;
+      this.jogo.som.efeito("esquiva");
+      for (let k = 0; k < 4; k++) this.particula(j.x, j.y - 4, -vx * 20 + (Math.random() - 0.5) * 20, -vy * 20 - Math.random() * 10, "#c8d0e0", 0.3);
+      return true;
+    }
+    caixaGolpe() {
+      const j = this.mundo.jogador;
+      switch (j.dir) {
+        case "dir":
+          return { x: j.x + 1, y: j.y - 17, w: 17, h: 16 };
+        case "esq":
+          return { x: j.x - 18, y: j.y - 17, w: 17, h: 16 };
+        case "cima":
+          return { x: j.x - 10, y: j.y - 30, w: 20, h: 16 };
+        default:
+          return { x: j.x - 10, y: j.y - 6, w: 20, h: 16 };
+      }
+    }
+    caixaJogadora() {
+      const j = this.mundo.jogador;
+      return { x: j.x - 5, y: j.y - 15, w: 10, h: 15 };
+    }
+    // movimento extra da jogadora (esquiva e empurrao); devolve true se a esquiva controla o movimento
+    moverJogadora(dt) {
+      const m = this.mundo;
+      const j = m.jogador;
+      if (this.esquiva) {
+        const e = this.esquiva;
+        e.t += dt;
+        m.mover(j, e.vx * dt, 0);
+        m.mover(j, 0, e.vy * dt);
+        if (e.t >= e.dur) this.esquiva = null;
+        return true;
+      }
+      if (Math.abs(this.kx) > 1 || Math.abs(this.ky) > 1) {
+        m.mover(j, this.kx * dt, 0);
+        m.mover(j, 0, this.ky * dt);
+        this.kx *= Math.pow(2e-3, dt);
+        this.ky *= Math.pow(2e-3, dt);
+      }
+      return false;
+    }
+    // ---------------------------------------------------------------- dano
+    ferirJogadora(dano, ox, oy) {
+      if (this.inv > 0 || this.esquiva || this.jogo.ocupado > 0) return;
+      const e = this.estado;
+      const real = this.leve() ? dano * 0.5 : dano;
+      e.vida = Math.max(0, e.vida - real);
+      this.inv = 1.1;
+      const j = this.mundo.jogador;
+      const [nx, ny] = normal(j.x - ox, j.y - oy);
+      this.kx = nx * 170;
+      this.ky = ny * 170;
+      this.mundo.tremor = Math.max(this.mundo.tremor, 0.18);
+      this.jogo.som.efeito("dano");
+      for (let k = 0; k < 6; k++) this.particula(j.x, j.y - 10, (Math.random() - 0.5) * 60, -Math.random() * 50, "#e5675b", 0.4);
+      if (e.vida <= 0) this.jogo.desmaiar();
+    }
+    ferirInimigo(i, dano, ox, oy, fonte) {
+      if (i.morto) return;
+      if (!i.vulneravel()) {
+        this.jogo.som.efeito("escudo");
+        for (let k = 0; k < 4; k++) this.particula(ox, oy, (Math.random() - 0.5) * 60, -Math.random() * 40, "#fff6c8", 0.25);
+        if (fonte === "golpe") {
+          const j = this.mundo.jogador;
+          const [nx, ny] = normal(j.x - i.x, j.y - i.y);
+          this.kx = nx * 120;
+          this.ky = ny * 120;
+        }
+        return;
+      }
+      const mult = i.estado === "tonto" ? 2 : 1;
+      i.vida -= dano * mult;
+      i.flash = 0.16;
+      if (!i.solido) {
+        const [nx, ny] = normal(i.x - ox, i.y - oy);
+        i.kx = nx * 140;
+        i.ky = ny * 140;
+      }
+      this.jogo.som.efeito("acerto");
+      for (let k = 0; k < 5; k++) this.particula(i.x, i.y - 8, (Math.random() - 0.5) * 70, -Math.random() * 60, "#d6dcf5", 0.35);
+      if (i.vida <= 0) this.derrotar(i);
+    }
+    derrotar(i) {
+      i.morto = true;
+      const t = i.t;
+      this.jogo.som.efeito(i.chefe ? "sucesso" : "restaurado");
+      const n = i.chefe ? 40 : 12;
+      for (let k = 0; k < n; k++) {
+        const cor = k % 3 === 0 ? "#7c7e90" : ["#7fe3f0", "#ffd98a", "#8fe08a", "#e58fd6"][k % 4];
+        this.particula(i.x, i.y - t.caixa[1] / 2, (Math.random() - 0.5) * (i.chefe ? 160 : 90), -Math.random() * (i.chefe ? 120 : 80), cor, 0.7 + Math.random() * 0.5);
+      }
+      this.texto(i.x, i.y - t.caixa[1] - 6, t.maquina ? "Restaurado!" : "Dissipado!", "#8fe08a");
+      if (i.chefe) {
+        this.mundo.tremor = 0.8;
+        this.jogo.flash = 0.8;
+      }
+      const q = t.queda || {};
+      if (q.coracao && Math.random() < q.coracao) this.soltar(i.x - 5, i.y, "coracao");
+      if (q.energia && Math.random() < q.energia) this.soltar(i.x + 5, i.y, "energia");
+      for (const [m, chance] of Object.entries(q.mat || {})) if (Math.random() < chance) this.soltar(i.x + (Math.random() - 0.5) * 12, i.y + 2, "mat", m);
+      if (i.def.flag) this.estado.definir(i.def.flag, 1);
+      if (i.def.roteiro_derrota) setTimeout(() => this.jogo.rodarRoteiro(i.def.roteiro_derrota), 900);
+      this.inimigos = this.inimigos.filter((x) => x !== i);
+    }
+    soltar(x, y, tipo, mat) {
+      this.quedas.push({ x, y, tipo, mat, t: 0, vy: -50, z: 0 });
+    }
+    particula(x, y, vx, vy, cor, vida) {
+      this.particulas.push({ x, y, vx, vy, cor, vida, max: vida });
+    }
+    texto(x, y, s, cor) {
+      this.textos.push({ x, y, s, cor, t: 0 });
+    }
+    // ---------------------------------------------------------------- laco
+    atualizar(dt) {
+      const m = this.mundo;
+      const j = m.jogador;
+      const e = this.estado;
+      this.cdGolpe = Math.max(0, this.cdGolpe - dt);
+      this.cdPulso = Math.max(0, this.cdPulso - dt);
+      this.cdEsquiva = Math.max(0, this.cdEsquiva - dt);
+      this.inv = Math.max(0, this.inv - dt);
+      if (this.energia < ENERGIA_MAX) {
+        this.recargaEnergia += dt;
+        if (this.recargaEnergia >= 2.2) {
+          this.energia += 1;
+          this.recargaEnergia = 0;
+        }
+      }
+      if (this.golpe) {
+        this.golpe.t += dt;
+        const cg = this.caixaGolpe();
+        for (const i of this.inimigos) {
+          if (this.golpe.atingidos.has(i)) continue;
+          if (intersecta2(cg, i.corpo())) {
+            this.golpe.atingidos.add(i);
+            this.ferirInimigo(i, 1, j.x, j.y - 8, "golpe");
+          }
+        }
+        if (this.golpe && this.golpe.t >= this.golpe.dur) this.golpe = null;
+      }
+      const cj = this.caixaJogadora();
+      for (const i of [...this.inimigos]) {
+        this.atualizarInimigo(i, dt);
+        if (i.morto) continue;
+        const ci = i.caixa();
+        const toque = { x: ci.x - 2, y: ci.y - 2, w: ci.w + 4, h: ci.h + 4 };
+        if (intersecta2(toque, cj)) this.ferirJogadora(i.t.dano || 1, i.x, i.y - 4);
+      }
+      for (const p of this.projeteis) {
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vida -= dt;
+        const r = { x: p.x - 3, y: p.y - 3, w: 6, h: 6 };
+        if (p.dono === "jogadora") {
+          for (const i of this.inimigos) {
+            if (intersecta2(r, i.corpo())) {
+              this.ferirInimigo(i, p.dano, p.x - p.vx * 0.05, p.y - p.vy * 0.05, "pulso");
+              p.vida = 0;
+              break;
+            }
+          }
+        } else if (intersecta2(r, cj)) {
+          this.ferirJogadora(p.dano, p.x - p.vx, p.y - p.vy);
+          p.vida = 0;
+        }
+        if (p.vida > 0 && this.bateParede(p.x, p.y + (p.dono === "jogadora" ? 8 : 6))) {
+          p.vida = 0;
+          for (let k = 0; k < 3; k++) this.particula(p.x, p.y, (Math.random() - 0.5) * 40, (Math.random() - 0.5) * 40, p.dono === "jogadora" ? "#7fe3f0" : "#ffb04a", 0.25);
+        }
+      }
+      this.projeteis = this.projeteis.filter((p) => p.vida > 0);
+      for (const q of this.quedas) {
+        q.t += dt;
+        if (q.z < 0 || q.vy < 0) {
+          q.vy += 240 * dt;
+          q.z = Math.min(0, q.z + q.vy * dt);
+        }
+        if (q.t > 0.3 && Math.hypot(q.x - j.x, q.y - j.y) < 11) {
+          this.pegar(q);
+          q.t = 99;
+        }
+      }
+      this.quedas = this.quedas.filter((q) => q.t < 14);
+      for (const p of this.particulas) {
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vy += 90 * dt;
+        p.vida -= dt;
+      }
+      this.particulas = this.particulas.filter((p) => p.vida > 0);
+      for (const t of this.textos) t.t += dt;
+      this.textos = this.textos.filter((t) => t.t < 1.1);
+    }
+    pegar(q) {
+      const e = this.estado;
+      if (q.tipo === "coracao") {
+        e.vida = Math.min(e.vidaMax, e.vida + 2);
+        this.texto(q.x, q.y - 12, "+1 cora\xE7\xE3o", "#e5675b");
+      } else if (q.tipo === "energia") {
+        this.energia = Math.min(ENERGIA_MAX, this.energia + 2);
+        this.texto(q.x, q.y - 12, "+2 energia", "#7fe3f0");
+      } else {
+        e.coletar(q.mat, 1);
+        const nome = this.jogo.rec.dados.materiais.materiais[q.mat]?.nome || q.mat;
+        this.texto(q.x, q.y - 12, `+1 ${nome}`, "#ffd98a");
+      }
+      this.jogo.som.efeito("brilho");
+    }
+    bateParede(x, y) {
+      const m = this.mundo;
+      if (m.tileSolido(Math.floor(x / TILE), Math.floor(y / TILE))) return true;
+      for (const e of m.ents) {
+        if (e.tipo !== "obj" || !e.col || !e.visivel() || e.def.camada === "fundo") continue;
+        if (x >= e.col.x && x < e.col.x + e.col.w && y >= e.col.y && y < e.col.y + e.col.h) return true;
+      }
+      return false;
+    }
+    mover(i, dx, dy) {
+      const ox = i.x;
+      const oy = i.y;
+      this.mundo.mover(i, dx, dy, i);
+      return Math.abs(i.x - ox - dx) > 0.01 || Math.abs(i.y - oy - dy) > 0.01;
+    }
+    atualizarInimigo(i, dt) {
+      const j = this.mundo.jogador;
+      const t = i.t;
+      i.anim += dt;
+      i.flash = Math.max(0, i.flash - dt);
+      const dx = j.x - i.x;
+      const dy = j.y - i.y;
+      const dist = Math.hypot(dx, dy);
+      if (!i.chefe && dist > 220) return;
+      if (i.chefe && !this.estado.v(i.def.ativar || "chefe_ativo")) return;
+      if (Math.abs(i.kx) > 1 || Math.abs(i.ky) > 1) {
+        this.mover(i, i.kx * dt, i.ky * dt);
+        i.kx *= Math.pow(3e-3, dt);
+        i.ky *= Math.pow(3e-3, dt);
+        if (i.estado !== "tonto") return;
+      }
+      const vel = (t.vel || 30) * (this.leve() ? 0.8 : 1);
+      i.timer -= dt;
+      switch (t.ia) {
+        case "perseguir": {
+          if (dist < (t.alcance || 90)) {
+            i.estado = "perseguir";
+            const [nx, ny] = normal(dx, dy);
+            const ond = Math.sin(i.anim * 5) * 0.5;
+            this.mover(i, (nx - ny * ond) * vel * dt, (ny + nx * ond) * vel * dt);
+          } else {
+            i.estado = "vagar";
+            this.vagar(i, dt, vel * 0.5);
+          }
+          break;
+        }
+        case "atirador": {
+          if (dist > (t.alcance || 130)) {
+            i.estado = "vagar";
+            this.vagar(i, dt, vel * 0.5);
+            break;
+          }
+          const [nx, ny] = normal(dx, dy);
+          const alvo = t.distancia || 70;
+          if (i.estado !== "mirar") {
+            i.estado = "manter";
+            let mx = 0;
+            let my = 0;
+            if (dist < alvo - 14) {
+              mx = -nx;
+              my = -ny;
+            } else if (dist > alvo + 14) {
+              mx = nx;
+              my = ny;
+            } else {
+              mx = -ny * Math.sign(Math.sin(i.anim * 0.7));
+              my = nx * Math.sign(Math.sin(i.anim * 0.7));
+            }
+            if (this.mover(i, mx * vel * dt, my * vel * dt)) i.anim += 1.3;
+            i.recarga -= dt;
+            if (i.recarga <= 0) {
+              i.estado = "mirar";
+              i.timer = (t.aviso || 0.6) * (this.leve() ? 1.4 : 1);
+              this.jogo.som.efeito("aviso");
+            }
+          } else if (i.timer <= 0) {
+            const v = t.projetil_vel || 85;
+            this.projeteis.push({ x: i.x, y: i.y - 10, vx: nx * v, vy: ny * v, vida: 2.2, dono: "inimigo", dano: t.dano || 1, sprite: "fx_faisca" });
+            this.jogo.som.efeito("faisca");
+            i.estado = "manter";
+            i.recarga = (t.recarga || 2.4) * (0.8 + Math.random() * 0.4);
+          }
+          break;
+        }
+        case "investida": {
+          if (i.estado === "tonto") {
+            if (i.timer <= 0) {
+              i.estado = "vagar";
+              i.timer = 0.8;
+            }
+            break;
+          }
+          if (i.estado === "mirar") {
+            if (i.timer <= 0) {
+              i.estado = "investir";
+              i.timer = t.duracao || 0.9;
+              this.jogo.som.efeito("investida");
+            }
+            break;
+          }
+          if (i.estado === "investir") {
+            const v = (t.investida_vel || 150) * (this.leve() ? 0.8 : 1);
+            const bateu = this.mover(i, i.dirMov[0] * v * dt, i.dirMov[1] * v * dt);
+            if (Math.random() < dt * 20) this.particula(i.x, i.y - 2, (Math.random() - 0.5) * 20, -10, "#8a8c9a", 0.3);
+            if (bateu) {
+              i.estado = "tonto";
+              i.timer = t.tonto || 1.4;
+              this.mundo.tremor = Math.max(this.mundo.tremor, 0.15);
+              this.jogo.som.efeito("escudo");
+            } else if (i.timer <= 0) {
+              i.estado = "vagar";
+              i.timer = 1;
+            }
+            break;
+          }
+          this.vagar(i, dt, vel);
+          if (i.timer <= 0 && dist < (t.alcance || 110)) {
+            i.estado = "mirar";
+            i.timer = (t.aviso || 0.7) * (this.leve() ? 1.4 : 1);
+            i.dirMov = normal(dx, dy);
+            this.jogo.som.efeito("aviso");
+          }
+          break;
+        }
+        case "quicar": {
+          if (!i.vq) i.vq = [Math.random() < 0.5 ? -1 : 1, Math.random() < 0.5 ? -1 : 1];
+          const ox = i.x;
+          this.mundo.mover(i, i.vq[0] * vel * dt, 0, i);
+          if (Math.abs(i.x - ox - i.vq[0] * vel * dt) > 0.01) i.vq[0] *= -1;
+          const oy = i.y;
+          this.mundo.mover(i, 0, i.vq[1] * vel * dt, i);
+          if (Math.abs(i.y - oy - i.vq[1] * vel * dt) > 0.01) i.vq[1] *= -1;
+          if (Math.random() < dt * 6) this.particula(i.x, i.y - 5, (Math.random() - 0.5) * 30, -Math.random() * 30, "#ffd98a", 0.2);
+          break;
+        }
+        case "chefe_gerador":
+          this.atualizarChefe(i, dt, dx, dy);
+          break;
+      }
+    }
+    vagar(i, dt, vel) {
+      i.tVagar = (i.tVagar ?? 0) - dt;
+      if (i.tVagar <= 0) {
+        i.tVagar = 0.8 + Math.random() * 1.6;
+        i.parado = Math.random() < 0.4;
+        i.dirMov = normal(Math.random() - 0.5, Math.random() - 0.5);
+        if (Math.hypot(i.x - i.casa.x, i.y - i.casa.y) > 48) i.dirMov = normal(i.casa.x - i.x, i.casa.y - i.y);
+      }
+      if (!i.parado) this.mover(i, i.dirMov[0] * vel * dt, i.dirMov[1] * vel * dt);
+    }
+    // Chefe: blindado (atira) -> carregando (aviso) -> anel de faiscas -> superaquecido (vulneravel)
+    atualizarChefe(i, dt, dx, dy) {
+      const t = i.t;
+      const metade = i.vida <= t.vida / 2;
+      const quarto = i.vida <= t.vida / 4;
+      if (metade && !i.invocou) {
+        i.invocou = true;
+        for (const [ox, oy] of [[-40, 10], [40, 10]]) this.inimigos.push(new Inimigo(this, "faisca", {}, i.x + ox, i.y + oy));
+        this.jogo.som.efeito("tremor");
+        this.texto(i.x, i.y - 54, "Sobrecarga!", "#ffb04a");
+      }
+      if (i.estado === "vagar") {
+        i.estado = "blindado";
+        i.timer = 2.2;
+        i.rajada = 0.9;
+      }
+      if (i.estado === "blindado") {
+        i.rajada -= dt;
+        if (i.rajada <= 0) {
+          const n = metade ? 5 : 3;
+          const [nx, ny] = normal(dx, dy + 8);
+          const base = Math.atan2(ny, nx);
+          for (let k = 0; k < n; k++) {
+            const a = base + (k - (n - 1) / 2) * 0.22;
+            this.projeteis.push({ x: i.x, y: i.y - 24, vx: Math.cos(a) * 80, vy: Math.sin(a) * 80, vida: 3, dono: "inimigo", dano: 1, sprite: "fx_faisca" });
+          }
+          this.jogo.som.efeito("faisca");
+          i.rajada = 9;
+        }
+        if (i.timer <= 0) {
+          i.estado = "carregando";
+          i.timer = 1 * (this.leve() ? 1.4 : 1);
+          this.jogo.som.efeito("aviso");
+        }
+      } else if (i.estado === "carregando") {
+        if (Math.random() < dt * 30) this.particula(i.x + (Math.random() - 0.5) * 40, i.y - 24 + (Math.random() - 0.5) * 30, 0, -20, "#7fe3f0", 0.3);
+        if (i.timer <= 0) {
+          i.estado = "anel";
+          const n = metade ? 12 : 8;
+          const giro = Math.random() * Math.PI;
+          for (let k = 0; k < n; k++) {
+            const a = giro + k * Math.PI * 2 / n;
+            this.projeteis.push({ x: i.x, y: i.y - 22, vx: Math.cos(a) * 70, vy: Math.sin(a) * 70, vida: 3.2, dono: "inimigo", dano: 1, sprite: "fx_faisca" });
+          }
+          this.jogo.som.efeito("turbina");
+          i.timer = 0.5;
+        }
+      } else if (i.estado === "anel") {
+        if (i.timer <= 0) {
+          i.estado = "superaquecido";
+          i.timer = (quarto ? 2 : 2.7) * (this.leve() ? 1.3 : 1);
+          this.jogo.som.efeito("vapor");
+          this.texto(i.x, i.y - 54, "N\xFAcleo exposto!", "#ffd98a");
+        }
+      } else if (i.estado === "superaquecido") {
+        if (Math.random() < dt * 25) this.particula(i.x + (Math.random() - 0.5) * 36, i.y - 40, (Math.random() - 0.5) * 10, -30, "#d8dce6", 0.6);
+        if (i.timer <= 0) {
+          i.estado = "blindado";
+          i.timer = metade ? 1.8 : 2.2;
+          i.rajada = 0.7;
+        }
+      }
+    }
+    // ---------------------------------------------------------------- desenho
+    // itens para o desenho ordenado por profundidade (o mundo junta tudo)
+    itensDesenho(dd, t) {
+      const lista = [];
+      for (const i of this.inimigos) {
+        lista.push({
+          o: i.y,
+          d: () => {
+            const tt = i.t;
+            const sw = tt.w;
+            const sh = tt.h;
+            const voo = tt.voa ? Math.round(Math.sin(i.anim * 4) * 2) - 6 : 0;
+            if (!i.chefe) dd.img("ui_sombra", i.x - 6, i.y - 4);
+            let tremer = 0;
+            if ((i.estado === "mirar" || i.estado === "carregando") && Math.floor(t * 20) % 2) tremer = 1;
+            const x = Math.round(i.x - sw / 2 + tremer);
+            const y = Math.round(i.y - sh + voo);
+            const opc = { sx: i.quadro() * sw, sw, sh, espelhar: !i.chefe && this.mundo.jogador.x < i.x && tt.espelhar !== false };
+            if (i.flash > 0) dd.imgBranca("obj_" + tt.sprite, x, y, opc);
+            else dd.img("obj_" + tt.sprite, x, y, opc);
+            if (i.estado === "mirar" && tt.ia === "investida") dd.texto("!", i.x, y - 9, "#e5675b", { alinhar: "centro", sombra: true });
+            if (i.estado === "tonto") for (let k = 0; k < 3; k++) dd.ret(i.x - 6 + k * 5 + Math.round(Math.sin(t * 6 + k) * 2), y - 4, 2, 2, "#ffd98a");
+          }
+        });
+      }
+      for (const q of this.quedas) {
+        if (q.t > 11 && Math.floor(q.t * 8) % 2) continue;
+        lista.push({
+          o: q.y,
+          d: () => {
+            const bob = q.z + Math.round(Math.sin(q.t * 5) * 1);
+            const nome = q.tipo === "coracao" ? "drop_coracao" : q.tipo === "energia" ? "drop_energia" : "mat_" + q.mat;
+            if (q.tipo === "mat") dd.img(nome, q.x - 8, q.y - 16 + bob);
+            else dd.img(nome, q.x - 4, q.y - 10 + bob);
+          }
+        });
+      }
+      return lista;
+    }
+    desenharSobre(dd, t) {
+      const j = this.mundo.jogador;
+      if (this.golpe) {
+        const p = this.golpe.t / this.golpe.dur;
+        const base = { dir: 0, baixo: Math.PI / 2, esq: Math.PI, cima: -Math.PI / 2 }[j.dir];
+        const a = base - 1.1 + p * 2.2;
+        const r = 11;
+        const cx = j.x + Math.cos(a) * r;
+        const cy = j.y - 11 + Math.sin(a) * r;
+        const c = dd.ctx;
+        c.save();
+        c.translate(Math.round(cx), Math.round(cy));
+        c.rotate(a + Math.PI / 4);
+        c.drawImage(this.jogo.rec.img.item_chave, -8, -8);
+        c.restore();
+        c.strokeStyle = "rgba(255,255,255,0.55)";
+        c.lineWidth = 2;
+        c.beginPath();
+        c.arc(Math.round(j.x), Math.round(j.y - 11), 15, base - 1.1, a);
+        c.stroke();
+      }
+      for (const p of this.projeteis) {
+        const q = Math.floor(t * 12) % 2;
+        const s = p.sprite === "fx_pulso" ? 8 : 6;
+        dd.img(p.sprite, p.x - s / 2, p.y - s / 2, { sx: q * s, sw: s, sh: s });
+      }
+      for (const p of this.particulas) {
+        dd.ctx.globalAlpha = Math.max(0, p.vida / p.max);
+        dd.ret(p.x, p.y, 2, 2, p.cor);
+      }
+      dd.ctx.globalAlpha = 1;
+      for (const tx of this.textos) {
+        dd.ctx.globalAlpha = Math.max(0, 1 - tx.t / 1.1);
+        dd.texto(tx.s, tx.x, tx.y - tx.t * 14, tx.cor, { alinhar: "centro", contorno: "#14121e" });
+      }
+      dd.ctx.globalAlpha = 1;
+    }
+    jogadoraVisivel(t) {
+      return this.inv <= 0 || Math.floor(t * 16) % 2 === 0;
+    }
+    chefeAtual() {
+      return this.inimigos.find((i) => i.chefe && this.estado.v(i.def.ativar || "chefe_ativo"));
+    }
+    desenharHud(d, t, yObjetivo) {
+      const e = this.estado;
+      if (!this.ativo()) return 0;
+      const cheios = Math.floor(e.vida / 2);
+      const meio = e.vida % 2 >= 1;
+      const total = Math.ceil(e.vidaMax / 2);
+      for (let k = 0; k < total; k++) {
+        const q = k < cheios ? 0 : k === cheios && meio ? 1 : 2;
+        d.img("ui_coracao", 4 + k * 9, 3, { sx: q * 9, sw: 9, sh: 8 });
+      }
+      if (e.v("arma_pulso")) {
+        const x = 8 + total * 9;
+        d.img("ui_raio", x, 2);
+        for (let k = 0; k < ENERGIA_MAX; k++) {
+          d.ret(x + 9 + k * 6, 4, 5, 5, "#14121e");
+          d.ret(x + 10 + k * 6, 5, 3, 3, k < this.energia ? "#7fe3f0" : "#2a3550");
+        }
+      }
+      const ch = this.chefeAtual();
+      if (ch) {
+        const w = 180;
+        const x = (320 - w) / 2;
+        const y = 168;
+        d.texto(ch.t.nome.toUpperCase(), 160, y - 10, "#ffd98a", { alinhar: "centro", contorno: "#14121e" });
+        d.ret(x, y, w, 7, "#14121e");
+        d.ret(x + 1, y + 1, Math.round((w - 2) * Math.max(0, ch.vida) / ch.t.vida), 5, ch.vulneravel() ? "#ffb04a" : "#e5675b");
+        d.moldura(x, y, w, 7, "#5a6280");
+      }
+      return 11;
+    }
+  };
+
   // jogo/main.js
   var Jogo = class {
     constructor(canvas) {
@@ -2754,7 +3614,7 @@
     async carregar(progresso) {
       const r = this.rec;
       r.dados.config = await r.json("config");
-      await r.carregar(["arte", "fonte", "personagens", "itens", "pioneiras", "materiais"], progresso);
+      await r.carregar(["arte", "fonte", "personagens", "itens", "pioneiras", "materiais", "inimigos"], progresso);
       r.dados.mapas = {};
       for (const m of r.dados.config.mapas) r.dados.mapas[m] = await r.json("mapas/" + m);
       r.dados.minigames = {};
@@ -2762,6 +3622,7 @@
       this.roteirista = new Roteirista(this);
       for (const f of r.dados.config.roteiros) this.roteirista.adicionar(await r.json("roteiros/" + f));
       this.d = new Desenho(this.ctx, r);
+      this.combate = new Combate(this);
       this.mundo = new Mundo(this);
       this.hud = new Hud(this);
       this.ui = {
@@ -2818,6 +3679,7 @@
           await this.fade(1, 0.35);
         } else this.fadeA = 1;
         this.carregarMapa(id, chegada);
+        this.estado.vida = this.estado.vidaMax;
         this.salvar(false);
         await this.fade(0, 0.4);
         const def = this.mundo.def;
@@ -2828,6 +3690,29 @@
         if (def.ao_entrar) await this.rodarRoteiro(this.mundo.escolherRoteiro(def.ao_entrar));
       } finally {
         this.ocupado--;
+      }
+    }
+    // Vida zerada: a protagonista desmaia e volta para a entrada do mapa, com tudo o que ja conquistou.
+    async desmaiar() {
+      if (this.desmaiando) return;
+      this.desmaiando = true;
+      this.ocupado++;
+      try {
+        this.mundo.jogador.movendo = false;
+        this.som.efeito("tremor");
+        await this.esperar(0.4);
+        await this.fade(1, 0.7);
+        const def = this.mundo.def;
+        if (def.ao_desmaiar) await this.rodarRoteiro(def.ao_desmaiar);
+        this.estado.vida = this.estado.vidaMax;
+        this.carregarMapa(def.id, def.renascer || Object.keys(this.mundo.spawns)[0]);
+        if (def.musica) this.som.tocarMusica(def.musica, true);
+        this.salvar(false);
+        await this.fade(0, 0.6);
+        await this.ui.falar("revisor", "neutro", "Voc\xEA desmaiou... Eu trouxe voc\xEA de volta para a entrada. Seus materiais e seu progresso continuam com voc\xEA.");
+      } finally {
+        this.ocupado--;
+        this.desmaiando = false;
       }
     }
     salvar(avisar) {
@@ -2848,6 +3733,7 @@
       j.dir = dados.dir || "baixo";
       this.mundo.ultimoTile = this.mundo.tileDe(j);
       this.mundo.camera();
+      this.combate.energia = 5;
     }
     async abrirMinigame(id) {
       const def = this.rec.dados.minigames[id];
@@ -2943,6 +3829,11 @@
           m.opcoes[4].texto = `Efeitos: ${s.efeitosLigados ? "ligados" : "desligados"}`;
         } },
         { texto: "Tela cheia", acao: () => this.telaCheia() },
+        { texto: `Batalhas: ${this.estado.v("dificuldade_leve") ? "leves" : "normais"}`, acao: (m) => {
+          const e = this.estado;
+          e.definir("dificuldade_leve", e.v("dificuldade_leve") ? 0 : 1);
+          m.opcoes[6].texto = `Batalhas: ${e.v("dificuldade_leve") ? "leves" : "normais"}`;
+        } },
         { texto: "Salvar jogo", acao: (m) => {
           this.salvar(true);
           m.fechar();
@@ -2990,6 +3881,7 @@
       }
       if (this.mundo.def && (this.ocupado > 0 || topo) && !this.mundo.jogador.rota) this.mundo.jogador.movendo = false;
       if (this.mundo.def && !cobre) this.mundo.atualizar(dt, this.ocupado === 0 && !topo);
+      if (this.mundo.def && !cobre && this.ocupado === 0 && !topo && this.fadeA < 0.5) this.combate.atualizar(dt);
       this.hud.atualizar(dt);
       if (this.fadeA !== this.fadeAlvo) {
         const passo = this.fadeVel * dt;
@@ -3015,7 +3907,9 @@
       if (this.mundo.def && !cobre) {
         const livre = this.ocupado === 0 && this.camadas.length === 0;
         this.mundo.desenhar(c, d, this.t, livre);
-        this.hud.desenharObjetivo(d, this.t, this.camadas.length === 0 || this.camadas[0] instanceof Dialogo);
+        const mostrar = this.camadas.length === 0 || this.camadas[0] instanceof Dialogo;
+        const dy = mostrar ? this.combate.desenharHud(d, this.t) : 0;
+        this.hud.desenharObjetivo(d, this.t, mostrar, dy);
       }
       for (let i = inicio; i < this.camadas.length; i++) this.camadas[i].desenhar(d, this.t);
       this.hud.desenharAvisos(d, this.t);

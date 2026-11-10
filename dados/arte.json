@@ -26,7 +26,10 @@
   "grade": 23,
   "vazio": 24,
   "canteiro": 25,
-  "trilho": 26
+  "trilho": 26,
+  "chapa": 27,
+  "cabo_h": 28,
+  "cabo_v": 29
  },
  "tiles_colunas": 8,
  "objetos": {
@@ -572,6 +575,179 @@
     16
    ],
    "quadros": 1
+  },
+  "terminal": {
+   "w": 32,
+   "h": 32,
+   "col": [
+    0,
+    0,
+    32,
+    12
+   ],
+   "quadros": 2
+  },
+  "servidor": {
+   "w": 16,
+   "h": 32,
+   "col": [
+    0,
+    0,
+    16,
+    10
+   ],
+   "quadros": 2
+  },
+  "placa_usina": {
+   "w": 128,
+   "h": 24,
+   "col": [
+    2,
+    0,
+    124,
+    4
+   ],
+   "quadros": 1
+  },
+  "placa_oficina": {
+   "w": 48,
+   "h": 24,
+   "col": [
+    2,
+    0,
+    44,
+    4
+   ],
+   "quadros": 1
+  },
+  "placa_condutos": {
+   "w": 96,
+   "h": 24,
+   "col": [
+    2,
+    0,
+    92,
+    4
+   ],
+   "quadros": 1
+  },
+  "placa_casa_forca": {
+   "w": 80,
+   "h": 24,
+   "col": [
+    2,
+    0,
+    76,
+    4
+   ],
+   "quadros": 1
+  },
+  "placa_ventilacao": {
+   "w": 64,
+   "h": 24,
+   "col": [
+    2,
+    0,
+    60,
+    4
+   ],
+   "quadros": 1
+  },
+  "placa_deposito": {
+   "w": 48,
+   "h": 24,
+   "col": [
+    2,
+    0,
+    44,
+    4
+   ],
+   "quadros": 1
+  },
+  "placa_comando": {
+   "w": 96,
+   "h": 24,
+   "col": [
+    2,
+    0,
+    92,
+    4
+   ],
+   "quadros": 1
+  },
+  "placa_canteiro": {
+   "w": 96,
+   "h": 24,
+   "col": [
+    2,
+    0,
+    92,
+    4
+   ],
+   "quadros": 1
+  },
+  "placa_santos_andrade": {
+   "w": 112,
+   "h": 24,
+   "col": [
+    2,
+    0,
+    108,
+    4
+   ],
+   "quadros": 1
+  },
+  "placa_redame": {
+   "w": 80,
+   "h": 24,
+   "col": [
+    2,
+    0,
+    76,
+    4
+   ],
+   "quadros": 1
+  },
+  "placa_acervo": {
+   "w": 96,
+   "h": 24,
+   "col": [
+    2,
+    0,
+    92,
+    4
+   ],
+   "quadros": 1
+  },
+  "ini_borrao": {
+   "w": 16,
+   "h": 16,
+   "col": null,
+   "quadros": 3
+  },
+  "ini_drone": {
+   "w": 16,
+   "h": 16,
+   "col": null,
+   "quadros": 3
+  },
+  "ini_robo": {
+   "w": 16,
+   "h": 24,
+   "col": null,
+   "quadros": 3
+  },
+  "ini_faisca": {
+   "w": 12,
+   "h": 12,
+   "col": null,
+   "quadros": 2
+  },
+  "ini_gerador": {
+   "w": 48,
+   "h": 48,
+   "col": null,
+   "quadros": 3
   }
  },
  "itens": [
@@ -598,7 +774,11 @@
   "cetica"
  ],
  "arquivos": [
+  "drop_coracao",
+  "drop_energia",
   "fonte",
+  "fx_faisca",
+  "fx_pulso",
   "item_capacete",
   "item_chave",
   "item_diploma",
@@ -651,6 +831,11 @@
   "obj_estante",
   "obj_flores",
   "obj_gerador",
+  "obj_ini_borrao",
+  "obj_ini_drone",
+  "obj_ini_faisca",
+  "obj_ini_gerador",
+  "obj_ini_robo",
   "obj_janela",
   "obj_lampada",
   "obj_lousa_usina",
@@ -660,14 +845,27 @@
   "obj_monte_areia",
   "obj_painel",
   "obj_placa",
+  "obj_placa_acervo",
+  "obj_placa_canteiro",
+  "obj_placa_casa_forca",
+  "obj_placa_comando",
+  "obj_placa_condutos",
+  "obj_placa_deposito",
+  "obj_placa_oficina",
   "obj_placa_perigo",
+  "obj_placa_redame",
+  "obj_placa_santos_andrade",
+  "obj_placa_usina",
+  "obj_placa_ventilacao",
   "obj_pneus",
   "obj_ponto_bonde",
   "obj_porta_comando",
   "obj_poste",
   "obj_quadro",
   "obj_revisor",
+  "obj_servidor",
   "obj_sucata",
+  "obj_terminal",
   "obj_tijolos",
   "obj_turbina",
   "obj_ufpr",
@@ -706,12 +904,15 @@
   "ui_bola",
   "ui_brilho",
   "ui_caderneta",
+  "ui_coracao",
   "ui_cursor",
   "ui_holograma",
+  "ui_madeira",
   "ui_moldura",
   "ui_nevoa",
   "ui_painel",
   "ui_papel",
+  "ui_raio",
   "ui_seta",
   "ui_sombra"
  ]

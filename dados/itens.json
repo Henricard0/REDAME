@@ -26,5 +26,9 @@
  "plantas": {
   "nome": "Plantas da usina",
   "desc": "Os desenhos técnicos da Usina Capivari-Cachoeira: túneis, condutos forçados e a casa de força."
+ },
+ "chave": {
+  "nome": "Chave inglesa do Zé",
+  "desc": "Pesada e confiável. Aperta parafusos... e afasta borrões do Esquecimento. Golpeie com Espaço (no celular, A)."
  }
 }

@@ -33,8 +33,11 @@ for (const f of config.roteiros) {
 const arquivos = new Set(arte.arquivos);
 for (const f of readdirSync(join(RAIZ, "arte"))) if (f.endsWith(".png") && !arquivos.has(f.slice(0, -4))) aviso(`PNG fora do manifesto: ${f}`);
 const EMOCOES = new Set(arte.emocoes);
-const EFEITOS = new Set(["blip", "cursor", "confirmar", "voltar", "item", "erro", "girar", "agua", "turbina", "sucesso", "revisor", "brilho", "porta", "tremor", "passo"]);
-const MUSICAS = new Set(["titulo", "acervo", "curitiba", "usina", "revisor", "nada"]);
+const EFEITOS = new Set(["blip", "cursor", "confirmar", "voltar", "item", "erro", "girar", "agua", "turbina", "sucesso", "revisor", "brilho", "porta", "tremor", "passo",
+  "golpe", "acerto", "dano", "disparo", "esquiva", "escudo", "restaurado", "aviso", "faisca", "investida", "vapor"]);
+const MUSICAS = new Set(["titulo", "acervo", "curitiba", "usina", "revisor", "chefe", "nada"]);
+const INIMIGOS = ler("inimigos").tipos;
+const IAS = new Set(["perseguir", "atirador", "investida", "quicar", "chefe_gerador"]);
 const DIRS = new Set(["baixo", "cima", "esq", "dir"]);
 const glifos = new Set(fonte.glifos.map((g) => g.c));
 const faltando = new Map();
@@ -99,6 +102,10 @@ for (const [id, m] of Object.entries(mapas)) {
       case "spawn":
         spawns[id].add(e.nome);
         break;
+      case "inimigo":
+        if (!INIMIGOS[e.inimigo]) erro(`${onde}: inimigo desconhecido "${e.inimigo}"`);
+        if (e.roteiro_derrota) refRoteiro(e.roteiro_derrota, onde);
+        break;
       case "portal":
       case "gatilho":
       case "inspecao":
@@ -112,6 +119,7 @@ for (const [id, m] of Object.entries(mapas)) {
     if (e.dir && !DIRS.has(e.dir)) erro(`${onde}: direção inválida "${e.dir}"`);
   }
   refVariantes(m.ao_entrar, `Mapa ${id} ao_entrar`);
+  if (m.ao_desmaiar) refRoteiro(m.ao_desmaiar, `Mapa ${id} ao_desmaiar`);
   if (m.nome) checarTexto(m.nome, `mapa ${id}`);
 }
 for (const [id, m] of Object.entries(mapas)) {
@@ -180,6 +188,15 @@ for (const m of Object.values(mapas)) {
   for (const e of Object.values(m.legenda)) checarCondicao(e.se, `Mapa ${m.id}`);
   for (const v of Array.isArray(m.ao_entrar) ? m.ao_entrar : []) checarCondicao(v.se, `Mapa ${m.id}`);
   if (m.ao_coletar) refRoteiro(m.ao_coletar, `Mapa ${m.id} ao_coletar`);
+}
+
+// ------------------------------------------------------------- inimigos
+for (const [id, t] of Object.entries(INIMIGOS)) {
+  if (!IAS.has(t.ia)) erro(`Inimigo ${id}: ia desconhecida "${t.ia}"`);
+  if (!arte.objetos[t.sprite]) erro(`Inimigo ${id}: sprite inexistente "${t.sprite}"`);
+  else if (arte.objetos[t.sprite].w !== t.w || arte.objetos[t.sprite].h !== t.h) erro(`Inimigo ${id}: tamanho ${t.w}x${t.h} não bate com o sprite`);
+  for (const m of Object.keys(t.queda?.mat || {})) if (!MATS[m]) erro(`Inimigo ${id}: material desconhecido na queda "${m}"`);
+  checarTexto(t.nome, `inimigo ${id}`);
 }
 
 // ------------------------------------------------------------- roteiros

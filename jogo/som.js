@@ -40,6 +40,13 @@ export const MUSICAS = {
       { onda: "triangle", vol: 0.1, notas: "D2 D3 D2 D3 D2 D3 D2 D3 | C2 C3 C2 C3 C2 C3 C2 C3 | Bb1 Bb2 Bb1 Bb2 Bb1 Bb2 Bb1 Bb2 | A1 A2 A1 A2 A1 A2 C#3 A2 | D2 D3 D2 D3 D2 D3 D2 D3 | F2 F3 F2 F3 G2 G3 G2 G3 | Bb1 Bb2 A1 A2 A1 A2 A1 A2 | D2 D3 D2 D3 D2 D3 D2 D3" },
     ],
   },
+  chefe: {
+    bpm: 148,
+    canais: [
+      { onda: "square", vol: 0.04, notas: "E5 . E5 G5 . E5 D5 . | C5 . C5 D5 . E5 B4 . | E5 . E5 G5 . A5 G5 . | F#5 . E5 D5 . B4 . . | E5 . G5 . B5 . A5 G5 | F#5 . D5 . E5 . B4 . | C5 . E5 . G5 . F#5 E5 | D#5 - - - B4 - - -" },
+      { onda: "triangle", vol: 0.1, notas: "E2 E3 E2 E3 E2 E3 E2 E3 | C2 C3 C2 C3 D2 D3 D2 D3 | E2 E3 E2 E3 E2 E3 E2 E3 | B1 B2 B1 B2 B1 B2 D#2 D#3 | E2 E3 E2 E3 G2 G3 G2 G3 | D2 D3 D2 D3 B1 B2 B1 B2 | C2 C3 C2 C3 A1 A2 A1 A2 | B1 B2 B1 B2 B1 B2 B1 B2" },
+    ],
+  },
   revisor: {
     bpm: 70,
     canais: [
@@ -193,6 +200,46 @@ export class Som {
         break;
       case "passo":
         this.ruido(t, 0.03, 0.02, 500);
+        break;
+      case "golpe":
+        this.ruido(t, 0.09, 0.06, 2400);
+        this.nota(420, t, 0.08, "triangle", 0.04, null, 0.6);
+        break;
+      case "acerto":
+        this.nota(180, t, 0.08, "square", 0.06, null, 0.5);
+        this.ruido(t, 0.06, 0.06, 1800);
+        break;
+      case "dano":
+        this.nota(300, t, 0.2, "sawtooth", 0.06, null, 0.4);
+        break;
+      case "disparo":
+        this.nota(900, t, 0.12, "sine", 0.05, null, 2.2);
+        this.nota(600, t, 0.1, "square", 0.02, null, 1.8);
+        break;
+      case "esquiva":
+        this.ruido(t, 0.12, 0.05, 900);
+        break;
+      case "escudo":
+        this.nota(1200, t, 0.06, "square", 0.04);
+        this.nota(1500, t + 0.03, 0.08, "square", 0.03);
+        break;
+      case "restaurado":
+        ["E5", "G5", "C6"].forEach((n, i) => this.nota(freq(n), t + i * 0.05, 0.1, "triangle", 0.05));
+        this.ruido(t, 0.15, 0.04, 3000);
+        break;
+      case "aviso":
+        this.nota(1300, t, 0.05, "square", 0.03);
+        this.nota(1300, t + 0.09, 0.05, "square", 0.03);
+        break;
+      case "faisca":
+        this.ruido(t, 0.08, 0.05, 4000);
+        this.nota(700, t, 0.08, "sawtooth", 0.025, null, 0.5);
+        break;
+      case "investida":
+        this.nota(90, t, 0.4, "sawtooth", 0.05, null, 2.5);
+        break;
+      case "vapor":
+        this.ruido(t, 0.8, 0.06, 1200);
         break;
     }
   }

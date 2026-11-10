@@ -746,125 +746,152 @@ def tile(nome):
 
 
 def gerar_tiles():
+    """Tiles no estilo industrial: tons mais escuros, texturas e desgaste."""
     # grama
     for k, nome in enumerate(["grama", "grama2", "grama3"]):
         t = tile(nome)
-        t.ret(0, 0, 16, 16, c(98, 160, 72))
-        ruido(t, 0, 0, 16, 16, [c(84, 142, 62), c(112, 176, 84)], 0.22, 10 + k)
+        t.ret(0, 0, 16, 16, c(72, 118, 62))
+        ruido(t, 0, 0, 16, 16, [c(58, 100, 52), c(88, 136, 72), c(64, 108, 56)], 0.3, 10 + k)
         r = random.Random(20 + k)
-        for _ in range(3):
+        for _ in range(4):
             x, y = r.randrange(1, 15), r.randrange(2, 15)
-            t.p(x, y, c(70, 126, 54)); t.p(x, y - 1, c(124, 188, 92))
+            t.p(x, y, c(48, 86, 44)); t.p(x, y - 1, c(104, 152, 84))
     t = tile("grama_flor")
-    t.ret(0, 0, 16, 16, c(98, 160, 72))
-    ruido(t, 0, 0, 16, 16, [c(84, 142, 62), c(112, 176, 84)], 0.22, 33)
-    for (x, y, cor) in [(3, 4, c(250, 250, 250)), (11, 3, c(250, 220, 80)), (7, 10, c(240, 130, 170)),
-                        (13, 12, c(250, 250, 250)), (2, 13, c(250, 220, 80))]:
-        t.p(x, y, cor); t.p(x + 1, y, cor); t.p(x, y + 1, cor); t.p(x + 1, y + 1, escurecer(cor))
+    t.ret(0, 0, 16, 16, c(72, 118, 62))
+    ruido(t, 0, 0, 16, 16, [c(58, 100, 52), c(88, 136, 72)], 0.28, 33)
+    for (x, y, cor) in [(3, 4, c(226, 220, 200)), (11, 3, c(220, 186, 80)), (7, 10, c(200, 120, 150)),
+                        (13, 12, c(226, 220, 200)), (2, 13, c(220, 186, 80))]:
+        t.p(x, y, cor); t.p(x + 1, y, cor); t.p(x, y + 1, escurecer(cor))
     # rua de paralelepipedos
     for k, nome in enumerate(["rua", "rua2"]):
         t = tile(nome)
-        t.ret(0, 0, 16, 16, c(84, 80, 90))
+        t.ret(0, 0, 16, 16, c(48, 46, 54))
         r = random.Random(40 + k)
         for row in range(4):
             off = 0 if row % 2 == 0 else -4
             for col in range(3):
                 x = off + col * 8
                 y = row * 4
-                base = r.choice([c(132, 128, 136), c(120, 116, 126), c(142, 136, 140)])
+                base = r.choice([c(96, 94, 102), c(86, 84, 94), c(104, 100, 106)])
                 t.ret(x + 1, y + 1, 6, 3, base)
-                t.ret(x + 1, y + 1, 5, 1, clarear(base, 0.18))
-                t.p(x + 6, y + 3, escurecer(base, 0.85))
+                t.ret(x + 1, y + 1, 5, 1, clarear(base, 0.15))
+                t.ret(x + 2, y + 3, 5, 1, escurecer(base, 0.8))
         if k == 1:
-            t.p(9, 6, c(98, 160, 72)); t.p(10, 6, c(84, 142, 62))
-    # calcada de petit-pave (ondas pretas e brancas de Curitiba)
+            t.p(9, 6, c(72, 118, 62)); t.p(10, 6, c(58, 100, 52))
+    # calcada de petit-pave
     for k, nome in enumerate(["calcada", "calcada2"]):
         t = tile(nome)
-        t.ret(0, 0, 16, 16, c(150, 146, 140))
+        t.ret(0, 0, 16, 16, c(110, 106, 102))
         for ty in range(0, 16, 2):
             for tx in range(0, 16, 2):
-                onda = math.sin((tx + k * 16) / 16 * math.pi * 2) * 3 + 8
+                onda = math.sin((tx + k * 8) / 16 * math.pi * 2) * 3 + 8
                 preto = abs(ty - onda) < 2.2
-                base = c(60, 56, 64) if preto else c(226, 220, 206)
+                base = c(48, 46, 54) if preto else c(192, 186, 172)
                 t.p(tx, ty, base)
-                t.p(tx + 1, ty, base if (tx + ty) % 4 else escurecer(base, 0.92))
-                t.p(tx, ty + 1, escurecer(base, 0.92))
+                t.p(tx + 1, ty, base if (tx + ty) % 4 else escurecer(base, 0.9))
+                t.p(tx, ty + 1, escurecer(base, 0.88))
     t = tile("praca")
-    t.ret(0, 0, 16, 16, c(196, 186, 168))
-    t.ret(0, 0, 16, 1, c(170, 160, 144)); t.ret(0, 0, 1, 16, c(170, 160, 144))
-    t.ret(8, 0, 1, 16, c(176, 166, 150)); t.ret(0, 8, 16, 1, c(176, 166, 150))
-    ruido(t, 1, 1, 15, 15, [c(206, 198, 180), c(186, 176, 160)], 0.1, 50)
+    t.ret(0, 0, 16, 16, c(150, 142, 128))
+    t.ret(0, 0, 16, 1, c(118, 112, 102)); t.ret(0, 0, 1, 16, c(118, 112, 102))
+    t.ret(8, 0, 1, 16, c(126, 120, 108)); t.ret(0, 8, 16, 1, c(126, 120, 108))
+    ruido(t, 1, 1, 15, 15, [c(160, 152, 138), c(138, 130, 118), c(130, 124, 112)], 0.18, 50)
     t = tile("terra")
-    t.ret(0, 0, 16, 16, c(150, 108, 70))
-    ruido(t, 0, 0, 16, 16, [c(132, 94, 60), c(166, 124, 84), c(120, 86, 58)], 0.25, 60)
+    t.ret(0, 0, 16, 16, c(112, 80, 56))
+    ruido(t, 0, 0, 16, 16, [c(96, 68, 48), c(128, 94, 66), c(86, 60, 42)], 0.3, 60)
     t = tile("areia")
-    t.ret(0, 0, 16, 16, c(222, 196, 136))
-    ruido(t, 0, 0, 16, 16, [c(206, 178, 120), c(236, 214, 160)], 0.25, 61)
+    t.ret(0, 0, 16, 16, c(186, 162, 114))
+    ruido(t, 0, 0, 16, 16, [c(170, 146, 100), c(200, 178, 130)], 0.3, 61)
     for k, nome in enumerate(["agua", "agua2"]):
         t = tile(nome)
-        t.ret(0, 0, 16, 16, c(64, 120, 196))
-        ruido(t, 0, 0, 16, 16, [c(56, 108, 184), c(74, 132, 206)], 0.2, 70 + k)
+        t.ret(0, 0, 16, 16, c(40, 84, 140))
+        ruido(t, 0, 0, 16, 16, [c(34, 74, 126), c(48, 96, 154)], 0.25, 70 + k)
         for (x, y) in [(2 + k * 3, 3), (9 - k * 2, 9), (12, 5 + k * 4)]:
-            t.ret(x, y, 3, 1, c(170, 210, 240))
-    # pisos internos
+            t.ret(x, y, 3, 1, c(120, 170, 210))
     for k, nome in enumerate(["madeira", "madeira2"]):
         t = tile(nome)
-        cores = [c(168, 116, 72), c(156, 106, 64), c(176, 124, 78), c(162, 110, 68)]
+        cores = [c(122, 82, 52), c(110, 74, 46), c(132, 90, 58), c(116, 78, 50)]
         for row in range(4):
             t.ret(0, row * 4, 16, 4, cores[(row + k) % 4])
-            t.ret(0, row * 4 + 3, 16, 1, c(120, 80, 50))
+            t.ret(0, row * 4 + 3, 16, 1, c(70, 46, 30))
             jx = (row * 7 + k * 5) % 16
-            t.ret(jx, row * 4, 1, 3, c(130, 88, 56))
-        ruido(t, 0, 0, 16, 16, [c(146, 98, 60)], 0.05, 80 + k)
+            t.ret(jx, row * 4, 1, 3, c(84, 56, 36))
+        ruido(t, 0, 0, 16, 16, [c(100, 66, 42), c(140, 98, 64)], 0.08, 80 + k)
     t = tile("tapete")
-    t.ret(0, 0, 16, 16, c(150, 50, 56))
-    ruido(t, 0, 0, 16, 16, [c(138, 44, 50), c(162, 60, 64)], 0.2, 90)
+    t.ret(0, 0, 16, 16, c(104, 38, 46))
+    ruido(t, 0, 0, 16, 16, [c(92, 32, 40), c(118, 48, 54)], 0.25, 90)
+    t.ret(0, 0, 16, 1, c(150, 120, 70))
     t = tile("azulejo")
     for j in range(16):
         for i in range(16):
-            t.p(i, j, c(230, 236, 240) if ((i // 8) + (j // 8)) % 2 == 0 else c(200, 220, 236))
-    t.ret(0, 7, 16, 1, c(170, 180, 190)); t.ret(7, 0, 1, 16, c(170, 180, 190))
+            t.p(i, j, c(180, 190, 194) if ((i // 8) + (j // 8)) % 2 == 0 else c(150, 168, 178))
+    t.ret(0, 7, 16, 1, c(110, 120, 128)); t.ret(7, 0, 1, 16, c(110, 120, 128))
     t = tile("parede")
-    t.ret(0, 0, 16, 16, c(214, 196, 160))
-    for i in range(0, 16, 4):
-        t.ret(i, 0, 1, 13, c(200, 180, 144))
-    t.ret(0, 12, 16, 4, c(110, 74, 50)); t.ret(0, 12, 16, 1, c(140, 100, 70))
+    t.ret(0, 0, 16, 16, c(70, 50, 44))
+    for row in range(3):
+        off = 0 if row % 2 == 0 else 4
+        for col in range(-1, 3):
+            x = off + col * 8
+            t.ret(x + 1, row * 4 + 1, 7, 3, c(118, 76, 60) if (row + col) % 2 else c(108, 70, 56))
+            t.ret(x + 1, row * 4 + 1, 7, 1, c(134, 90, 70))
+    t.ret(0, 12, 16, 4, c(48, 50, 58)); t.ret(0, 12, 16, 1, c(86, 90, 100)); t.p(3, 14, c(130, 136, 146)); t.p(12, 14, c(130, 136, 146))
     t = tile("parede_topo")
-    t.ret(0, 0, 16, 16, c(74, 56, 52))
-    ruido(t, 0, 0, 16, 16, [c(66, 50, 46), c(84, 64, 58)], 0.15, 100)
+    t.ret(0, 0, 16, 16, c(32, 28, 34))
+    ruido(t, 0, 0, 16, 16, [c(26, 22, 28), c(42, 36, 42)], 0.2, 100)
     t = tile("parede_moderna")
-    t.ret(0, 0, 16, 16, c(206, 214, 226))
-    t.ret(0, 12, 16, 4, c(120, 130, 150)); t.ret(0, 12, 16, 1, c(150, 160, 180))
+    t.ret(0, 0, 16, 16, c(66, 76, 88))
+    t.ret(0, 0, 1, 12, c(48, 56, 66)); t.ret(8, 0, 1, 12, c(48, 56, 66))
+    t.ret(1, 0, 7, 1, c(86, 98, 112)); t.ret(9, 0, 7, 1, c(86, 98, 112))
+    t.ret(0, 12, 16, 4, c(40, 44, 52)); t.ret(0, 12, 16, 1, c(90, 98, 110))
+    t.ret(4, 9, 3, 1, c(90, 220, 140)); t.p(12, 4, c(130, 140, 154)); t.p(3, 4, c(130, 140, 154))
     t = tile("rocha")
-    t.ret(0, 0, 16, 16, c(70, 66, 74))
-    ruido(t, 0, 0, 16, 16, [c(60, 56, 64), c(84, 80, 88)], 0.3, 110)
-    t.linha(2, 3, 6, 6, c(50, 46, 54)); t.linha(10, 9, 14, 12, c(50, 46, 54))
+    t.ret(0, 0, 16, 16, c(40, 36, 42))
+    ruido(t, 0, 0, 16, 16, [c(32, 28, 34), c(52, 48, 54), c(46, 40, 44)], 0.35, 110)
+    t.linha(2, 3, 6, 6, c(24, 20, 26)); t.linha(10, 9, 14, 12, c(24, 20, 26))
     t = tile("rocha_face")
-    t.ret(0, 0, 16, 16, c(104, 98, 102))
-    ruido(t, 0, 0, 16, 16, [c(92, 86, 92), c(118, 112, 116)], 0.3, 111)
-    for (x, y, w) in [(1, 4, 6), (8, 9, 7), (3, 13, 5)]:
-        t.ret(x, y, w, 1, c(76, 70, 78))
-    t.ret(0, 15, 16, 1, c(60, 56, 64))
+    t.ret(0, 0, 16, 16, c(78, 70, 70))
+    for (y, cor) in [(0, c(92, 84, 82)), (4, c(70, 62, 64)), (8, c(82, 74, 72)), (12, c(60, 54, 56))]:
+        t.ret(0, y, 16, 4, cor)
+    ruido(t, 0, 0, 16, 16, [c(56, 50, 52), c(100, 92, 90), c(66, 58, 60)], 0.3, 111)
+    for (x, y, w) in [(1, 4, 6), (8, 8, 7), (3, 12, 5)]:
+        t.ret(x, y, w, 1, c(44, 38, 42))
+    t.ret(0, 15, 16, 1, c(30, 26, 30))
     t = tile("concreto")
-    t.ret(0, 0, 16, 16, c(164, 164, 160))
-    ruido(t, 0, 0, 16, 16, [c(150, 150, 148), c(176, 176, 170)], 0.18, 120)
-    t.ret(0, 15, 16, 1, c(140, 140, 136)); t.ret(15, 0, 1, 16, c(140, 140, 136))
+    t.ret(0, 0, 16, 16, c(104, 106, 108))
+    ruido(t, 0, 0, 16, 16, [c(92, 94, 98), c(114, 116, 118), c(98, 100, 104)], 0.3, 120)
+    t.ret(0, 15, 16, 1, c(76, 78, 82)); t.ret(15, 0, 1, 16, c(76, 78, 82))
+    t.ret(0, 0, 16, 1, c(122, 124, 126)); t.ret(0, 0, 1, 16, c(122, 124, 126))
+    t.elipse(10, 9, 3, 1.6, c(80, 82, 86, 140)); t.linha(3, 4, 5, 6, c(84, 86, 90))
     t = tile("grade")
-    t.ret(0, 0, 16, 16, c(70, 76, 86))
+    t.ret(0, 0, 16, 16, c(54, 60, 70))
     for j in range(1, 16, 3):
         for i in range(1, 16, 3):
-            t.ret(i, j, 2, 2, c(36, 40, 48))
+            t.ret(i, j, 2, 2, c(18, 22, 28))
+    t.ret(0, 0, 16, 1, c(86, 94, 106)); t.ret(0, 15, 16, 1, c(36, 40, 48))
     t = tile("vazio")
-    t.ret(0, 0, 16, 16, c(12, 10, 18))
+    t.ret(0, 0, 16, 16, c(8, 8, 12))
     t = tile("canteiro")
-    t.ret(0, 0, 16, 16, c(110, 76, 48))
-    ruido(t, 0, 0, 16, 16, [c(96, 66, 42), c(124, 88, 58)], 0.3, 130)
+    t.ret(0, 0, 16, 16, c(86, 60, 40))
+    ruido(t, 0, 0, 16, 16, [c(72, 50, 34), c(100, 72, 48)], 0.3, 130)
     t = tile("trilho")
-    t.ret(0, 0, 16, 16, c(84, 80, 90))
+    t.ret(0, 0, 16, 16, c(48, 46, 54))
     for x in range(0, 16, 4):
-        t.ret(x, 2, 2, 12, c(110, 80, 56))
-    t.ret(0, 4, 16, 2, c(170, 170, 180)); t.ret(0, 10, 16, 2, c(170, 170, 180))
-    t.ret(0, 5, 16, 1, c(120, 120, 130)); t.ret(0, 11, 16, 1, c(120, 120, 130))
+        t.ret(x, 2, 2, 12, c(84, 60, 42))
+    t.ret(0, 4, 16, 2, c(150, 152, 160)); t.ret(0, 10, 16, 2, c(150, 152, 160))
+    t.ret(0, 5, 16, 1, c(96, 98, 106)); t.ret(0, 11, 16, 1, c(96, 98, 106))
+    # novos: chapa de aco xadrez e cabos amarelos no chao
+    t = tile("chapa")
+    t.ret(0, 0, 16, 16, c(86, 92, 102))
+    for j in range(0, 16, 4):
+        for i in range(0, 16, 4):
+            o = 2 if (j // 4) % 2 else 0
+            t.ret((i + o) % 16, j + 1, 2, 1, c(124, 132, 144)); t.p((i + o + 1) % 16, j + 2, c(64, 70, 80))
+    t.ret(0, 15, 16, 1, c(58, 62, 72)); t.ret(15, 0, 1, 16, c(58, 62, 72))
+    t = tile("cabo_h")
+    t.img.paste(dict(TILES)["concreto"].img, (0, 0)); t.px = t.img.load()
+    t.ret(0, 6, 16, 3, c(214, 170, 40)); t.ret(0, 6, 16, 1, c(240, 210, 90)); t.ret(0, 9, 16, 1, c(60, 50, 30, 160))
+    t = tile("cabo_v")
+    t.img.paste(dict(TILES)["concreto"].img, (0, 0)); t.px = t.img.load()
+    t.ret(6, 0, 3, 16, c(214, 170, 40)); t.ret(6, 0, 1, 16, c(240, 210, 90)); t.ret(9, 0, 1, 16, c(60, 50, 30, 160))
 
     cols = 8
     linhas = (len(TILES) + cols - 1) // cols
@@ -1561,6 +1588,308 @@ def gerar_materiais():
     t.contorno(); t.salvar("obj_porta_comando")
 
 
+# ================================================================ ESTILO INDUSTRIAL
+VERDE_CRT = c(90, 230, 140)
+VERDE_CRT_E = c(20, 60, 36)
+
+
+def tela_crt(t, x, y, w, h, q, seed=0):
+    t.ret(x, y, w, h, VERDE_CRT_E)
+    r = random.Random(seed + q)
+    for i in range(w - 2):
+        yy = y + h // 2 + int(math.sin((i + q * 3) * 0.9 + seed) * (h // 3))
+        t.p(x + 1 + i, yy, VERDE_CRT)
+    for j in range(y + 1, y + h - 1, 2):
+        if r.random() < 0.3:
+            t.ret(x + 1, j, r.randrange(1, max(2, w - 2)), 1, c(60, 160, 100))
+    t.moldura(x, y, w, h, c(30, 36, 40))
+
+
+def faixa_alerta(t, x, y, w, h):
+    for i in range(w):
+        for j in range(h):
+            t.p(x + i, y + j, c(226, 180, 40) if ((i + j) // 2) % 2 == 0 else c(40, 36, 36))
+
+
+def contornar_quadros(t, w, h, q):
+    sheet = t.img.copy()
+    for k in range(q):
+        s = Tela(w, h)
+        s.img.alpha_composite(sheet.crop((k * w, 0, k * w + w, h)))
+        s.px = s.img.load()
+        s.contorno()
+        t.img.paste(s.img, (k * w, 0))
+    t.px = t.img.load()
+
+
+def placa(nome, rotulo):
+    larg = largura_texto(rotulo) + 12
+    w = max(32, ((larg + 15) // 16) * 16)
+    t = objeto("placa_" + nome, w, 24, [2, 0, w - 4, 4])
+    madeira, escura, clara = c(118, 78, 46), c(70, 44, 26), c(146, 100, 62)
+    t.ret(5, 14, 3, 10, escura); t.ret(w - 8, 14, 3, 10, escura)
+    t.ret(0, 1, w, 14, madeira)
+    for y in (4, 8, 11):
+        t.ret(1, y, w - 2, 1, c(104, 68, 40))
+    t.ret(0, 1, w, 1, clara)
+    t.moldura(0, 1, w, 14, escura)
+    for (x, y) in [(2, 3), (w - 3, 3), (2, 12), (w - 3, 12)]:
+        t.p(x, y, c(190, 180, 160))
+    texto_x = (w - largura_texto(rotulo)) // 2
+    texto(t, texto_x + 1, 4, rotulo, c(40, 24, 14))
+    texto(t, texto_x, 3, rotulo, c(244, 230, 196))
+    t.contorno()
+    t.salvar("obj_placa_" + nome)
+
+
+def gerar_industrial():
+    # painel de comando com telas verdes
+    t = objeto("painel", 32, 32, [0, 0, 32, 14], quadros=2)
+    for q in range(2):
+        o = q * 32
+        t.ret(o + 1, 4, 30, 28, c(56, 62, 72)); t.ret(o + 1, 4, 30, 2, c(84, 92, 104))
+        tela_crt(t, o + 3, 7, 12, 9, q, 1); tela_crt(t, o + 17, 7, 12, 9, q, 4)
+        t.ret(o + 3, 19, 26, 6, c(40, 44, 52))
+        for k in range(6):
+            on = (k + q) % 3 != 0
+            t.ret(o + 5 + k * 4, 21, 2, 2, (c(90, 230, 140) if k % 2 else c(230, 80, 70)) if on else c(50, 60, 56))
+        faixa_alerta(t, o + 1, 28, 30, 3)
+    contornar_quadros(t, 32, 32, 2)
+    t.salvar("obj_painel")
+    # terminal de mesa (acervo e usina)
+    t = objeto("terminal", 32, 32, [0, 0, 32, 12], quadros=2)
+    for q in range(2):
+        o = q * 32
+        t.ret(o + 0, 18, 32, 8, c(70, 76, 86)); t.ret(o + 0, 18, 32, 2, c(100, 108, 120))
+        t.ret(o + 2, 26, 3, 6, c(44, 48, 56)); t.ret(o + 27, 26, 3, 6, c(44, 48, 56))
+        t.ret(o + 3, 3, 13, 14, c(48, 52, 60)); tela_crt(t, o + 4, 4, 11, 10, q, 7)
+        t.ret(o + 17, 5, 12, 12, c(48, 52, 60)); tela_crt(t, o + 18, 6, 10, 9, q + 1, 3)
+        t.ret(o + 6, 20, 16, 3, c(36, 40, 46))
+        for k in range(7):
+            t.p(o + 7 + k * 2, 21, c(150, 156, 166))
+        t.p(o + 26, 21, c(90, 230, 140) if q else c(40, 90, 60))
+    contornar_quadros(t, 32, 32, 2)
+    t.salvar("obj_terminal")
+    # rack de servidores
+    t = objeto("servidor", 16, 32, [0, 0, 16, 10], quadros=2)
+    for q in range(2):
+        o = q * 16
+        t.ret(o + 1, 2, 14, 30, c(44, 48, 56)); t.ret(o + 1, 2, 14, 2, c(72, 78, 90))
+        for y in range(6, 30, 4):
+            t.ret(o + 3, y, 10, 3, c(30, 34, 40))
+            r = random.Random(y * 7 + q)
+            for x in range(4, 12, 2):
+                if r.random() < 0.5:
+                    t.p(o + x, y + 1, c(90, 230, 140) if r.random() < 0.7 else c(230, 160, 60))
+    contornar_quadros(t, 16, 32, 2)
+    t.salvar("obj_servidor")
+    # turbina com faixa de alerta
+    t = objeto("turbina", 32, 32, [0, 0, 32, 16], quadros=4)
+    for q in range(4):
+        o = q * 32
+        t.elipse(o + 16, 17, 15, 13, c(58, 64, 74))
+        t.elipse(o + 16, 17, 13, 11, c(226, 180, 40))
+        for a in range(16):
+            if a % 2:
+                ang = a * math.pi / 8
+                t.linha(o + 16 + int(11 * math.cos(ang)), 17 + int(9 * math.sin(ang)), o + 16 + int(13 * math.cos(ang)), 17 + int(11 * math.sin(ang)), c(40, 36, 36))
+        t.elipse(o + 16, 17, 10, 8, c(86, 94, 106))
+        t.elipse(o + 16, 17, 8, 6, c(30, 36, 44))
+        for k in range(4):
+            ang = q * math.pi / 8 + k * math.pi / 2
+            t.linha(o + 16, 17, o + 16 + int(round(7 * math.cos(ang))), 17 + int(round(5 * math.sin(ang))), c(170, 180, 192))
+        t.elipse(o + 16, 17, 2, 2, c(230, 190, 80))
+        t.ret(o + 4, 28, 24, 4, c(44, 48, 56))
+    contornar_quadros(t, 32, 32, 4)
+    t.salvar("obj_turbina")
+    # gerador
+    t = objeto("gerador", 32, 40, [0, 0, 32, 16])
+    t.ret(2, 8, 28, 30, c(64, 84, 72)); t.ret(2, 8, 28, 3, c(90, 112, 98))
+    t.ret(5, 13, 22, 10, c(30, 36, 40)); tela_crt(t, 6, 14, 10, 8, 0, 9)
+    t.elipse(22, 18, 3.5, 3.5, c(220, 220, 210)); t.linha(22, 18, 24, 16, c(200, 50, 40))
+    faixa_alerta(t, 2, 32, 28, 4)
+    for y in range(25, 31, 2):
+        t.ret(5, y, 22, 1, c(48, 64, 54))
+    t.contorno(); t.salvar("obj_gerador")
+    # lampada industrial com grade
+    t = objeto("lampada", 16, 16, None)
+    t.elipse(8, 9, 7, 6, c(255, 220, 140, 70))
+    t.ret(5, 5, 6, 7, c(255, 236, 170)); t.ret(6, 6, 4, 5, c(255, 250, 220))
+    for x in (5, 8, 10):
+        t.ret(x, 5, 1, 7, c(60, 56, 52))
+    t.ret(4, 4, 8, 1, c(60, 56, 52)); t.ret(4, 12, 8, 1, c(60, 56, 52)); t.ret(7, 1, 2, 3, c(50, 50, 56))
+    t.salvar("obj_lampada")
+    # placas de madeira
+    for nome, txt in [("usina", "USINA CAPIVARI-CACHOEIRA"), ("oficina", "OFICINA"), ("condutos", "CONDUTOS FORÇADOS"),
+                      ("casa_forca", "CASA DE FORÇA"), ("ventilacao", "VENTILAÇÃO"), ("deposito", "DEPÓSITO"),
+                      ("comando", "SALA DE COMANDO"), ("canteiro", "CANTEIRO DE OBRAS"),
+                      ("santos_andrade", "PRAÇA SANTOS ANDRADE"), ("redame", "PROJETO REDAME"), ("acervo", "DEPÓSITO DO ACERVO")]:
+        placa(nome, txt)
+
+
+def gerar_combate():
+    cinza, cinza_e, cinza_c = c(96, 98, 110), c(64, 66, 78), c(140, 142, 154)
+    mag, cia = c(214, 70, 200), c(70, 226, 230)
+
+    def glitch(t, ox, oy, w, h, seed):
+        r = random.Random(seed)
+        for _ in range(3):
+            y = oy + r.randrange(h)
+            x = ox + r.randrange(w - 3)
+            if t.get(x, y)[3]:
+                t.ret(x, y, 3, 1, r.choice([mag, cia]))
+
+    # borrao do Esquecimento
+    t = objeto("ini_borrao", 16, 16, None, quadros=3)
+    for q in range(3):
+        o = q * 16
+        ry = 5 if q != 1 else 4.2
+        rx = 6 if q != 1 else 7
+        t.elipse(o + 8, 10, rx, ry, c(58, 58, 70))
+        t.elipse(o + 8, 9, rx - 1.5, ry - 1.5, c(84, 84, 98))
+        t.ret(o + 4, 13, 1, 2, c(58, 58, 70)); t.ret(o + 11, 14, 1, 2, c(58, 58, 70))
+        ey = 8 if q != 1 else 9
+        t.ret(o + 5, ey, 2, 2, c(240, 240, 240)); t.ret(o + 9, ey, 2, 2, c(240, 240, 240))
+        t.p(o + 6, ey + 1, c(20, 20, 26)); t.p(o + 10, ey + 1, c(20, 20, 26))
+        if q == 2:
+            t.ret(o + 5, ey - 1, 2, 1, c(20, 20, 26)); t.ret(o + 9, ey - 1, 2, 1, c(20, 20, 26))
+        glitch(t, o + 2, 5, 12, 9, q)
+    contornar_quadros(t, 16, 16, 3)
+    t.salvar("obj_ini_borrao")
+    # drone de inspecao corrompido
+    t = objeto("ini_drone", 16, 16, None, quadros=3)
+    for q in range(3):
+        o = q * 16
+        t.ret(o + 1, 2, 6, 1, cinza_c) if q % 2 == 0 else t.ret(o + 3, 2, 3, 1, cinza_c)
+        t.ret(o + 9, 2, 6, 1, cinza_c) if q % 2 == 0 else t.ret(o + 10, 2, 3, 1, cinza_c)
+        t.ret(o + 4, 3, 1, 2, cinza_e); t.ret(o + 11, 3, 1, 2, cinza_e)
+        t.elipse(o + 8, 8, 5.5, 4, cinza); t.elipse(o + 8, 7, 4, 2.5, cinza_c)
+        eye = c(240, 70, 60) if q != 2 else c(255, 230, 120)
+        t.ret(o + 6, 8, 4, 2, c(30, 30, 36)); t.ret(o + 7, 8, 2, 2, eye)
+        t.ret(o + 6, 12, 1, 2, cinza_e); t.ret(o + 9, 12, 1, 2, cinza_e)
+        glitch(t, o + 3, 5, 10, 6, 10 + q)
+    contornar_quadros(t, 16, 16, 3)
+    t.salvar("obj_ini_drone")
+    # robo de manutencao corrompido (parado, andando, tonto)
+    t = objeto("ini_robo", 16, 24, None, quadros=3)
+    for q in range(3):
+        o = q * 16
+        dy = 1 if q == 1 else 0
+        t.ret(o + 3, 4 + dy, 10, 8, cinza); t.ret(o + 3, 4 + dy, 10, 2, cinza_c)
+        visor = c(240, 70, 60) if q != 2 else c(120, 120, 130)
+        t.ret(o + 4, 7 + dy, 8, 3, c(30, 30, 36)); t.ret(o + 5, 8 + dy, 6, 1, visor)
+        t.ret(o + 7, 1 + dy, 2, 3, cinza_e); t.p(o + 8, 0 + dy, c(240, 70, 60))
+        t.ret(o + 2, 13, 12, 6, cinza_e); t.ret(o + 4, 14, 8, 3, cinza)
+        faixa_alerta(t, o + 4, 17, 8, 1)
+        t.ret(o + 0, 13, 2, 5, cinza); t.ret(o + 14, 13, 2, 4, cinza)
+        t.ret(o + 14, 17, 2, 3, c(150, 156, 166)); t.p(o + 15, 20, c(150, 156, 166))
+        t.ret(o + 2, 19, 5, 4, c(40, 42, 50)); t.ret(o + 9, 19, 5, 4, c(40, 42, 50))
+        for x in (3, 5, 10, 12):
+            t.p(o + x, 21 if q != 1 else 20, c(90, 94, 104))
+        if q == 2:
+            for (x, y) in [(2, 0), (13, 1), (8, 2)]:
+                t.p(o + x, y, c(255, 230, 120))
+        glitch(t, o + 3, 4, 10, 14, 20 + q)
+    contornar_quadros(t, 16, 24, 3)
+    t.salvar("obj_ini_robo")
+    # faisca (curto-circuito)
+    t = objeto("ini_faisca", 12, 12, None, quadros=2)
+    for q in range(2):
+        o = q * 12
+        t.elipse(o + 6, 6, 3.5, 3.5, c(255, 236, 140)); t.elipse(o + 6, 6, 2, 2, c(255, 255, 240))
+        pontas = [(0, 6), (12, 6), (6, 0), (6, 12), (1, 1), (11, 11), (11, 1), (1, 11)]
+        for k, (x, y) in enumerate(pontas):
+            if (k + q) % 2 == 0:
+                t.linha(o + 6, 6, o + min(x, 11), min(y, 11), c(255, 210, 80))
+    t.salvar("obj_ini_faisca")
+    # chefe: Gerador Esquecido (blindado, vulneravel, atacando)
+    t = objeto("ini_gerador", 48, 48, None, quadros=3)
+    for q in range(3):
+        o = q * 48
+        t.ret(o + 4, 10, 40, 34, c(70, 74, 86)); t.ret(o + 4, 10, 40, 4, c(104, 108, 122))
+        t.ret(o + 8, 4, 32, 8, c(84, 88, 100)); t.ret(o + 20, 0, 8, 5, c(60, 64, 74))
+        faixa_alerta(t, o + 4, 40, 40, 4)
+        t.ret(o + 2, 44, 44, 4, c(44, 46, 54))
+        if q == 1:
+            t.elipse(o + 24, 25, 11, 11, c(40, 20, 16))
+            t.elipse(o + 24, 25, 9, 9, c(250, 140, 50)); t.elipse(o + 24, 25, 5, 5, c(255, 230, 150))
+            for (x, y) in [(10, 14), (36, 12), (12, 34), (37, 33)]:
+                t.ret(o + x, y, 2, 4, c(220, 220, 230, 160))
+        else:
+            for k in range(5):
+                t.ret(o + 13, 15 + k * 4, 22, 3, c(110, 114, 128)); t.ret(o + 13, 17 + k * 4, 22, 1, c(52, 56, 66))
+            eye = c(240, 70, 60) if q == 0 else c(120, 240, 255)
+            t.ret(o + 18, 8, 12, 3, c(30, 30, 36)); t.ret(o + 20, 9, 8, 1, eye)
+        if q == 2:
+            for (x, y) in [(2, 6), (44, 8), (6, 30), (42, 28), (24, 1)]:
+                t.linha(o + 24, 25, o + x, y, c(120, 240, 255))
+        t.ret(o + 0, 18, 4, 14, c(56, 60, 70)); t.ret(o + 44, 18, 4, 14, c(56, 60, 70))
+        glitch(t, o + 6, 12, 36, 28, 40 + q)
+        glitch(t, o + 6, 12, 36, 28, 50 + q)
+    contornar_quadros(t, 48, 48, 3)
+    t.salvar("obj_ini_gerador")
+    # projeteis, quedas e interface de combate
+    t = Tela(16, 8)
+    for q in range(2):
+        t.elipse(q * 8 + 4, 4, 3.5, 3.5, c(70, 200, 230)); t.elipse(q * 8 + 4, 4, 2 - q * 0.5, 2 - q * 0.5, c(220, 255, 255))
+    t.salvar("fx_pulso")
+    t = Tela(12, 6)
+    for q in range(2):
+        t.elipse(q * 6 + 3, 3, 2.6, 2.6, c(255, 170, 60)); t.elipse(q * 6 + 3, 3, 1.2 + q * 0.3, 1.2 + q * 0.3, c(255, 250, 200))
+    t.salvar("fx_faisca")
+    t = Tela(8, 8)
+    t.carimbo([".##.##.", "#######", "#######", ".#####.", "..###..", "...#..."], {"#": c(230, 60, 70)}, 0, 1)
+    t.p(1, 2, c(255, 170, 170)); t.contorno(); t.salvar("drop_coracao")
+    t = Tela(8, 8)
+    t.carimbo(["...##", "..##.", ".####", "..##.", ".##..", "##..."], {"#": c(110, 230, 250)}, 1, 1)
+    t.contorno(); t.salvar("drop_energia")
+    t = Tela(27, 8)
+    for k, tipo in enumerate(["cheio", "meio", "vazio"]):
+        o = k * 9
+        forma = [".##.##.", "#######", "#######", ".#####.", "..###..", "...#..."]
+        for j, linha in enumerate(forma):
+            for i, ch in enumerate(linha):
+                if ch != "#":
+                    continue
+                if tipo == "cheio" or (tipo == "meio" and i < 4):
+                    cor = c(230, 60, 70)
+                else:
+                    cor = c(60, 40, 52)
+                t.p(o + 1 + i, 1 + j, cor)
+        if tipo != "vazio":
+            t.p(o + 2, 2, c(255, 170, 170))
+    sub = t.img.copy()
+    for k in range(3):
+        s2 = Tela(9, 8); s2.img.alpha_composite(sub.crop((k * 9, 0, k * 9 + 9, 8))); s2.px = s2.img.load(); s2.contorno()
+        t.img.paste(s2.img, (k * 9, 0))
+    t.px = t.img.load()
+    t.salvar("ui_coracao")
+    t = Tela(7, 9)
+    t.carimbo(["...##", "..##.", ".####", "..##.", ".##..", "##..."], {"#": c(110, 230, 250)}, 0, 1)
+    t.contorno(); t.salvar("ui_raio")
+
+
+def gerar_ui_industrial():
+    # painel de metal rebitado
+    t = Tela(24, 24)
+    t.ret(0, 0, 24, 24, c(20, 22, 28)); t.ret(1, 1, 22, 22, c(92, 98, 112)); t.ret(2, 2, 20, 20, c(52, 58, 70))
+    t.ret(3, 3, 18, 18, c(26, 30, 40)); t.ret(3, 3, 18, 1, c(40, 46, 58))
+    for (x, y) in [(2, 2), (20, 2), (2, 20), (20, 20)]:
+        t.ret(x, y, 2, 2, c(150, 156, 170))
+    for (x, y) in [(0, 0), (23, 0), (0, 23), (23, 23)]:
+        t.px[x, y] = T
+    t.salvar("ui_painel")
+    # tabua de madeira (faixas com nome de lugar e titulos)
+    t = Tela(24, 24)
+    t.ret(0, 0, 24, 24, c(64, 40, 22)); t.ret(1, 1, 22, 22, c(122, 82, 48))
+    for y in (6, 12, 18):
+        t.ret(2, y, 20, 1, c(100, 66, 38))
+    t.ret(1, 1, 22, 1, c(150, 104, 64))
+    for (x, y) in [(3, 3), (20, 3), (3, 20), (20, 20)]:
+        t.p(x, y, c(200, 190, 170))
+    t.salvar("ui_madeira")
+
+
 # ================================================================ FONTE BITMAP
 def gerar_fonte():
     chars = [chr(i) for i in range(32, 127)]
@@ -1655,6 +1984,9 @@ def main():
     gerar_ui()
     gerar_canos()
     gerar_materiais()
+    gerar_industrial()
+    gerar_combate()
+    gerar_ui_industrial()
     gerar_fonte()
     arquivos = sorted(f[:-4] for f in os.listdir(SAIDA) if f.endswith(".png"))
     meta = {"tiles": indice, "tiles_colunas": 8, "objetos": OBJETOS, "itens": itens, "emocoes": EMOCOES,

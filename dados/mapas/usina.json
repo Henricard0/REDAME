@@ -10,32 +10,38 @@
   }
  ],
  "ao_coletar": "objetivo_usina",
+ "luz": {
+  "escuridao": 0.62,
+  "jogadora": 62
+ },
+ "renascer": "entrada",
+ "ao_desmaiar": "usina_desmaio",
  "chao": "&",
  "linhas": [
   "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&",
   "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&",
   "&&&&&&%%A%%%%A%%&&&&&&&&%%A%%%%%A%%&&&&&&&&&",
-  "&%%A%%cccccccccc&&&&&&&&ccccccccccc%%%A%%%&&",
+  "&%%A%%cccccccccc&&&&&&&&ccccccccccc%A%A%A%&&",
   "&::cBccCCcccCCCc&&&&&&&&cgggcDDDDDcccccccc&&",
-  "&:EccccFFcGcFFFc&&&&&&&&cgHgccccccccccccIc&&",
-  "&&&&&&cccccccccc&&&&&&&&cccccccccccccJcccc&&",
+  "&:EFcccGGcHcGGGc&&&&&&&&cgIgccccccccccJcKc&&",
+  "&&&&&&cccccccccc&&&&&&&&ccccccJccccccLcccc&&",
   "&&&&&&cccccccccc&&&&&&&&ccccccccccc&&&&&&&&&",
-  "&&&&&&KLccccccMc&&&&&&&&NIcccccccKc&%%A%%A%&",
-  "&&&&&&cccccccccc&&&&&&&&ccccccccccc&ccccccc&",
-  "%%%A%%%%%cc%A%%%%%A%%%%%%%A%cc%%A&&&ccOcPcc&",
-  "cccccccccccccccccccccccccccccccQc%%%ccccccc&",
-  "ccRccSccccccccccccccccccccccccccccTcccccccc&",
-  "ccccccccccccccccccUcccccccccccVcc&&&cWccccc&",
-  "&&&&cc&&&&&&&&&&&&&&cc&&&&&&&&&&&&&&ccccXcc&",
-  "&%A%cc%%A%&&&&&&&&&&cc&&&&&&&&&&&&&&cgggggc&",
-  "&cccccYccc&&&&%%A%%%cc%%A%%%%A%%&&&&Zgggggc&",
-  "&ccccccccc&&&&cccccccccccccccccc&&&&ccccccc&",
-  "&c0ccccccc&&&&cccccccccccccccc0c&%%A%%%%A%&&",
-  "&cccccccLc&&&&c1c2cc1c2cc1cccccc%cccNccccc&&",
-  "&3cccccccN&&&&ccccccccccccccccccccccccccJc&&",
-  "&&&&&&&&&&&&&&cggggggggggggg4ggcccccccccc3&&",
-  "&&&&&&&&&&&&&&cJcccccccccccccccc&c5ccccccc&&",
-  "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&ccccc3ccc&&",
+  "&&&&&&MNccccOcPc&&&&&&&&QKJccccccMc&&&&&&&&&",
+  "&&&&&&cccccccccc&&&&&&&&cccccvccccc&ppppppp&",
+  "%%%A%%A%%ccRA%%%%%A%%%A%%%A%cvS%A&&&ppTpUpp&",
+  "cccccccccccccccccccccccccccccccVc%%%ppppppp&",
+  "ccWccXccccccYcccccZccccc0ccccccccc1cpppppp2&",
+  "ccc3ccyyyyyyyyyyyyyyyy4yyy5y6y7yc&&&p8ppppp&",
+  "&&&&cc&&&&&&&&&&&&&&cv&&&&&&&&&&&&&&pppp9pp&",
+  "&%A%cc%%A%&&&&&&&&&&@v&&&&&&&&&&&&&&cgggggc&",
+  "&c$ccc*c!c&&&&%AA%%A?v%AA%%A%A%%&&&&<gggg>c&",
+  "&ccccccccc&&&&^cc^cccccc^cc^cccc&&&&ppppppp&",
+  "&c(ccccccc&&&&cccccccccccccccc(c&%AA%%%%A%&&",
+  "&cccccccNc&&&&cccccccccccccccccc%c)cQccccc&&",
+  "&[cccccccQ&&&&ccccccccccccccccccccccccccLc&&",
+  "&&&&&&&&&&&&&&cggggggg]ggggggggccccccOccc[&&",
+  "&&&&&&&&&&&&&&cLcccccccccccccc{c&c}cccccYc&&",
+  "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&ccccc[ccc&&",
   "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&",
   "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"
  ],
@@ -73,78 +79,107 @@
    "chao": ":"
   },
   "F": {
+   "tipo": "inimigo",
+   "inimigo": "faisca",
+   "chao": "c"
+  },
+  "G": {
    "tipo": "obj",
    "obj": "cano_v",
    "chao": "c"
   },
-  "G": {
+  "H": {
    "tipo": "obj",
    "obj": "valvula",
    "roteiro": "insp_condutos",
    "chao": "c"
   },
-  "H": {
+  "I": {
    "tipo": "inspecao",
    "roteiro": "insp_ventilacao",
    "larg": 2,
    "alt": 2,
    "chao": "g"
   },
-  "I": {
+  "J": {
+   "tipo": "inimigo",
+   "inimigo": "drone",
+   "chao": "c"
+  },
+  "K": {
    "tipo": "coleta",
    "mat": "cobre",
    "qtd": 2,
    "obj": "bobina",
    "chao": "c"
   },
-  "J": {
+  "L": {
    "tipo": "coleta",
    "mat": "parafuso",
    "qtd": 2,
    "obj": "caixa_parafusos",
    "chao": "c"
   },
-  "K": {
+  "M": {
    "tipo": "obj",
    "obj": "placa_perigo",
    "camada": "fundo",
    "solido": false,
    "chao": "c"
   },
-  "L": {
+  "N": {
    "tipo": "coleta",
    "mat": "borracha",
    "qtd": 1,
    "obj": "pneus",
    "chao": "c"
   },
-  "M": {
+  "O": {
+   "tipo": "inimigo",
+   "inimigo": "robo",
+   "chao": "c"
+  },
+  "P": {
    "tipo": "coleta",
    "mat": "cobre",
    "qtd": 1,
    "obj": "bobina",
    "chao": "c"
   },
-  "N": {
+  "Q": {
    "tipo": "obj",
    "obj": "caixa_obra",
    "chao": "c"
   },
-  "O": {
+  "R": {
+   "tipo": "obj",
+   "obj": "placa_condutos",
+   "camada": "fundo",
+   "solido": false,
+   "chao": "%"
+  },
+  "S": {
+   "tipo": "obj",
+   "obj": "placa_ventilacao",
+   "camada": "fundo",
+   "solido": false,
+   "chao": "%"
+  },
+  "T": {
    "tipo": "obj",
    "obj": "painel",
    "fps": 2,
    "roteiro": "painel_comando",
-   "chao": "c"
+   "chao": "p"
   },
-  "P": {
+  "U": {
    "tipo": "obj",
    "obj": "lousa_usina",
    "camada": "fundo",
    "roteiro": "lousa_usina",
-   "chao": "c"
+   "chao": "p"
   },
-  "Q": {
+  "V": {
    "tipo": "npc",
    "id": "operaria",
    "sprite": "operaria_usina",
@@ -153,13 +188,13 @@
    "roteiro": "porta_fechada",
    "chao": "c"
   },
-  "R": {
+  "W": {
    "tipo": "spawn",
    "nome": "entrada",
    "dir": "dir",
    "chao": "c"
   },
-  "S": {
+  "X": {
    "tipo": "npc",
    "id": "enedina",
    "sprite": "enedina_obra",
@@ -168,30 +203,77 @@
    "roteiro": "enedina_usina",
    "chao": "c"
   },
-  "T": {
-   "tipo": "obj",
-   "obj": "porta_comando",
-   "se": "!porta_consertada",
-   "roteiro": "porta_comando",
+  "Y": {
+   "tipo": "inimigo",
+   "inimigo": "borrao",
    "chao": "c"
   },
-  "U": {
+  "Z": {
    "tipo": "coleta",
    "mat": "ferro",
    "qtd": 1,
    "obj": "sucata",
    "chao": "c"
   },
-  "V": {
+  "0": {
+   "tipo": "npc",
+   "id": "operario",
+   "sprite": "operario_usina",
+   "dir": "baixo",
+   "roteiro": [
+    {
+     "se": "chefe_usina",
+     "r": "operario_depois"
+    },
+    {
+     "r": "operario_conversa"
+    }
+   ],
+   "chao": "c"
+  },
+  "1": {
+   "tipo": "obj",
+   "obj": "porta_comando",
+   "se": "!porta_consertada",
+   "roteiro": "porta_comando",
+   "chao": "c"
+  },
+  "2": {
+   "tipo": "obj",
+   "obj": "servidor",
+   "fps": 3,
+   "chao": "p"
+  },
+  "3": {
+   "tipo": "obj",
+   "obj": "placa_usina",
+   "chao": "c"
+  },
+  "4": {
+   "tipo": "obj",
+   "obj": "placa_casa_forca",
+   "chao": "y"
+  },
+  "5": {
+   "tipo": "inimigo",
+   "inimigo": "borrao",
+   "chao": "y"
+  },
+  "6": {
+   "tipo": "obj",
+   "obj": "placa_comando",
+   "chao": "y"
+  },
+  "7": {
    "tipo": "npc",
    "id": "enedina_porta",
    "sprite": "enedina_obra",
    "dir": "baixo",
    "se": "usina_intro !porta_consertada",
    "roteiro": "enedina_usina",
-   "chao": "c"
+   "chao": "y"
   },
-  "W": {
+  "8": {
    "tipo": "npc",
    "id": "enedina_sala",
    "sprite": "enedina_obra",
@@ -210,71 +292,99 @@
      "r": "enedina_sala_espera"
     }
    ],
-   "chao": "c"
+   "chao": "p"
   },
-  "X": {
+  "9": {
    "tipo": "npc",
    "id": "operaria2",
    "sprite": "operaria_usina",
    "dir": "baixo",
    "se": "porta_consertada",
    "roteiro": "operaria_sala",
+   "chao": "p"
+  },
+  "@": {
+   "tipo": "barreira",
+   "se": "chefe_ativo !chefe_usina",
+   "roteiro": "arena_trancada",
+   "larg": 2,
    "chao": "c"
   },
-  "Y": {
+  "$": {
+   "tipo": "obj",
+   "obj": "placa_oficina",
+   "chao": "c"
+  },
+  "*": {
    "tipo": "obj",
    "obj": "bancada",
    "roteiro": "usar_bancada",
    "chao": "c"
   },
-  "Z": {
+  "!": {
+   "tipo": "obj",
+   "obj": "terminal",
+   "fps": 2,
+   "chao": "c"
+  },
+  "?": {
+   "tipo": "gatilho",
+   "se": "!chefe_usina !chefe_ativo",
+   "roteiro": "chefe_inicio",
+   "larg": 2,
+   "chao": "c"
+  },
+  "<": {
    "tipo": "obj",
    "obj": "mesa_projeto",
    "roteiro": "mesa_projeto",
    "chao": "c"
   },
-  "0": {
-   "tipo": "coleta",
-   "mat": "ferro",
-   "qtd": 2,
-   "obj": "sucata",
-   "chao": "c"
+  ">": {
+   "tipo": "obj",
+   "obj": "terminal",
+   "fps": 2,
+   "roteiro": "terminal_usina",
+   "chao": "g"
   },
-  "1": {
+  "^": {
    "tipo": "obj",
    "obj": "turbina",
    "fps": 8,
    "roteiro": "insp_turbinas",
    "chao": "c"
   },
-  "2": {
-   "tipo": "obj",
-   "obj": "gerador",
+  "(": {
+   "tipo": "coleta",
+   "mat": "ferro",
+   "qtd": 2,
+   "obj": "sucata",
    "chao": "c"
   },
-  "3": {
+  ")": {
+   "tipo": "obj",
+   "obj": "placa_deposito",
+   "chao": "c"
+  },
+  "[": {
    "tipo": "obj",
    "obj": "caixas",
    "chao": "c"
   },
-  "4": {
-   "tipo": "npc",
-   "id": "operario",
-   "sprite": "operario_usina",
-   "dir": "esq",
-   "vagar": 1,
-   "roteiro": [
-    {
-     "se": "insp_turbinas",
-     "r": "operario_depois"
-    },
-    {
-     "r": "operario_conversa"
-    }
-   ],
+  "]": {
+   "tipo": "inimigo",
+   "inimigo": "gerador",
+   "se": "!chefe_usina",
+   "flag": "chefe_usina",
+   "roteiro_derrota": "chefe_derrotado",
    "chao": "g"
   },
-  "5": {
+  "{": {
+   "tipo": "obj",
+   "obj": "gerador",
+   "chao": "c"
+  },
+  "}": {
    "tipo": "coleta",
    "mat": "borracha",
    "qtd": 2,

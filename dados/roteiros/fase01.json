@@ -7,6 +7,10 @@
   "fala revisor neutro O Esquecimento já chegou aqui. Quanto mais a cidade esquece Enedina, mais cinza tudo fica.",
   "fala protagonista determinada Então vamos fazer Curitiba lembrar. Onde ela está?",
   "fala revisor neutro Pergunte pela cidade. Alguém há de se lembrar da moça que estudou engenharia.",
+  "fala revisor neutro Cuidado: o Esquecimento cria borrões de tinta cinza que atacam quem tenta lembrar. Eu posso disparar um pulso de luz para dissipá-los.",
+  "flag arma_pulso",
+  "aviso Pulso do Revisor: X (no celular, B)",
+  "fala revisor neutro Minha energia recarrega sozinha, mas devagar. E se um borrão chegar perto demais, desvie com Shift (no celular, Esquiva).",
   "objetivo Encontre Enedina Alves Marques. Converse com as pessoas na praça."
  ],
  "morador_praca": [
@@ -222,6 +226,10 @@
   "tirar marmita",
   "fala ze feliz Minha marmita! Feijão, arroz e farofa. Você é dez!",
   "fala ze determinada Pode dizer à engenheira: se ela se importa com a turma, a turma se importa com ela. Conte comigo.",
+  "fala ze neutro E toma: leva minha chave inglesa reserva. Dizem que tem umas manchas cinzentas andando pela cidade... vai que precisa.",
+  "dar chave",
+  "flag arma_chave",
+  "aviso Chave inglesa: Espaço (no celular, A)",
   "flag apoio_ze",
   "somar apoio 1",
   "somar memoria_curitiba 12",
@@ -347,6 +355,8 @@
   "fala enedina_obra determinada Vamos fabricar peças novas: duas válvulas de comporta, um cabo isolado e um manômetro.",
   "fala enedina_obra neutro Junte sucata de ferro, fio de cobre, borracha e parafusos pelas galerias. A bancada de montagem fica na oficina, logo ao sul da entrada.",
   "fala enedina_obra determinada E inspecione as três galerias: condutos ao norte, casa de força ao sul e ventilação a nordeste. Espero você na porta da sala de comando.",
+  "fala enedina_obra triste Mais uma coisa: o Esquecimento tomou conta de algumas máquinas da usina. Drones, robôs de manutenção... e até o gerador principal da casa de força.",
+  "fala enedina_obra determinada Golpeie com a chave inglesa e use o pulso do Revisor. Os robôs ficam tontos quando batem na parede: é a hora de atacar!",
   "andar enedina 30 13 160",
   "flag usina_intro",
   "rodar objetivo_usina"
@@ -365,7 +375,7 @@
   "narra O conduto já foi inspecionado. A água ronca lá dentro."
  ],
  "insp_turbinas": [
-  "se insp_turbinas => insp_turbinas_feito | insp_turbinas_novo"
+  "se !chefe_usina => turbinas_tomadas | insp_turbinas_checar"
  ],
  "insp_turbinas_novo": [
   "narra Na casa de força, enormes turbinas esperam pela água. Cada uma está ligada a um gerador.",
@@ -400,10 +410,11 @@
   "rodar objetivo_usina"
  ],
  "operario_conversa": [
-  "fala operario neutro A casa de força fica bem no coração da montanha. Dá um frio na barriga trabalhar aqui embaixo."
+  "fala operario triste A casa de força, ao sul, foi tomada! O gerador principal ganhou vida e cospe faíscas para todo lado.",
+  "fala operario neutro E tem drone e robô de manutenção agindo estranho pelas galerias. Cuidado!"
  ],
  "operario_depois": [
-  "fala operario feliz Turbina aprovada na inspeção! A engenheira vai gostar de saber."
+  "fala operario feliz Você domou o gerador! A casa de força está livre para a inspeção."
  ],
  "porta_fechada": [
   "fala operaria neutro A porta da sala de comando emperrou com a umidade. Sem válvulas novas, um cabo e um manômetro, ela não abre.",
@@ -526,5 +537,37 @@
  "enedina_sala_espera": [
   "fala enedina_obra neutro A porta abriu! Agora termine as inspeções das galerias. Depois a gente liga o painel.",
   "rodar objetivo_usina"
+ ],
+ "chefe_inicio": [
+  "flag chefe_ativo",
+  "musica chefe",
+  "tremer 0.8",
+  "narra A casa de força está tomada pelo Esquecimento! O gerador principal ganhou vida... e não quer ser lembrado.",
+  "fala protagonista determinada Ele está blindado. Preciso desviar das faíscas e atacar quando o núcleo superaquecer!",
+  "aviso Ataque quando o núcleo ficar exposto"
+ ],
+ "arena_trancada": [
+  "narra Uma cortina de estática bloqueia a passagem. Não dá para sair antes de vencer o gerador."
+ ],
+ "chefe_derrotado": [
+  "desflag chefe_ativo",
+  "musica usina",
+  "narra O gerador estremece, solta um último suspiro de vapor... e o Esquecimento se desprende da máquina.",
+  "coracao",
+  "somar memoria_usina 10",
+  "fala protagonista feliz Restaurado! Agora dá para inspecionar as turbinas.",
+  "rodar objetivo_usina"
+ ],
+ "usina_desmaio": [
+  "desflag chefe_ativo"
+ ],
+ "insp_turbinas_checar": [
+  "se insp_turbinas => insp_turbinas_feito | insp_turbinas_novo"
+ ],
+ "turbinas_tomadas": [
+  "narra Impossível inspecionar com o gerador descontrolado!"
+ ],
+ "terminal_usina": [
+  "narra Terminal da usina. Na tela verde: NÍVEL DO RESERVATÓRIO 92% · PRESSÃO NOS CONDUTOS: NORMAL."
  ]
 }

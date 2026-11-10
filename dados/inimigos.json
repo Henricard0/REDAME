@@ -1,0 +1,17 @@
+{
+ "_leia": "Tipos de inimigo. ia: perseguir, atirador, investida, quicar ou chefe_gerador. caixa = [largura, altura] da área que leva e causa dano. dano em meios corações. queda = chances de soltar coração, energia ou materiais.",
+ "tipos": {
+  "borrao": {"nome": "Borrão do Esquecimento", "sprite": "ini_borrao", "w": 16, "h": 16, "caixa": [11, 8], "vida": 2, "dano": 1, "vel": 30, "ia": "perseguir", "alcance": 85,
+             "queda": {"coracao": 0.3, "energia": 0.3}},
+  "drone": {"nome": "Drone de inspeção corrompido", "sprite": "ini_drone", "w": 16, "h": 16, "caixa": [11, 9], "vida": 2, "dano": 1, "vel": 34, "ia": "atirador", "voa": true, "maquina": true,
+            "distancia": 72, "alcance": 140, "recarga": 2.6, "aviso": 0.6, "projetil_vel": 85, "brilho": true,
+            "queda": {"coracao": 0.2, "energia": 0.4, "mat": {"cobre": 0.5}}},
+  "robo": {"nome": "Robô de manutenção corrompido", "sprite": "ini_robo", "w": 16, "h": 24, "caixa": [12, 10], "vida": 4, "dano": 2, "vel": 20, "ia": "investida", "maquina": true,
+           "alcance": 110, "aviso": 0.75, "investida_vel": 150, "duracao": 1.0, "tonto": 1.6,
+           "queda": {"coracao": 0.4, "mat": {"ferro": 0.6, "parafuso": 0.5}}},
+  "faisca": {"nome": "Faísca de curto-circuito", "sprite": "ini_faisca", "w": 12, "h": 12, "caixa": [8, 7], "vida": 1, "dano": 1, "vel": 52, "ia": "quicar", "maquina": true, "fps": 10, "brilho": true, "espelhar": false,
+             "queda": {"energia": 0.5}},
+  "gerador": {"nome": "Gerador Esquecido", "sprite": "ini_gerador", "w": 48, "h": 48, "caixa": [40, 22], "vida": 14, "dano": 2, "ia": "chefe_gerador", "chefe": true, "solido": true, "maquina": true, "espelhar": false,
+              "queda": {"coracao": 1, "energia": 1, "mat": {"cobre": 1, "parafuso": 1}}}
+ }
+}

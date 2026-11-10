@@ -104,5 +104,8 @@
   "objetivo Leia a página de Enedina na Caderneta REDAME (menu Esc) e use o Revisor para escolher a próxima época.",
   "fimdemo",
   "salvar"
+ ],
+ "terminal_acervo": [
+  "narra Terminal do projeto REDAME. Na tela verde, uma linha pisca: “Restaurando arquivos... aguardando o Revisor de Épocas.”"
  ]
 }
