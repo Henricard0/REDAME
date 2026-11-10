@@ -1,0 +1,123 @@
+{
+ "pioneiras": [
+  {
+   "id": "enedina",
+   "fase": 1,
+   "nome": "Enedina Alves Marques",
+   "anos": "1913 – 1981",
+   "local": "Curitiba",
+   "local_completo": "Curitiba, Paraná, Brasil",
+   "area": "Engenharia civil e hidrelétricas",
+   "retrato": "enedina",
+   "mapa": "curitiba",
+   "chegada": "revisor",
+   "obra": "Primeira mulher a se formar em engenharia no Paraná, em 1945, e primeira engenheira negra do Brasil. Trabalhou no Plano Hidrelétrico do Paraná, com destaque para a Usina Capivari-Cachoeira.",
+   "curiosidades": [
+    "Nasceu em Curitiba, numa família humilde. Antes da engenharia, formou-se professora e deu aulas no interior do Paraná.",
+    "Entrou na Faculdade de Engenharia do Paraná em 1940 e se formou engenheira civil em 1945.",
+    "Trabalhou para o governo do Paraná no aproveitamento dos rios Capivari, Cachoeira e Iguaçu.",
+    "A Usina Capivari-Cachoeira, hoje Usina Governador Parigot de Souza, tem a casa de força escavada na rocha da Serra do Mar.",
+    "Relatos contam que ela usava macacão nos canteiros de obras e impunha respeito com pulso firme.",
+    "Hoje dá nome a homenagens e instituições, como o Instituto de Mulheres Negras Enedina Alves Marques, em Maringá."
+   ]
+  },
+  {
+   "id": "emily_roebling",
+   "fase": 2,
+   "nome": "Emily Warren Roebling",
+   "local": "Nova York",
+   "area": "A Ponte do Brooklyn"
+  },
+  {
+   "id": "ellen_richards",
+   "fase": 3,
+   "nome": "Ellen Swallow Richards",
+   "local": "Boston",
+   "area": "Água limpa e saneamento"
+  },
+  {
+   "id": "mary_jackson",
+   "fase": 4,
+   "nome": "Mary Jackson",
+   "local": "Hampton",
+   "area": "Aerodinâmica e túneis de vento"
+  },
+  {
+   "id": "beatrice_shilling",
+   "fase": 5,
+   "nome": "Beatrice Shilling",
+   "local": "Farnborough",
+   "area": "Motores de aviões"
+  },
+  {
+   "id": "margaret_hamilton",
+   "fase": 6,
+   "nome": "Margaret Hamilton",
+   "local": "Cambridge (EUA)",
+   "area": "O software da Apollo 11"
+  },
+  {
+   "id": "aprille_ericsson",
+   "fase": 7,
+   "nome": "Aprille Ericsson-Jackson",
+   "local": "Greenbelt",
+   "area": "Satélites da NASA"
+  },
+  {
+   "id": "hedy_lamarr",
+   "fase": 8,
+   "nome": "Hedy Lamarr",
+   "local": "Los Angeles",
+   "area": "Salto de frequência"
+  },
+  {
+   "id": "edith_clarke",
+   "fase": 9,
+   "nome": "Edith Clarke",
+   "local": "Schenectady",
+   "area": "Redes de energia elétrica"
+  },
+  {
+   "id": "lillian_gilbreth",
+   "fase": 10,
+   "nome": "Lillian Gilbreth",
+   "local": "Montclair",
+   "area": "Engenharia de produção"
+  },
+  {
+   "id": "stephanie_kwolek",
+   "fase": 11,
+   "nome": "Stephanie Kwolek",
+   "local": "Wilmington",
+   "area": "A fibra Kevlar"
+  },
+  {
+   "id": "frances_arnold",
+   "fase": 12,
+   "nome": "Frances Arnold",
+   "local": "Pasadena",
+   "area": "Evolução dirigida de enzimas"
+  },
+  {
+   "id": "sangeeta_bhatia",
+   "fase": 13,
+   "nome": "Sangeeta Bhatia",
+   "local": "Boston (MIT)",
+   "area": "Micro-fígados de laboratório"
+  },
+  {
+   "id": "nina_tandon",
+   "fase": 14,
+   "nome": "Nina Tandon",
+   "local": "Nova York",
+   "area": "Ossos feitos por bioengenharia"
+  },
+  {
+   "id": "evelyn_wang",
+   "fase": 15,
+   "nome": "Evelyn Wang",
+   "local": "Cambridge (EUA)",
+   "area": "Água tirada do ar"
+  }
+ ]
+}

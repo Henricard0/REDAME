@@ -1,0 +1,481 @@
+{
+ "curitiba_chegada": [
+  "flag chegou_curitiba",
+  "esperar 0.4",
+  "narra Curitiba, anos 1940. O vento frio atravessa a Praça Santos Andrade...",
+  "narra ...mas as cores parecem desbotadas, como uma fotografia esquecida numa gaveta.",
+  "fala revisor neutro O Esquecimento já chegou aqui. Quanto mais a cidade esquece Enedina, mais cinza tudo fica.",
+  "fala protagonista determinada Então vamos fazer Curitiba lembrar. Onde ela está?",
+  "fala revisor neutro Pergunte pela cidade. Alguém há de se lembrar da moça que estudou engenharia.",
+  "objetivo Encontre Enedina Alves Marques. Converse com as pessoas na praça."
+ ],
+ "morador_praca": [
+  "se registro => morador_lembra | morador_esquece"
+ ],
+ "morador_esquece": [
+  "fala morador neutro Engenheira? Mulher? Hum... nunca ouvi falar. Engenheiro é coisa de homem, moça."
+ ],
+ "morador_lembra": [
+  "fala morador surpresa Pensando bem... teve uma moça que se formou engenheira, sim! A primeira do Paraná. Como eu fui esquecer?"
+ ],
+ "moradora_praca": [
+  "se apoio>=2 => moradora_lembra | moradora_esquece"
+ ],
+ "moradora_esquece": [
+  "fala moradora neutro Uma engenheira? Olha, eu só sei que a luz aqui de casa vive faltando. Se alguém der jeito nisso, eu quero conhecer."
+ ],
+ "moradora_lembra": [
+  "fala moradora feliz Dizem que a moça engenheira está organizando a turma da obra. Já era hora de alguém botar ordem!"
+ ],
+ "moradora2_praca": [
+  "fala moradora2 neutro Minha filha diz que quer ser professora. Eu digo: por que não engenheira também?"
+ ],
+ "morador_rua": [
+  "fala morador2 neutro Essas ruas de paralelepípedo acabam com os pneus. Ainda bem que o bonde passa aqui perto."
+ ],
+ "jornaleiro_dica": [
+  "fala jornaleiro neutro Olha o jornal! ...Hã? Uma engenheira?",
+  "fala jornaleiro cetica Espera, tinha uma notinha sobre isso: a moça que se formou na Universidade do Paraná. A tinta da notícia sumiu do papel, veja só.",
+  "fala jornaleiro neutro Mas eu lembro que ela trabalha no Departamento de Águas, ao sul da praça. Atravesse a rua de baixo.",
+  "objetivo Procure Enedina no Departamento de Águas, ao sul da praça."
+ ],
+ "jornaleiro_depois": [
+  "fala jornaleiro feliz Se a moça engenheira conseguir essa usina, vou vender jornal até de madrugada, com luz farta!"
+ ],
+ "ufpr_predio": [
+  "narra O prédio da Universidade do Paraná, na Praça Santos Andrade. A universidade foi fundada em 1912."
+ ],
+ "departamento_predio": [
+  "narra Departamento de Águas. Aqui, engenheiros estudam como aproveitar os rios do Paraná para gerar energia."
+ ],
+ "colegio_predio": [
+  "narra Colégio Estadual do Paraná, uma das escolas mais tradicionais de Curitiba."
+ ],
+ "banco_praca": [
+  "narra Um banco de praça. Os pombos olham para você esperando migalhas."
+ ],
+ "chafariz": [
+  "narra A água do chafariz cai sem parar. Quanta energia será que existe numa queda d'água muito maior que essa?"
+ ],
+ "placa_praca": [
+  "narra Placa: “Praça Santos Andrade”."
+ ],
+ "banca_jornal": [
+  "narra Jornais do dia. Uma manchete reclama da falta de energia elétrica no estado."
+ ],
+ "ponto_bonde": [
+  "narra Ponto do bonde elétrico. Os trilhos cortam a rua de paralelepípedos."
+ ],
+ "andaime": [
+  "narra Um andaime de madeira. A obra parece parada há dias."
+ ],
+ "enedina_encontro": [
+  "flag conheceu_enedina",
+  "fala enedina cansada Pois não? ...Desculpe, hoje não é um bom dia.",
+  "fala protagonista feliz Enedina Alves Marques? Você não imagina como é bom te encontrar!",
+  "fala enedina cetica Você me conhece? Engraçado. Hoje parece que ninguém conhece. Nem os papéis.",
+  "fala enedina triste Meu nome sumiu do livro de formatura da universidade. O teodolito que emprestei ninguém sabe onde foi parar. E a turma da obra não quer receber ordens de uma mulher.",
+  "fala enedina determinada Mas eu não estudei tanto para desistir agora. Me formei engenheira civil em 1945, a primeira mulher no Paraná.",
+  "fala enedina determinada Tenho um projeto: aproveitar a força dos rios da Serra do Mar para levar energia ao estado. Para isso, preciso de três coisas.",
+  "fala enedina neutro O registro da minha formatura, na universidade. O teodolito, que ficou no Colégio Estadual. E o apoio dos operários do canteiro de obras, a oeste.",
+  "fala protagonista determinada Deixa comigo. Eu vou ajudar.",
+  "fala enedina feliz Obrigada. Volte quando tiver tudo.",
+  "somar memoria_curitiba 10",
+  "rodar objetivo_fase1"
+ ],
+ "enedina_lembrete": [
+  "fala enedina neutro Ainda precisamos do registro de formatura, do teodolito e do apoio da turma da obra.",
+  "rodar objetivo_fase1"
+ ],
+ "objetivo_fase1": [
+  "se registro teodolito apoio>=3 => obj_fase1_pronto | obj_fase1_lista"
+ ],
+ "obj_fase1_lista": [
+  "objetivo Ajude Enedina. Registro: {v:registro}/1 · Teodolito: {v:teodolito}/1 · Operários: {v:apoio}/3"
+ ],
+ "obj_fase1_pronto": [
+  "objetivo Tudo pronto! Volte até Enedina, no Departamento de Águas."
+ ],
+ "enedina_pronta": [
+  "fala enedina surpresa Você conseguiu? O registro, o teodolito... e a turma da obra está aí fora perguntando por mim!",
+  "tirar diploma",
+  "tirar teodolito",
+  "fala enedina feliz A universidade se lembrou de mim. E os operários também.",
+  "fala enedina determinada Com o teodolito, medimos o terreno. Com a equipe, abrimos caminho. Agora o projeto pode sair do papel.",
+  "dar plantas",
+  "definir memoria_curitiba 90",
+  "fala revisor neutro O Esquecimento recua, mas a obra principal ainda corre perigo. Vou levar vocês duas adiante no tempo.",
+  "fala enedina surpresa Esse aparelho fala?!",
+  "fala protagonista feliz É uma longa história. Segure firme, Enedina!",
+  "fala revisor neutro Destino: Serra do Mar. O canteiro da Usina Capivari-Cachoeira.",
+  "objetivo Viaje até a Usina Capivari-Cachoeira.",
+  "som revisor",
+  "tremer 1",
+  "esperar 0.8",
+  "flash",
+  "ir usina entrada"
+ ],
+ "prof_cetico": [
+  "fala professor cetica Hum? Visitante? A universidade não está aberta para passeios hoje, mocinha."
+ ],
+ "prof_pedido": [
+  "flag pediu_livro",
+  "fala protagonista neutro Professor, vim buscar o registro de formatura de Enedina Alves Marques. Turma de 1945.",
+  "fala professor cetica Uma engenheira formada aqui? Não me recordo de nenhuma... e eu dou aula nesta casa há vinte anos.",
+  "fala professor neutro De todo modo, o livro de registros de 1945 não está comigo. Emprestei ao Rui, um aluno que estuda lá na praça.",
+  "objetivo Encontre Rui, o estudante que está com o livro de registros, na praça."
+ ],
+ "prof_lembrete": [
+  "fala professor neutro O Rui deve estar lá na praça, perto do chafariz. Sempre com o nariz enfiado nos livros."
+ ],
+ "prof_livro": [
+  "tirar livro",
+  "fala professor neutro Ah, o livro de 1945. Vejamos... turma de engenharia civil...",
+  "fala professor surpresa Que estranho. Há uma linha em branco bem no meio da lista, como se alguém tivesse apagado.",
+  "narra O Revisor de Épocas vibra na sua mochila. Uma luz azulada percorre a página...",
+  "som revisor",
+  "flash",
+  "fala professor surpresa “Enedina Alves Marques, engenheira civil, 1945.” A tinta voltou!",
+  "fala professor triste Como pude esquecer? Ela estudava mais do que qualquer um. A primeira mulher a se formar em engenharia neste estado.",
+  "fala professor determinada Tome. Leve uma cópia do registro para ela, com a minha assinatura. E diga que a universidade se lembra.",
+  "flag registro",
+  "dar diploma",
+  "somar memoria_curitiba 18",
+  "rodar objetivo_fase1"
+ ],
+ "prof_depois": [
+  "fala professor feliz Vou contar aos alunos sobre Enedina na próxima aula. Uma história dessas não pode se perder de novo."
+ ],
+ "rui_conversa": [
+  "fala rui neutro Psiu... estou estudando para a prova de Resistência dos Materiais. Viga, carga, momento fletor..."
+ ],
+ "rui_quiz": [
+  "fala rui neutro O livro de registros? Está comigo, sim. Mas só empresto para quem entende de engenharia!",
+  {
+   "escolha": "Responda: o que é um teodolito?",
+   "quem": "rui",
+   "emocao": "neutro",
+   "opcoes": [
+    [
+     "Um instrumento que mede ângulos",
+     "rui_certo"
+    ],
+    [
+     "Um remédio para dor de dente",
+     "rui_errado"
+    ],
+    [
+     "Um tipo de ponte antiga",
+     "rui_errado"
+    ]
+   ]
+  }
+ ],
+ "rui_certo": [
+  "fala rui feliz Isso mesmo! Com ele se mede o terreno antes de qualquer obra. Pode levar o livro.",
+  "dar livro",
+  "objetivo Leve o livro de registros ao Prof. Bittencourt, na frente da universidade."
+ ],
+ "rui_errado": [
+  "fala rui cetica Hum, não é bem isso. Pense em obras e em medir o terreno... Fale comigo de novo para tentar outra vez."
+ ],
+ "rui_depois": [
+  "fala rui feliz Uma engenheira formada na minha universidade! Quando eu me formar, quero trabalhar com ela."
+ ],
+ "zelador_conversa": [
+  "fala zelador neutro Bom dia! Cuidado com o chão, acabei de encerar o corredor do Colégio."
+ ],
+ "zelador_pedido": [
+  "flag pediu_giz",
+  "fala protagonista neutro Seu Lauro, a engenheira Enedina deixou um teodolito aqui no Colégio. Posso buscar para ela?",
+  "fala zelador cetica Teodolito? Ah, aquele tripé com uma luneta! Está guardado, sim.",
+  "fala zelador triste Mas estou numa enrascada: sumiu a caixa de giz das salas de aula. Sem giz, professor nenhum dá aula amanhã.",
+  "fala zelador neutro Acho que caiu da carroça de entregas, lá para o leste, depois da rua. Se achar, eu te entrego o teodolito na hora.",
+  "objetivo Encontre a caixa de giz a leste do Colégio Estadual."
+ ],
+ "zelador_lembrete": [
+  "fala zelador neutro A caixa de giz deve estar lá para o leste, perto das araucárias, depois da rua."
+ ],
+ "zelador_giz": [
+  "tirar giz",
+  "fala zelador feliz A caixa de giz! Você salvou as aulas de amanhã.",
+  "fala zelador neutro Sabia que a Dona Enedina foi professora antes de ser engenheira? Ela conhece bem o valor de um giz.",
+  "fala zelador feliz Aqui está o teodolito. Cuidado, que a luneta é delicada.",
+  "flag teodolito",
+  "dar teodolito",
+  "somar memoria_curitiba 18",
+  "rodar objetivo_fase1"
+ ],
+ "zelador_depois": [
+  "fala zelador feliz Quando a usina sair, vou contar para todo mundo que o teodolito dela passou por aqui!"
+ ],
+ "ze_conversa": [
+  "fala ze cansada Ô dia comprido... Nem almocei ainda."
+ ],
+ "ze_pedido": [
+  "fala protagonista neutro Zé, a engenheira Enedina precisa do apoio da turma para o projeto da usina.",
+  "fala ze cetica A moça engenheira? Olha, eu até escuto o que ela tem a dizer. Mas de barriga vazia ninguém trabalha.",
+  "fala ze triste Esqueci minha marmita no ponto do bonde, perto da praça. Se você me trouxer, eu escuto a moça.",
+  "flag pediu_marmita"
+ ],
+ "ze_marmita": [
+  "tirar marmita",
+  "fala ze feliz Minha marmita! Feijão, arroz e farofa. Você é dez!",
+  "fala ze determinada Pode dizer à engenheira: se ela se importa com a turma, a turma se importa com ela. Conte comigo.",
+  "flag apoio_ze",
+  "somar apoio 1",
+  "somar memoria_curitiba 12",
+  "rodar objetivo_fase1"
+ ],
+ "ze_depois": [
+  "fala ze feliz Barriga cheia, ânimo lá em cima. Quando é que a gente começa?"
+ ],
+ "bento_conversa": [
+  "fala bento neutro Cuidado aí. Canteiro de obra não é lugar de passeio."
+ ],
+ "bento_pedido": [
+  "fala protagonista neutro Bento, a engenheira Enedina vai comandar um grande projeto. Ela precisa da turma.",
+  "fala bento cetica Mulher mandando em obra? Nunca vi isso.",
+  "fala bento triste Mas, para falar a verdade, nem trabalhar eu consigo: perdi minhas luvas de couro. Sem elas, o tijolo arranca a pele da mão.",
+  "fala bento neutro Devem ter caído perto do monte de areia, no fundo do canteiro.",
+  "flag pediu_luvas"
+ ],
+ "bento_luvas": [
+  "tirar luvas",
+  "fala bento surpresa Minhas luvas! Achou mesmo.",
+  "fala bento neutro Sabe... eu disse que mulher não mandava em obra. Mas quem se preocupa com a mão do operário entende de obra.",
+  "fala bento determinada Vou ouvir a engenheira. Pode contar comigo.",
+  "flag apoio_bento",
+  "somar apoio 1",
+  "somar memoria_curitiba 12",
+  "rodar objetivo_fase1"
+ ],
+ "bento_depois": [
+  "fala bento feliz Com luva nova e chefe que entende do ofício, a obra anda."
+ ],
+ "antonio_conversa": [
+  "fala antonio neutro Eu sou o mestre de obras. Aqui no canteiro quem manda sou eu."
+ ],
+ "antonio_desafio": [
+  "se apoio>=2 => antonio_quiz | antonio_espera"
+ ],
+ "antonio_espera": [
+  "fala antonio cetica A tal engenheira? Uma moça vai dizer para mim, com trinta anos de obra, como se faz?",
+  "fala antonio neutro Olha: se o Zé e o Bento confiarem nela, eu converso. Antes disso, não.",
+  "objetivo Conquiste o apoio do Zé e do Bento. Depois volte ao Mestre Antônio."
+ ],
+ "antonio_quiz": [
+  "fala antonio cetica O Zé e o Bento estão do lado dela, é? Então vamos ver se você entende do assunto.",
+  {
+   "escolha": "Para que serve uma usina hidrelétrica?",
+   "quem": "antonio",
+   "emocao": "cetica",
+   "opcoes": [
+    [
+     "Transformar a força da água em energia elétrica",
+     "antonio_q2"
+    ],
+    [
+     "Guardar água para a cidade beber",
+     "antonio_errou"
+    ],
+    [
+     "Esquentar a água do rio",
+     "antonio_errou"
+    ]
+   ]
+  }
+ ],
+ "antonio_q2": [
+  "fala antonio surpresa Hum. Certo.",
+  {
+   "escolha": "E por que construir a usina na Serra do Mar?",
+   "quem": "antonio",
+   "emocao": "cetica",
+   "opcoes": [
+    [
+     "Porque venta muito perto do mar",
+     "antonio_errou"
+    ],
+    [
+     "Porque a água cai de muito alto e ganha força",
+     "antonio_acertou"
+    ],
+    [
+     "Porque fica perto da praia",
+     "antonio_errou"
+    ]
+   ]
+  }
+ ],
+ "antonio_errou": [
+  "fala antonio cetica Ha! Errou. Volte quando estiver mais preparada... e com um argumento melhor."
+ ],
+ "antonio_acertou": [
+  "fala antonio surpresa ...Exatamente. Quanto maior a queda, maior a pressão da água nas turbinas.",
+  "fala antonio neutro Quem te ensinou isso foi ela, não foi? Respeito se conquista com conhecimento. E com pulso firme.",
+  "fala antonio determinada Diga à engenheira Enedina que o mestre Antônio e a turma estão às ordens dela.",
+  "flag apoio_antonio",
+  "somar apoio 1",
+  "somar memoria_curitiba 14",
+  "rodar objetivo_fase1"
+ ],
+ "antonio_depois": [
+  "fala antonio feliz Já separei os melhores homens da turma. Quando a engenheira chamar, a gente vai."
+ ],
+ "pegar_marmita": [
+  "flag pegou_marmita",
+  "narra Uma marmita de alumínio esquecida no banco do ponto. Tem um “Z” riscado na tampa.",
+  "dar marmita"
+ ],
+ "pegar_luvas": [
+  "flag pegou_luvas",
+  "narra Um par de luvas de couro, meio enterradas na areia.",
+  "dar luvas"
+ ],
+ "pegar_giz": [
+  "flag pegou_giz",
+  "narra Uma caixa de giz escolar caída na grama. Ainda bem que não choveu!",
+  "dar giz"
+ ],
+ "usina_chegada": [
+  "definir memoria_usina 20",
+  "narra O Revisor salta no tempo. Na Serra do Mar, a usina está sendo escavada dentro da rocha.",
+  "fala enedina_obra determinada Bem-vinda ao canteiro da Capivari-Cachoeira! A água desce do alto da serra por túneis e condutos até as turbinas.",
+  "fala protagonista surpresa Uma usina inteira dentro da montanha...",
+  "fala enedina_obra neutro A casa de força fica escavada na rocha. Antes de ligar as turbinas, precisamos inspecionar as três galerias.",
+  "fala enedina_obra determinada Condutos forçados ao norte, casa de força ao sul e ventilação a nordeste. Espero você na sala de comando, no fim do túnel.",
+  "andar enedina 22 12 110",
+  "flag usina_intro",
+  "objetivo Inspecione as galerias da usina ({v:inspecoes}/3)."
+ ],
+ "insp_condutos": [
+  "se insp_condutos => insp_condutos_feito | insp_condutos_novo"
+ ],
+ "insp_condutos_novo": [
+  "narra Você gira a válvula de inspeção. O conduto forçado vibra com a força da água que desce da serra.",
+  "narra Quanto maior a altura da queda, maior a pressão da água. É essa pressão que vai girar as turbinas lá embaixo.",
+  "fala protagonista determinada Pressão normal, nenhum vazamento. Conduto aprovado!",
+  "flag insp_condutos",
+  "rodar inspecao_feita"
+ ],
+ "insp_condutos_feito": [
+  "narra O conduto já foi inspecionado. A água ronca lá dentro."
+ ],
+ "insp_turbinas": [
+  "se insp_turbinas => insp_turbinas_feito | insp_turbinas_novo"
+ ],
+ "insp_turbinas_novo": [
+  "narra Na casa de força, enormes turbinas esperam pela água. Cada uma está ligada a um gerador.",
+  "narra A água gira a turbina, a turbina gira o gerador, e o gerador transforma esse giro em energia elétrica.",
+  "fala protagonista determinada Eixos alinhados, pás no lugar. Turbinas aprovadas!",
+  "flag insp_turbinas",
+  "rodar inspecao_feita"
+ ],
+ "insp_turbinas_feito": [
+  "narra As turbinas já foram inspecionadas. Estão prontas para girar."
+ ],
+ "insp_ventilacao": [
+  "se insp_ventilacao => insp_ventilacao_feito | insp_ventilacao_novo"
+ ],
+ "insp_ventilacao_novo": [
+  "narra Uma grade de ventilação sopra ar fresco para dentro da galeria.",
+  "narra Uma usina subterrânea precisa de túneis de acesso e de ventilação: o ar circula, as máquinas esfriam e as equipes trabalham com segurança.",
+  "fala protagonista determinada Ar circulando bem. Ventilação aprovada!",
+  "flag insp_ventilacao",
+  "rodar inspecao_feita"
+ ],
+ "insp_ventilacao_feito": [
+  "narra A ventilação já foi inspecionada. Um vento gelado passa por você."
+ ],
+ "inspecao_feita": [
+  "somar inspecoes 1",
+  "somar memoria_usina 20",
+  "se inspecoes>=3 => inspecoes_completas | inspecoes_parcial"
+ ],
+ "inspecoes_parcial": [
+  "objetivo Inspecione as galerias da usina ({v:inspecoes}/3)."
+ ],
+ "inspecoes_completas": [
+  "aviso Inspeções completas!",
+  "objetivo Vá até a sala de comando, no fim do túnel principal, a leste."
+ ],
+ "operario_conversa": [
+  "fala operario neutro A casa de força fica bem no coração da montanha. Dá um frio na barriga trabalhar aqui embaixo."
+ ],
+ "operario_depois": [
+  "fala operario feliz Turbina aprovada na inspeção! A engenheira vai gostar de saber."
+ ],
+ "porta_fechada": [
+  "fala operaria neutro A sala de comando só abre depois das três inspeções. Ordens da engenheira Enedina!",
+  "objetivo Inspecione as galerias da usina ({v:inspecoes}/3)."
+ ],
+ "operaria_sala": [
+  "fala operaria feliz A engenheira está esperando no painel. Quando ela dá uma ordem, ninguém discute!"
+ ],
+ "enedina_usina": [
+  "fala enedina_obra neutro Inspecione as três galerias: condutos ao norte, casa de força ao sul e ventilação a nordeste."
+ ],
+ "enedina_sala_pronta": [
+  "fala enedina_obra feliz Inspeções completas! Ótimo trabalho.",
+  "fala enedina_obra determinada Agora vem a parte delicada: alinhar as tubulações para a água chegar às turbinas. Use o painel de comando.",
+  "objetivo Use o painel de comando para alinhar as tubulações."
+ ],
+ "painel_comando": [
+  "se usina_ligada => painel_feito | painel_checar"
+ ],
+ "painel_checar": [
+  "se inspecoes>=3 => painel_ligar | painel_cedo"
+ ],
+ "painel_cedo": [
+  "narra Luzes piscando por todo lado. Melhor terminar as inspeções antes de mexer aqui."
+ ],
+ "painel_feito": [
+  "narra O painel mostra: TURBINAS EM OPERAÇÃO. A energia segue para Curitiba."
+ ],
+ "painel_ligar": [
+  "tirar plantas",
+  "fala enedina_obra determinada Abra as plantas, {nome}. A água precisa sair da represa e chegar a todas as turbinas.",
+  "fala enedina_obra neutro Os operários estão a postos. Cada válvula que você girar no painel, eles giram nas tubulações lá embaixo.",
+  "minigame canos_fase01",
+  "flag usina_ligada",
+  "definir memoria_usina 100",
+  "flash",
+  "tremer 1.2",
+  "som turbina",
+  "esperar 0.8",
+  "narra Um ronco profundo atravessa a montanha. As turbinas giram... e a energia corre pelos fios até Curitiba.",
+  "fala operaria feliz Está funcionando! Escutem só essas turbinas!",
+  "rodar discurso_enedina"
+ ],
+ "discurso_enedina": [
+  "olhar enedina_sala baixo",
+  "fala enedina_obra feliz Conseguimos, {nome}. Escute: cada um desses roncos é uma casa acendendo a luz lá em cima.",
+  "fala enedina_obra determinada Me disseram que engenharia não era lugar para mim. Para uma mulher. Para uma mulher negra, de família humilde.",
+  "fala enedina_obra determinada Eu trabalhei, estudei, fui professora antes de ser engenheira. Em 1945, me formei. A primeira do Paraná.",
+  "fala enedina_obra determinada Nos canteiros, vesti macacão, subi em andaime e chamei cada operário pelo nome. Respeito se constrói como uma barragem: pedra por pedra.",
+  "fala enedina_obra feliz E agora, olhe: a luz não pergunta quem projetou a turbina. Ela só acende.",
+  "fala enedina_obra determinada Leve meu nome com você. E quando alguém disser que você não pertence a um lugar... construa esse lugar.",
+  "fala protagonista determinada Eu prometo, Enedina. Ninguém mais vai esquecer.",
+  "gravar enedina",
+  "definir memoria_curitiba 100",
+  "fala revisor neutro O nome de Enedina Alves Marques está a salvo. A primeira página do Dispositivo REDAME brilha outra vez.",
+  "fala enedina_obra feliz Vá, viajante. Tem mais gente esperando por você.",
+  "fala revisor neutro Hora de voltar, {nome}.",
+  "objetivo Volte ao presente com o Revisor.",
+  "som revisor",
+  "tremer 1",
+  "esperar 0.8",
+  "flash",
+  "ir acervo volta"
+ ],
+ "enedina_usina_fim": [
+  "fala enedina_obra feliz A usina está funcionando. Obrigada, {nome}."
+ ],
+ "lousa_usina": [
+  "narra A lousa da sala de comando: “Capacidade prevista: 260 MW”."
+ ],
+ "mesa_projeto": [
+  "narra Plantas espalhadas na mesa: túneis, condutos e a casa de força, tudo escavado na rocha da Serra do Mar."
+ ]
+}

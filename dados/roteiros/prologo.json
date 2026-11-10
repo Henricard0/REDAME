@@ -1,0 +1,108 @@
+{
+ "inicio": [
+  "nome",
+  "ir acervo inicio"
+ ],
+ "prologo_chegada": [
+  "flag prologo_inicio",
+  "narra Dias atuais. Acervo histórico da universidade.",
+  "narra Entre caixas, fichas e livros antigos, o projeto REDAME guarda a memória das mulheres que construíram a engenharia.",
+  "fala helena surpresa {nome}! Ainda bem que você chegou. Venha até aqui, por favor.",
+  "objetivo Fale com a Profa. Helena."
+ ],
+ "helena_missao": [
+  "fala helena triste Aconteceu de novo. Abri as fichas do projeto REDAME hoje cedo e... olhe.",
+  "fala helena triste Os nomes estão sumindo. A tinta desbota, as fotos ficam em branco. Engenheiras inteiras desaparecendo do papel.",
+  "fala protagonista surpresa Como assim, sumindo? Ontem estava tudo aqui!",
+  "fala helena cetica Eu sei, parece loucura. Mas não é só no papel: quando pergunto aos alunos, ninguém se lembra delas.",
+  "fala helena determinada Procure uma caixa antiga no depósito, passando pela porta à direita. Veio da velha Faculdade de Engenharia. Talvez ainda reste algum registro lá.",
+  "flag missao_caixa",
+  "objetivo Procure a caixa antiga no depósito do acervo."
+ ],
+ "helena_lembrete": [
+  "fala helena neutro A caixa antiga deve estar no depósito, passando pela porta à direita."
+ ],
+ "helena_revisor": [
+  "fala helena surpresa Esse aparelho está brilhando? {nome}, tome cuidado!"
+ ],
+ "helena_depois": [
+  "fala helena feliz {nome}! As fichas de Enedina Alves Marques voltaram. Cada letra, cada foto.",
+  "fala helena determinada Ainda faltam catorze pioneiras. Quando estiver pronta, o Revisor está no depósito."
+ ],
+ "caio_conversa": [
+  "fala caio neutro Oi, {nome}. Estou digitalizando fotos antigas, mas metade delas sai em branco.",
+  "fala caio cetica Será defeito no scanner? Ou o papel está... esquecendo?"
+ ],
+ "caio_depois": [
+  "fala caio feliz As fotos voltaram! Tem uma aqui de uma engenheira de capacete numa usina. Que demais!"
+ ],
+ "estante_fichas": [
+  "narra Fichas do projeto REDAME. Em várias delas, o espaço do nome está em branco, como se alguém tivesse apagado com cuidado."
+ ],
+ "quadro_redame": [
+  "narra Um quadro com o mapa do projeto: 15 alfinetes espalhados pelo mundo. Curitiba, Nova York, Boston, Cambridge, Pasadena..."
+ ],
+ "arquivo_fichas": [
+  "narra Um arquivo de aço. Na gaveta, uma etiqueta: “Engenheiras pioneiras”. A gaveta está quase vazia."
+ ],
+ "mesa_laptop": [
+  "narra O computador do projeto REDAME. Na tela, uma busca por “primeira engenheira negra do Brasil” retorna: nenhum resultado."
+ ],
+ "estante_deposito": [
+  "narra Livros de cálculo, tabelas de resistência dos materiais e um manual de topografia de 1938."
+ ],
+ "caixa_antiga": [
+  "se missao_caixa => caixa_abrir | caixa_cedo"
+ ],
+ "caixa_cedo": [
+  "narra Uma caixa empoeirada com o carimbo “Faculdade de Engenharia”. Melhor falar com a professora antes de mexer nela."
+ ],
+ "caixa_abrir": [
+  "narra Você sopra a poeira e abre a caixa. Entre papéis amarelados, há um aparelho de latão cheio de engrenagens...",
+  "flag achou_revisor",
+  "som revisor",
+  "flash",
+  "esperar 0.6",
+  "fala revisor neutro Finalmente... alguém que ainda se lembra.",
+  "fala protagonista surpresa Ele... falou?!",
+  "fala revisor neutro Eu sou o Revisor de Épocas. Ligo o presente ao passado, para que nada importante se perca.",
+  "fala revisor neutro Mas uma força está apagando a história: o Esquecimento. Ele se alimenta de desinteresse e de preconceito.",
+  "fala revisor neutro Quinze engenheiras pioneiras estão sendo apagadas. Sem os nomes delas, as obras que construíram parecem ter surgido do nada.",
+  "fala protagonista determinada Então a gente precisa trazê-las de volta. Como eu ajudo?",
+  "fala revisor neutro Viaje comigo até a época de cada uma. Ajude-as a concluir suas maiores obras e grave seus nomes no Dispositivo REDAME, para sempre.",
+  "fala revisor neutro A primeira página já está piscando... Curitiba, anos 1940. Uma jovem engenheira chamada Enedina.",
+  "fala protagonista surpresa Enedina Alves Marques! A primeira engenheira negra do Brasil!",
+  "andar helena 15 7",
+  "fala helena surpresa {nome}? Que luz é essa?!",
+  "fala protagonista determinada Professora, acho que encontrei um jeito de salvar as fichas. Já volto!",
+  "fala helena determinada ...Vá. E traga essas mulheres de volta.",
+  "objetivo Viaje com o Revisor de Épocas até Curitiba.",
+  "som revisor",
+  "tremer 1",
+  "esperar 0.8",
+  "flash",
+  "ir curitiba chegada"
+ ],
+ "revisor_ocioso": [
+  "fala revisor neutro O Esquecimento não descansa, {nome}. Vamos?"
+ ],
+ "revisor_hub": [
+  "fala revisor neutro Para qual época vamos, {nome}?",
+  "revisor"
+ ],
+ "acervo_volta": [
+  "flag acervo_volta",
+  "narra O Revisor de Épocas traz você de volta ao presente.",
+  "andar helena 18 11",
+  "olhar helena dir",
+  "olhar jogador esq",
+  "fala helena surpresa {nome}! Você voltou! E olhe só as fichas...",
+  "fala helena feliz Enedina Alves Marques, primeira engenheira negra do Brasil. A foto, a assinatura, tudo de volta!",
+  "fala protagonista feliz Eu estive lá, professora. Curitiba, a universidade, a usina dentro da montanha... e ela.",
+  "fala revisor neutro Uma página restaurada. Catorze ainda esperam. As próximas épocas estão se reconstruindo, e logo poderemos viajar de novo.",
+  "fala helena determinada Então seguimos. O projeto REDAME acabou de ganhar uma viajante no tempo.",
+  "objetivo Leia a página de Enedina na Caderneta REDAME (menu Esc) e use o Revisor para escolher a próxima época.",
+  "fimdemo",
+  "salvar"
+ ]
+}

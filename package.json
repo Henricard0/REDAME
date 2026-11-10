@@ -1,0 +1,16 @@
+{
+  "name": "redame",
+  "version": "0.1.0",
+  "private": true,
+  "description": "REDAME: O Resgate do Legado - aventura em pixel art para navegador",
+  "scripts": {
+    "build": "esbuild jogo/main.js --bundle --format=iife --target=es2020 --outfile=jogo.js",
+    "arte": "python3 Ferramentas/gerar_arte.py",
+    "validar": "node Ferramentas/validar.mjs",
+    "servir": "python3 -m http.server 8080"
+  },
+  "devDependencies": {
+    "esbuild": "0.24.2"
+  },
+  "type": "module"
+}

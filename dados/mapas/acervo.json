@@ -1,0 +1,183 @@
+{
+ "id": "acervo",
+ "nome": "Acervo da Universidade, dias atuais",
+ "musica": "acervo",
+ "ao_entrar": [
+  {
+   "se": "!prologo_inicio",
+   "r": "prologo_chegada"
+  },
+  {
+   "se": "resgatada:enedina !acervo_volta",
+   "r": "acervo_volta"
+  }
+ ],
+ "chao": "+",
+ "linhas": [
+  "++++++++++++++++++++++++",
+  "+mmmmmmmmmmmmmm+mmmmmmm+",
+  "+mmmmAmBmmmmmmm+mmmmmmm+",
+  "+wwwwwwwwwwwwww+wwwwwww+",
+  "+CwCwwwwwwCwCwD+EFFGwwF+",
+  "+wwwwwwwwwwwwww+wwwwwww+",
+  "+wwwwwwwwwwwwwwwwwwwwww+",
+  "+wwwwwwwHwwwwwwwwwwwwww+",
+  "+wIwwwwwwwwwwww+wwwwwww+",
+  "+wwwwtttttwwwww+wwwwwww+",
+  "+wwwwtJtttwwwww+wwwwKLw+",
+  "+wwwwMttMtwwwww+wwwwwww+",
+  "+wNwwwwwwwwwwww+wwwOwwF+",
+  "+wwwPwwQwwwwwww+wFwwwww+",
+  "+RwwwwwwwwwwwwR+wwwwwwF+",
+  "++++++++++++++++++++++++"
+ ],
+ "legenda": {
+  "A": {
+   "tipo": "obj",
+   "obj": "janela",
+   "camada": "fundo",
+   "chao": "m"
+  },
+  "B": {
+   "tipo": "obj",
+   "obj": "quadro",
+   "camada": "fundo",
+   "roteiro": "quadro_redame",
+   "chao": "m"
+  },
+  "C": {
+   "tipo": "obj",
+   "obj": "estante",
+   "roteiro": "estante_fichas",
+   "chao": "w"
+  },
+  "D": {
+   "tipo": "obj",
+   "obj": "arquivo",
+   "roteiro": "arquivo_fichas",
+   "chao": "w"
+  },
+  "E": {
+   "tipo": "obj",
+   "obj": "arquivo",
+   "chao": "w"
+  },
+  "F": {
+   "tipo": "obj",
+   "obj": "caixas",
+   "chao": "w"
+  },
+  "G": {
+   "tipo": "obj",
+   "obj": "estante",
+   "roteiro": "estante_deposito",
+   "chao": "w"
+  },
+  "H": {
+   "tipo": "npc",
+   "id": "helena",
+   "sprite": "coordenadora",
+   "dir": "baixo",
+   "roteiro": [
+    {
+     "se": "resgatada:enedina",
+     "r": "helena_depois"
+    },
+    {
+     "se": "achou_revisor",
+     "r": "helena_revisor"
+    },
+    {
+     "se": "missao_caixa",
+     "r": "helena_lembrete"
+    },
+    {
+     "r": "helena_missao"
+    }
+   ],
+   "chao": "w"
+  },
+  "I": {
+   "tipo": "obj",
+   "obj": "mesa_moderna",
+   "roteiro": "mesa_laptop",
+   "chao": "w"
+  },
+  "J": {
+   "tipo": "obj",
+   "obj": "mesa",
+   "chao": "t"
+  },
+  "K": {
+   "tipo": "obj",
+   "obj": "caixa_antiga",
+   "se": "!achou_revisor",
+   "roteiro": "caixa_antiga",
+   "chao": "w"
+  },
+  "L": {
+   "tipo": "obj",
+   "obj": "revisor",
+   "se": "achou_revisor",
+   "desloc": [
+    -16,
+    0
+   ],
+   "roteiro": [
+    {
+     "se": "resgatada:enedina",
+     "r": "revisor_hub"
+    },
+    {
+     "r": "revisor_ocioso"
+    }
+   ],
+   "chao": "w"
+  },
+  "M": {
+   "tipo": "obj",
+   "obj": "cadeira",
+   "solido": false,
+   "chao": "t"
+  },
+  "N": {
+   "tipo": "obj",
+   "obj": "mesa_moderna",
+   "chao": "w"
+  },
+  "O": {
+   "tipo": "spawn",
+   "nome": "volta",
+   "dir": "cima",
+   "chao": "w"
+  },
+  "P": {
+   "tipo": "npc",
+   "id": "caio",
+   "sprite": "estudante",
+   "dir": "cima",
+   "vagar": 1,
+   "roteiro": [
+    {
+     "se": "resgatada:enedina",
+     "r": "caio_depois"
+    },
+    {
+     "r": "caio_conversa"
+    }
+   ],
+   "chao": "w"
+  },
+  "Q": {
+   "tipo": "spawn",
+   "nome": "inicio",
+   "dir": "cima",
+   "chao": "w"
+  },
+  "R": {
+   "tipo": "obj",
+   "obj": "vaso",
+   "chao": "w"
+  }
+ }
+}

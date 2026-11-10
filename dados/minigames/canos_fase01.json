@@ -1,0 +1,33 @@
+{
+ "tipo": "canos",
+ "titulo": "Usina Capivari-Cachoeira · Sala de comando",
+ "vitoria": "TURBINAS GIRANDO!",
+ "niveis": [
+  {
+   "fala": "enedina_obra|determinada|A água desce da serra pelos condutos. Gire os canos e leve a água da represa até a turbina!",
+   "linhas": [
+    "A──┐┌┐.",
+    "┌#.│└┘#",
+    "└──└──T"
+   ]
+  },
+  {
+   "fala": "enedina_obra|neutro|Agora são duas turbinas. Uma junção em T divide a água em dois caminhos.",
+   "linhas": [
+    "A─┬──┐..",
+    ".#│┌┐│#.",
+    "─.│└┘└─T",
+    "T─┘.#..."
+   ]
+  },
+  {
+   "fala": "enedina_obra|determinada|Última etapa: três turbinas! A conexão em cruz manda água para todos os lados. Vamos, {nome}!",
+   "linhas": [
+    "T─┐#┬─┌─T",
+    "A─┼─┐.│#.",
+    "┐#│.└─┘┌┐",
+    "..└──T.└┘"
+   ]
+  }
+ ]
+}

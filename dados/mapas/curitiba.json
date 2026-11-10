@@ -1,0 +1,468 @@
+{
+ "id": "curitiba",
+ "nome": "Curitiba, anos 1940",
+ "musica": "curitiba",
+ "esquecimento": true,
+ "ao_entrar": [
+  {
+   "se": "!chegou_curitiba",
+   "r": "curitiba_chegada"
+  }
+ ],
+ "chao": ".",
+ "linhas": [
+  "............................................................",
+  "............................................................",
+  "............................................................",
+  "............................................................",
+  ".....................A......................................",
+  "...............A...........................B............A...",
+  "...........B........................B.......................",
+  "...................B........................................",
+  "............................................................",
+  "......................_______________.....................B.",
+  ".C....D...............__E____________.F..........D....G.....",
+  "--------------==----------H--I----H-----------==------------",
+  "=====J==================================K===================",
+  "====================L=======================================",
+  "--------------==-M----------------------------==------------",
+  ".............-==-.............__.............-==-...........",
+  "...N.........-==-....O..P.....__...P.....O...-==-...Q.......",
+  ".............-==-.R.S......________..........-==-...........",
+  ".........B...-==-.B...T....________U..T..B...-==-..B........",
+  "..B..........-==-.........V________..........-==-...........",
+  ".............-==-____________W_______________-==-...........",
+  ".....A......N-==-..........________..........-==-.......B...",
+  ".............-==-........X.________........Y.-==-...........",
+  ".............-==-.....T....___Z0___...T......-==-....N......",
+  "..F....G.....-==-.......P.....__...P.........-==-..C........",
+  ".............-==-.B..O........__........OB...-==-...........",
+  "--------------==--------------------1--2------==------------",
+  "====================================================3=======",
+  "rrrrrrrrrrrrr===rrrrrrrrrrrrrrrrrrrrrrrrrrrrrr==rrrrrrrrrrrr",
+  "------------------------------------------------------------",
+  ".44444..44444...............................................",
+  ".::::::::::::.........................................A.....",
+  ".:::::5::6:7:...............................................",
+  ".:::::::66:::...............................................",
+  ".:::::::::8::......B..............................B....9....",
+  ".:@::::::::::...........$...................................",
+  ".::::::*:::::.........-----!-----?..........................",
+  ".::::::::::<:.........---------------->-------..........B...",
+  ".::^(::::::::....B..............--------------..............",
+  "............................................................"
+ ],
+ "legenda": {
+  "A": {
+   "tipo": "obj",
+   "obj": "arvore",
+   "chao": "."
+  },
+  "B": {
+   "tipo": "obj",
+   "obj": "araucaria",
+   "chao": "."
+  },
+  "C": {
+   "tipo": "obj",
+   "obj": "casa_verde",
+   "chao": "."
+  },
+  "D": {
+   "tipo": "obj",
+   "obj": "casa_amarela",
+   "chao": "."
+  },
+  "E": {
+   "tipo": "obj",
+   "obj": "ufpr",
+   "roteiro": "ufpr_predio",
+   "chao": "_"
+  },
+  "F": {
+   "tipo": "obj",
+   "obj": "casa_azul",
+   "chao": "."
+  },
+  "G": {
+   "tipo": "obj",
+   "obj": "casa_rosa",
+   "chao": "."
+  },
+  "H": {
+   "tipo": "obj",
+   "obj": "poste",
+   "chao": "-"
+  },
+  "I": {
+   "tipo": "npc",
+   "id": "professor",
+   "sprite": "professor",
+   "dir": "baixo",
+   "roteiro": [
+    {
+     "se": "registro",
+     "r": "prof_depois"
+    },
+    {
+     "se": "item:livro",
+     "r": "prof_livro"
+    },
+    {
+     "se": "pediu_livro",
+     "r": "prof_lembrete"
+    },
+    {
+     "se": "conheceu_enedina",
+     "r": "prof_pedido"
+    },
+    {
+     "r": "prof_cetico"
+    }
+   ],
+   "chao": "-"
+  },
+  "J": {
+   "tipo": "carro",
+   "obj": "carro_preto",
+   "vel": 34,
+   "sentido": -1,
+   "chao": "="
+  },
+  "K": {
+   "tipo": "carro",
+   "obj": "carro_vinho",
+   "vel": 28,
+   "sentido": -1,
+   "chao": "="
+  },
+  "L": {
+   "tipo": "carro",
+   "obj": "carro_verde",
+   "vel": 38,
+   "sentido": 1,
+   "chao": "="
+  },
+  "M": {
+   "tipo": "obj",
+   "obj": "placa",
+   "roteiro": "placa_praca",
+   "chao": "-"
+  },
+  "N": {
+   "tipo": "obj",
+   "obj": "arbusto",
+   "chao": "."
+  },
+  "O": {
+   "tipo": "obj",
+   "obj": "poste",
+   "chao": "."
+  },
+  "P": {
+   "tipo": "obj",
+   "obj": "flores",
+   "chao": "."
+  },
+  "Q": {
+   "tipo": "npc",
+   "id": "morador2",
+   "sprite": "morador",
+   "dir": "baixo",
+   "vagar": 2,
+   "roteiro": "morador_rua",
+   "chao": "."
+  },
+  "R": {
+   "tipo": "obj",
+   "obj": "banca",
+   "roteiro": "banca_jornal",
+   "chao": "."
+  },
+  "S": {
+   "tipo": "npc",
+   "id": "jornaleiro",
+   "sprite": "jornaleiro",
+   "dir": "baixo",
+   "roteiro": [
+    {
+     "se": "conheceu_enedina",
+     "r": "jornaleiro_depois"
+    },
+    {
+     "r": "jornaleiro_dica"
+    }
+   ],
+   "chao": "."
+  },
+  "T": {
+   "tipo": "obj",
+   "obj": "banco",
+   "roteiro": "banco_praca",
+   "chao": "."
+  },
+  "U": {
+   "tipo": "npc",
+   "id": "morador",
+   "sprite": "morador",
+   "dir": "esq",
+   "vagar": 2,
+   "roteiro": "morador_praca",
+   "chao": "."
+  },
+  "V": {
+   "tipo": "npc",
+   "id": "moradora",
+   "sprite": "moradora",
+   "dir": "dir",
+   "vagar": 2,
+   "roteiro": "moradora_praca",
+   "chao": "."
+  },
+  "W": {
+   "tipo": "obj",
+   "obj": "chafariz",
+   "roteiro": "chafariz",
+   "chao": "_"
+  },
+  "X": {
+   "tipo": "npc",
+   "id": "rui",
+   "sprite": "estudante",
+   "dir": "baixo",
+   "vagar": 2,
+   "roteiro": [
+    {
+     "se": "item:livro",
+     "r": "rui_depois"
+    },
+    {
+     "se": "registro",
+     "r": "rui_depois"
+    },
+    {
+     "se": "pediu_livro",
+     "r": "rui_quiz"
+    },
+    {
+     "r": "rui_conversa"
+    }
+   ],
+   "chao": "."
+  },
+  "Y": {
+   "tipo": "npc",
+   "id": "moradora2",
+   "sprite": "moradora2",
+   "dir": "baixo",
+   "vagar": 1,
+   "roteiro": "moradora2_praca",
+   "chao": "."
+  },
+  "Z": {
+   "tipo": "spawn",
+   "nome": "chegada",
+   "dir": "cima",
+   "chao": "_"
+  },
+  "0": {
+   "tipo": "spawn",
+   "nome": "revisor",
+   "dir": "baixo",
+   "chao": "_"
+  },
+  "1": {
+   "tipo": "obj",
+   "obj": "ponto_bonde",
+   "roteiro": "ponto_bonde",
+   "chao": "-"
+  },
+  "2": {
+   "tipo": "item",
+   "item": "marmita",
+   "se": "!pegou_marmita",
+   "roteiro": "pegar_marmita",
+   "chao": "-"
+  },
+  "3": {
+   "tipo": "carro",
+   "obj": "carro_preto",
+   "vel": 30,
+   "sentido": -1,
+   "chao": "="
+  },
+  "4": {
+   "tipo": "obj",
+   "obj": "cerca",
+   "chao": "-"
+  },
+  "5": {
+   "tipo": "npc",
+   "id": "ze",
+   "sprite": "ze",
+   "dir": "baixo",
+   "roteiro": [
+    {
+     "se": "apoio_ze",
+     "r": "ze_depois"
+    },
+    {
+     "se": "item:marmita",
+     "r": "ze_marmita"
+    },
+    {
+     "se": "conheceu_enedina",
+     "r": "ze_pedido"
+    },
+    {
+     "r": "ze_conversa"
+    }
+   ],
+   "chao": ":"
+  },
+  "6": {
+   "tipo": "obj",
+   "obj": "tijolos",
+   "chao": ":"
+  },
+  "7": {
+   "tipo": "obj",
+   "obj": "caixa_obra",
+   "chao": ":"
+  },
+  "8": {
+   "tipo": "npc",
+   "id": "antonio",
+   "sprite": "antonio",
+   "dir": "baixo",
+   "roteiro": [
+    {
+     "se": "apoio_antonio",
+     "r": "antonio_depois"
+    },
+    {
+     "se": "conheceu_enedina",
+     "r": "antonio_desafio"
+    },
+    {
+     "r": "antonio_conversa"
+    }
+   ],
+   "chao": ":"
+  },
+  "9": {
+   "tipo": "item",
+   "item": "giz",
+   "se": "!pegou_giz",
+   "roteiro": "pegar_giz",
+   "chao": "."
+  },
+  "@": {
+   "tipo": "obj",
+   "obj": "andaime",
+   "roteiro": "andaime",
+   "chao": ":"
+  },
+  "$": {
+   "tipo": "obj",
+   "obj": "departamento",
+   "roteiro": "departamento_predio",
+   "chao": "."
+  },
+  "*": {
+   "tipo": "npc",
+   "id": "bento",
+   "sprite": "bento",
+   "dir": "esq",
+   "roteiro": [
+    {
+     "se": "apoio_bento",
+     "r": "bento_depois"
+    },
+    {
+     "se": "item:luvas",
+     "r": "bento_luvas"
+    },
+    {
+     "se": "conheceu_enedina",
+     "r": "bento_pedido"
+    },
+    {
+     "r": "bento_conversa"
+    }
+   ],
+   "chao": ":"
+  },
+  "!": {
+   "tipo": "npc",
+   "id": "enedina",
+   "sprite": "enedina",
+   "dir": "baixo",
+   "roteiro": [
+    {
+     "se": "registro teodolito apoio>=3",
+     "r": "enedina_pronta"
+    },
+    {
+     "se": "conheceu_enedina",
+     "r": "enedina_lembrete"
+    },
+    {
+     "r": "enedina_encontro"
+    }
+   ],
+   "chao": "-"
+  },
+  "?": {
+   "tipo": "obj",
+   "obj": "colegio",
+   "roteiro": "colegio_predio",
+   "chao": "."
+  },
+  "<": {
+   "tipo": "obj",
+   "obj": "carrinho",
+   "chao": ":"
+  },
+  ">": {
+   "tipo": "npc",
+   "id": "zelador",
+   "sprite": "zelador",
+   "dir": "baixo",
+   "roteiro": [
+    {
+     "se": "teodolito",
+     "r": "zelador_depois"
+    },
+    {
+     "se": "item:giz",
+     "r": "zelador_giz"
+    },
+    {
+     "se": "pediu_giz",
+     "r": "zelador_lembrete"
+    },
+    {
+     "se": "conheceu_enedina",
+     "r": "zelador_pedido"
+    },
+    {
+     "r": "zelador_conversa"
+    }
+   ],
+   "chao": "-"
+  },
+  "^": {
+   "tipo": "item",
+   "item": "luvas",
+   "se": "!pegou_luvas",
+   "roteiro": "pegar_luvas",
+   "chao": ":"
+  },
+  "(": {
+   "tipo": "obj",
+   "obj": "monte_areia",
+   "chao": ":"
+  }
+ }
+}

@@ -1,0 +1,201 @@
+{
+ "id": "usina",
+ "nome": "Serra do Mar, Paraná",
+ "musica": "usina",
+ "esquecimento": true,
+ "ao_entrar": [
+  {
+   "se": "!usina_intro",
+   "r": "usina_chegada"
+  }
+ ],
+ "chao": "&",
+ "linhas": [
+  "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&",
+  "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&",
+  "&&&&&&%%A%%%%A%%&&&&&&&&%%A%%%%%A%%&&&&&&&&&",
+  "&&&&&&cccccccccc&&&&&&&&ccccccccccc&&&&&&&&&",
+  "&&&&&&cBBcccBBBc&&&&&&&&cgggcCCCCCc&&&&&&&&&",
+  "&&&&&&cDDcEcDDDc&&&&&&&&cgFgccccccc&&&&&&&&&",
+  "&&&&&&cccccccccc&&&&&&&&ccccccccccc&&&&&&&&&",
+  "&&&&&&cccccccccc&&&&&&&&ccccccccccc&&&&&&&&&",
+  "&&&&&&Gccccccccc&&&&&&&&HccccccccGc&%%A%%A%&",
+  "&&&&&&cccccccccc&&&&&&&&ccccccccccc&ccccccc&",
+  "%%%A%%%%%cc%A%%%%%A%%%%%%%A%cc%%A&&&ccIcJcc&",
+  "ccccccccccccccccccccccccccccccccc%%%ccccccc&",
+  "ccKccLccccccccccccccccccccccccccMcNcccccccc&",
+  "ccccccccccccccccccccccccccccccccc&&&cOccccc&",
+  "&&&&&&&&&&&&&&&&&&&&cc&&&&&&&&&&&&&&ccccPcc&",
+  "&&&&&&&&&&&&&&&&&&&&cc&&&&&&&&&&&&&&cgggggc&",
+  "&&&&&&&&&&&&&&%%A%%%cc%%A%%%%A%%&&&&Qgggggc&",
+  "&&&&&&&&&&&&&&cccccccccccccccccc&&&&ccccccc&",
+  "&&&&&&&&&&&&&&cccccccccccccccccc&&&&&&&&&&&&",
+  "&&&&&&&&&&&&&&cRcSccRcSccRcccccc&&&&&&&&&&&&",
+  "&&&&&&&&&&&&&&cccccccccccccccccc&&&&&&&&&&&&",
+  "&&&&&&&&&&&&&&cgggggggggggggTggc&&&&&&&&&&&&",
+  "&&&&&&&&&&&&&&cccccccccccccccccc&&&&&&&&&&&&",
+  "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&",
+  "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&",
+  "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"
+ ],
+ "legenda": {
+  "A": {
+   "tipo": "obj",
+   "obj": "lampada",
+   "camada": "fundo",
+   "solido": false,
+   "chao": "%"
+  },
+  "B": {
+   "tipo": "obj",
+   "obj": "cano_v",
+   "camada": "fundo",
+   "chao": "c"
+  },
+  "C": {
+   "tipo": "obj",
+   "obj": "cano_h",
+   "camada": "fundo",
+   "chao": "c"
+  },
+  "D": {
+   "tipo": "obj",
+   "obj": "cano_v",
+   "chao": "c"
+  },
+  "E": {
+   "tipo": "obj",
+   "obj": "valvula",
+   "roteiro": "insp_condutos",
+   "chao": "c"
+  },
+  "F": {
+   "tipo": "inspecao",
+   "roteiro": "insp_ventilacao",
+   "larg": 2,
+   "alt": 2,
+   "chao": "g"
+  },
+  "G": {
+   "tipo": "obj",
+   "obj": "placa_perigo",
+   "camada": "fundo",
+   "solido": false,
+   "chao": "c"
+  },
+  "H": {
+   "tipo": "obj",
+   "obj": "caixa_obra",
+   "chao": "c"
+  },
+  "I": {
+   "tipo": "obj",
+   "obj": "painel",
+   "fps": 2,
+   "roteiro": "painel_comando",
+   "chao": "c"
+  },
+  "J": {
+   "tipo": "obj",
+   "obj": "lousa_usina",
+   "camada": "fundo",
+   "roteiro": "lousa_usina",
+   "chao": "c"
+  },
+  "K": {
+   "tipo": "spawn",
+   "nome": "entrada",
+   "dir": "dir",
+   "chao": "c"
+  },
+  "L": {
+   "tipo": "npc",
+   "id": "enedina",
+   "sprite": "enedina_obra",
+   "dir": "esq",
+   "se": "!usina_intro",
+   "roteiro": "enedina_usina",
+   "chao": "c"
+  },
+  "M": {
+   "tipo": "npc",
+   "id": "operaria",
+   "sprite": "operaria_usina",
+   "dir": "esq",
+   "se": "inspecoes<3",
+   "roteiro": "porta_fechada",
+   "chao": "c"
+  },
+  "N": {
+   "tipo": "barreira",
+   "se": "inspecoes<3",
+   "roteiro": "porta_fechada",
+   "chao": "c"
+  },
+  "O": {
+   "tipo": "npc",
+   "id": "enedina_sala",
+   "sprite": "enedina_obra",
+   "dir": "baixo",
+   "se": "usina_intro",
+   "roteiro": [
+    {
+     "se": "usina_ligada",
+     "r": "enedina_usina_fim"
+    },
+    {
+     "se": "inspecoes>=3",
+     "r": "enedina_sala_pronta"
+    },
+    {
+     "r": "enedina_usina"
+    }
+   ],
+   "chao": "c"
+  },
+  "P": {
+   "tipo": "npc",
+   "id": "operaria2",
+   "sprite": "operaria_usina",
+   "dir": "baixo",
+   "se": "inspecoes>=3",
+   "roteiro": "operaria_sala",
+   "chao": "c"
+  },
+  "Q": {
+   "tipo": "obj",
+   "obj": "mesa_projeto",
+   "roteiro": "mesa_projeto",
+   "chao": "c"
+  },
+  "R": {
+   "tipo": "obj",
+   "obj": "turbina",
+   "fps": 8,
+   "roteiro": "insp_turbinas",
+   "chao": "c"
+  },
+  "S": {
+   "tipo": "obj",
+   "obj": "gerador",
+   "chao": "c"
+  },
+  "T": {
+   "tipo": "npc",
+   "id": "operario",
+   "sprite": "operario_usina",
+   "dir": "esq",
+   "vagar": 1,
+   "roteiro": [
+    {
+     "se": "insp_turbinas",
+     "r": "operario_depois"
+    },
+    {
+     "r": "operario_conversa"
+    }
+   ],
+   "chao": "g"
+  }
+ }
+}

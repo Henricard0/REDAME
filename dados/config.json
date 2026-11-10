@@ -1,0 +1,16 @@
+{
+ "_leia": "nome_protagonista: deixe vazio para o jogo perguntar o nome, ou escreva um nome para usá-lo sempre.",
+ "nome_protagonista": "",
+ "mapas": [
+  "acervo",
+  "curitiba",
+  "usina"
+ ],
+ "minigames": [
+  "canos_fase01"
+ ],
+ "roteiros": [
+  "prologo",
+  "fase01"
+ ]
+}

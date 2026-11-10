@@ -1,0 +1,638 @@
+{
+ "tiles": {
+  "grama": 0,
+  "grama2": 1,
+  "grama3": 2,
+  "grama_flor": 3,
+  "rua": 4,
+  "rua2": 5,
+  "calcada": 6,
+  "calcada2": 7,
+  "praca": 8,
+  "terra": 9,
+  "areia": 10,
+  "agua": 11,
+  "agua2": 12,
+  "madeira": 13,
+  "madeira2": 14,
+  "tapete": 15,
+  "azulejo": 16,
+  "parede": 17,
+  "parede_topo": 18,
+  "parede_moderna": 19,
+  "rocha": 20,
+  "rocha_face": 21,
+  "concreto": 22,
+  "grade": 23,
+  "vazio": 24,
+  "canteiro": 25,
+  "trilho": 26
+ },
+ "tiles_colunas": 8,
+ "objetos": {
+  "araucaria": {
+   "w": 32,
+   "h": 64,
+   "col": [
+    12,
+    0,
+    8,
+    6
+   ],
+   "quadros": 1
+  },
+  "arvore": {
+   "w": 32,
+   "h": 40,
+   "col": [
+    12,
+    0,
+    8,
+    6
+   ],
+   "quadros": 1
+  },
+  "arbusto": {
+   "w": 16,
+   "h": 16,
+   "col": [
+    1,
+    0,
+    14,
+    8
+   ],
+   "quadros": 1
+  },
+  "flores": {
+   "w": 32,
+   "h": 16,
+   "col": [
+    0,
+    0,
+    32,
+    8
+   ],
+   "quadros": 1
+  },
+  "chafariz": {
+   "w": 48,
+   "h": 40,
+   "col": [
+    2,
+    0,
+    44,
+    22
+   ],
+   "quadros": 1
+  },
+  "poste": {
+   "w": 16,
+   "h": 40,
+   "col": [
+    6,
+    0,
+    4,
+    4
+   ],
+   "quadros": 1
+  },
+  "banco": {
+   "w": 32,
+   "h": 16,
+   "col": [
+    0,
+    0,
+    32,
+    8
+   ],
+   "quadros": 1
+  },
+  "placa": {
+   "w": 16,
+   "h": 24,
+   "col": [
+    6,
+    0,
+    4,
+    3
+   ],
+   "quadros": 1
+  },
+  "banca": {
+   "w": 32,
+   "h": 32,
+   "col": [
+    0,
+    0,
+    32,
+    18
+   ],
+   "quadros": 1
+  },
+  "ponto_bonde": {
+   "w": 32,
+   "h": 32,
+   "col": [
+    0,
+    0,
+    32,
+    8
+   ],
+   "quadros": 1
+  },
+  "carro_preto": {
+   "w": 32,
+   "h": 20,
+   "col": null,
+   "quadros": 1
+  },
+  "carro_vinho": {
+   "w": 32,
+   "h": 20,
+   "col": null,
+   "quadros": 1
+  },
+  "carro_verde": {
+   "w": 32,
+   "h": 20,
+   "col": null,
+   "quadros": 1
+  },
+  "andaime": {
+   "w": 48,
+   "h": 48,
+   "col": [
+    0,
+    0,
+    48,
+    10
+   ],
+   "quadros": 1
+  },
+  "tijolos": {
+   "w": 16,
+   "h": 16,
+   "col": [
+    0,
+    0,
+    16,
+    8
+   ],
+   "quadros": 1
+  },
+  "monte_areia": {
+   "w": 32,
+   "h": 16,
+   "col": [
+    0,
+    0,
+    32,
+    8
+   ],
+   "quadros": 1
+  },
+  "cerca": {
+   "w": 16,
+   "h": 16,
+   "col": [
+    0,
+    0,
+    16,
+    6
+   ],
+   "quadros": 1
+  },
+  "carrinho": {
+   "w": 16,
+   "h": 16,
+   "col": [
+    1,
+    0,
+    14,
+    6
+   ],
+   "quadros": 1
+  },
+  "caixa_obra": {
+   "w": 16,
+   "h": 16,
+   "col": [
+    0,
+    0,
+    16,
+    10
+   ],
+   "quadros": 1
+  },
+  "ufpr": {
+   "w": 176,
+   "h": 128,
+   "col": [
+    0,
+    0,
+    176,
+    100
+   ],
+   "quadros": 1
+  },
+  "colegio": {
+   "w": 192,
+   "h": 96,
+   "col": [
+    0,
+    0,
+    192,
+    72
+   ],
+   "quadros": 1
+  },
+  "casa_azul": {
+   "w": 64,
+   "h": 72,
+   "col": [
+    0,
+    0,
+    64,
+    52
+   ],
+   "quadros": 1
+  },
+  "casa_rosa": {
+   "w": 64,
+   "h": 72,
+   "col": [
+    0,
+    0,
+    64,
+    52
+   ],
+   "quadros": 1
+  },
+  "casa_amarela": {
+   "w": 64,
+   "h": 72,
+   "col": [
+    0,
+    0,
+    64,
+    52
+   ],
+   "quadros": 1
+  },
+  "casa_verde": {
+   "w": 64,
+   "h": 72,
+   "col": [
+    0,
+    0,
+    64,
+    52
+   ],
+   "quadros": 1
+  },
+  "departamento": {
+   "w": 112,
+   "h": 80,
+   "col": [
+    0,
+    0,
+    112,
+    58
+   ],
+   "quadros": 1
+  },
+  "estante": {
+   "w": 32,
+   "h": 40,
+   "col": [
+    0,
+    0,
+    32,
+    12
+   ],
+   "quadros": 1
+  },
+  "mesa": {
+   "w": 32,
+   "h": 24,
+   "col": [
+    0,
+    0,
+    32,
+    12
+   ],
+   "quadros": 1
+  },
+  "mesa_moderna": {
+   "w": 32,
+   "h": 24,
+   "col": [
+    0,
+    0,
+    32,
+    12
+   ],
+   "quadros": 1
+  },
+  "cadeira": {
+   "w": 16,
+   "h": 16,
+   "col": [
+    3,
+    0,
+    10,
+    6
+   ],
+   "quadros": 1
+  },
+  "arquivo": {
+   "w": 16,
+   "h": 32,
+   "col": [
+    0,
+    0,
+    16,
+    10
+   ],
+   "quadros": 1
+  },
+  "caixas": {
+   "w": 16,
+   "h": 16,
+   "col": [
+    0,
+    0,
+    16,
+    10
+   ],
+   "quadros": 1
+  },
+  "caixa_antiga": {
+   "w": 16,
+   "h": 16,
+   "col": [
+    0,
+    0,
+    16,
+    10
+   ],
+   "quadros": 1
+  },
+  "quadro": {
+   "w": 32,
+   "h": 24,
+   "col": null,
+   "quadros": 1
+  },
+  "janela": {
+   "w": 32,
+   "h": 24,
+   "col": null,
+   "quadros": 1
+  },
+  "vaso": {
+   "w": 16,
+   "h": 24,
+   "col": [
+    3,
+    0,
+    10,
+    6
+   ],
+   "quadros": 1
+  },
+  "revisor": {
+   "w": 16,
+   "h": 24,
+   "col": [
+    1,
+    0,
+    14,
+    8
+   ],
+   "quadros": 2
+  },
+  "turbina": {
+   "w": 32,
+   "h": 32,
+   "col": [
+    0,
+    0,
+    32,
+    16
+   ],
+   "quadros": 4
+  },
+  "gerador": {
+   "w": 32,
+   "h": 40,
+   "col": [
+    0,
+    0,
+    32,
+    16
+   ],
+   "quadros": 1
+  },
+  "painel": {
+   "w": 32,
+   "h": 32,
+   "col": [
+    0,
+    0,
+    32,
+    14
+   ],
+   "quadros": 2
+  },
+  "cano_v": {
+   "w": 16,
+   "h": 16,
+   "col": [
+    4,
+    0,
+    8,
+    16
+   ],
+   "quadros": 1
+  },
+  "cano_h": {
+   "w": 16,
+   "h": 16,
+   "col": [
+    0,
+    4,
+    16,
+    8
+   ],
+   "quadros": 1
+  },
+  "lampada": {
+   "w": 16,
+   "h": 16,
+   "col": null,
+   "quadros": 1
+  },
+  "placa_perigo": {
+   "w": 16,
+   "h": 16,
+   "col": null,
+   "quadros": 1
+  },
+  "valvula": {
+   "w": 16,
+   "h": 16,
+   "col": [
+    2,
+    0,
+    12,
+    6
+   ],
+   "quadros": 1
+  },
+  "mesa_projeto": {
+   "w": 32,
+   "h": 24,
+   "col": [
+    0,
+    0,
+    32,
+    12
+   ],
+   "quadros": 1
+  },
+  "lousa_usina": {
+   "w": 32,
+   "h": 24,
+   "col": null,
+   "quadros": 1
+  }
+ },
+ "itens": [
+  "plantas",
+  "teodolito",
+  "marmita",
+  "lanterna",
+  "diploma",
+  "livro",
+  "luvas",
+  "chave",
+  "capacete",
+  "regua",
+  "relatorio",
+  "giz"
+ ],
+ "emocoes": [
+  "neutro",
+  "feliz",
+  "determinada",
+  "cansada",
+  "surpresa",
+  "triste",
+  "cetica"
+ ],
+ "arquivos": [
+  "fonte",
+  "item_capacete",
+  "item_chave",
+  "item_diploma",
+  "item_giz",
+  "item_lanterna",
+  "item_livro",
+  "item_luvas",
+  "item_marmita",
+  "item_plantas",
+  "item_regua",
+  "item_relatorio",
+  "item_teodolito",
+  "mini_canos",
+  "obj_andaime",
+  "obj_araucaria",
+  "obj_arbusto",
+  "obj_arquivo",
+  "obj_arvore",
+  "obj_banca",
+  "obj_banco",
+  "obj_cadeira",
+  "obj_caixa_antiga",
+  "obj_caixa_obra",
+  "obj_caixas",
+  "obj_cano_h",
+  "obj_cano_v",
+  "obj_carrinho",
+  "obj_carro_preto",
+  "obj_carro_verde",
+  "obj_carro_vinho",
+  "obj_casa_amarela",
+  "obj_casa_azul",
+  "obj_casa_rosa",
+  "obj_casa_verde",
+  "obj_cerca",
+  "obj_chafariz",
+  "obj_colegio",
+  "obj_departamento",
+  "obj_estante",
+  "obj_flores",
+  "obj_gerador",
+  "obj_janela",
+  "obj_lampada",
+  "obj_lousa_usina",
+  "obj_mesa",
+  "obj_mesa_moderna",
+  "obj_mesa_projeto",
+  "obj_monte_areia",
+  "obj_painel",
+  "obj_placa",
+  "obj_placa_perigo",
+  "obj_ponto_bonde",
+  "obj_poste",
+  "obj_quadro",
+  "obj_revisor",
+  "obj_tijolos",
+  "obj_turbina",
+  "obj_ufpr",
+  "obj_valvula",
+  "obj_vaso",
+  "pers_antonio",
+  "pers_bento",
+  "pers_coordenadora",
+  "pers_enedina",
+  "pers_enedina_obra",
+  "pers_estudante",
+  "pers_jornaleiro",
+  "pers_morador",
+  "pers_moradora",
+  "pers_moradora2",
+  "pers_operaria_usina",
+  "pers_operario_usina",
+  "pers_professor",
+  "pers_protagonista",
+  "pers_ze",
+  "pers_zelador",
+  "ret_antonio",
+  "ret_bento",
+  "ret_coordenadora",
+  "ret_enedina",
+  "ret_enedina_obra",
+  "ret_jornaleiro",
+  "ret_professor",
+  "ret_protagonista",
+  "ret_revisor",
+  "ret_ze",
+  "ret_zelador",
+  "tiles",
+  "ui_balao",
+  "ui_balao_fala",
+  "ui_bola",
+  "ui_brilho",
+  "ui_caderneta",
+  "ui_cursor",
+  "ui_holograma",
+  "ui_moldura",
+  "ui_nevoa",
+  "ui_painel",
+  "ui_papel",
+  "ui_seta",
+  "ui_sombra"
+ ]
+}

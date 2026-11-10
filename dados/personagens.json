@@ -1,0 +1,92 @@
+{
+ "narrador": {
+  "nome": ""
+ },
+ "protagonista": {
+  "nome": "{nome}",
+  "retrato": "protagonista",
+  "voz": 1.15
+ },
+ "helena": {
+  "nome": "Profa. Helena",
+  "retrato": "coordenadora",
+  "voz": 0.9
+ },
+ "caio": {
+  "nome": "Caio",
+  "voz": 1.0
+ },
+ "revisor": {
+  "nome": "Revisor de Épocas",
+  "retrato": "revisor",
+  "voz": 1.6
+ },
+ "enedina": {
+  "nome": "Enedina",
+  "retrato": "enedina",
+  "voz": 1.0
+ },
+ "enedina_obra": {
+  "nome": "Enedina",
+  "retrato": "enedina_obra",
+  "voz": 1.0
+ },
+ "professor": {
+  "nome": "Prof. Bittencourt",
+  "retrato": "professor",
+  "voz": 0.75
+ },
+ "rui": {
+  "nome": "Rui",
+  "voz": 1.05
+ },
+ "zelador": {
+  "nome": "Seu Lauro",
+  "retrato": "zelador",
+  "voz": 0.8
+ },
+ "ze": {
+  "nome": "Zé",
+  "retrato": "ze",
+  "voz": 0.85
+ },
+ "bento": {
+  "nome": "Bento",
+  "retrato": "bento",
+  "voz": 0.7
+ },
+ "antonio": {
+  "nome": "Mestre Antônio",
+  "retrato": "antonio",
+  "voz": 0.62
+ },
+ "jornaleiro": {
+  "nome": "Jornaleiro",
+  "retrato": "jornaleiro",
+  "voz": 1.1
+ },
+ "morador": {
+  "nome": "Morador",
+  "voz": 0.8
+ },
+ "morador2": {
+  "nome": "Morador",
+  "voz": 0.85
+ },
+ "moradora": {
+  "nome": "Moradora",
+  "voz": 1.2
+ },
+ "moradora2": {
+  "nome": "Moradora",
+  "voz": 1.15
+ },
+ "operario": {
+  "nome": "Operário",
+  "voz": 0.8
+ },
+ "operaria": {
+  "nome": "Operária",
+  "voz": 1.15
+ }
+}

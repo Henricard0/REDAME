@@ -1,0 +1,30 @@
+{
+ "livro": {
+  "nome": "Livro de registros de 1945",
+  "desc": "O livro de formaturas da Universidade do Paraná. Uma das linhas está estranhamente em branco."
+ },
+ "diploma": {
+  "nome": "Registro de formatura",
+  "desc": "Cópia assinada pelo Prof. Bittencourt: “Enedina Alves Marques, engenheira civil, 1945.”"
+ },
+ "giz": {
+  "nome": "Caixa de giz",
+  "desc": "Giz escolar do Colégio Estadual. Sem ele, não tem aula amanhã."
+ },
+ "teodolito": {
+  "nome": "Teodolito",
+  "desc": "Instrumento que mede ângulos horizontais e verticais. Essencial para medir o terreno antes de uma obra."
+ },
+ "marmita": {
+  "nome": "Marmita do Zé",
+  "desc": "Marmita de alumínio com um “Z” riscado na tampa. Cheirinho de feijão."
+ },
+ "luvas": {
+  "nome": "Luvas de couro",
+  "desc": "Luvas grossas de trabalho. Protegem as mãos de quem assenta tijolos."
+ },
+ "plantas": {
+  "nome": "Plantas da usina",
+  "desc": "Os desenhos técnicos da Usina Capivari-Cachoeira: túneis, condutos forçados e a casa de força."
+ }
+}
