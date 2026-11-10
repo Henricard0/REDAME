@@ -11,6 +11,7 @@ export class Estado {
     this.nome = "";
     this.vars = {};
     this.itens = [];
+    this.mat = {};
     this.objetivo = "";
     this.mapa = null;
     this.x = 0;
@@ -21,7 +22,21 @@ export class Estado {
   }
 
   v(nome) {
+    if (nome.startsWith("mat:")) return this.mat[nome.slice(4)] || 0;
     return this.vars[nome] || 0;
+  }
+
+  qtd(mat) {
+    return this.mat[mat] || 0;
+  }
+
+  coletar(mat, n = 1) {
+    this.mat[mat] = this.qtd(mat) + n;
+  }
+
+  gastar(mat, n = 1) {
+    this.mat[mat] = Math.max(0, this.qtd(mat) - n);
+    if (!this.mat[mat]) delete this.mat[mat];
   }
 
   definir(nome, valor) {
@@ -46,6 +61,7 @@ export class Estado {
 
   // Condicao: termos separados por espaco, todos precisam valer.
   //   flag   !flag   item:x   !item:x   resgatada:x   var>=n  var<=n  var==n  var!=n  var>n  var<n
+  //   mat:ferro>=2 (quantidade de um material)
   condicao(texto) {
     if (!texto) return true;
     for (let termo of String(texto).trim().split(/\s+/)) {
@@ -75,6 +91,7 @@ export class Estado {
       nome: this.nome,
       vars: this.vars,
       itens: this.itens,
+      mat: this.mat,
       objetivo: this.objetivo,
       mapa: this.mapa,
       x: this.x,
@@ -91,6 +108,7 @@ export class Estado {
       nome: d.nome || "",
       vars: d.vars || {},
       itens: d.itens || [],
+      mat: d.mat || {},
       objetivo: d.objetivo || "",
       mapa: d.mapa,
       x: d.x,

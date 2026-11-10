@@ -5,7 +5,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { COMANDOS, partesSe } from "../jogo/roteiro.js";
 import { TILES } from "../jogo/mundo.js";
-import { montarNivel, resolvido, embaralhar, fluxo } from "../jogo/canos.js";
+import { montarNivel, gerarNivel, resolvido, embaralhar, vazamentos, aleatorio } from "../jogo/canos.js";
 
 const RAIZ = join(dirname(fileURLToPath(import.meta.url)), "..");
 const ler = (p) => JSON.parse(readFileSync(join(RAIZ, "dados", p + ".json"), "utf8"));
@@ -20,6 +20,8 @@ const fonte = ler("fonte");
 const pers = ler("personagens");
 const itens = ler("itens");
 const pioneiras = ler("pioneiras").pioneiras;
+const materiais = ler("materiais");
+const MATS = materiais.materiais;
 const mapas = Object.fromEntries(config.mapas.map((m) => [m, ler("mapas/" + m)]));
 const minis = Object.fromEntries(config.minigames.map((m) => [m, ler("minigames/" + m)]));
 const roteiros = {};
@@ -90,6 +92,10 @@ for (const [id, m] of Object.entries(mapas)) {
       case "item":
         if (!itens[e.item]) erro(`${onde}: item desconhecido "${e.item}"`);
         break;
+      case "coleta":
+        if (!MATS[e.mat]) erro(`${onde}: material desconhecido "${e.mat}"`);
+        if (!arte.objetos[e.obj]) erro(`${onde}: objeto desconhecido "${e.obj}"`);
+        break;
       case "spawn":
         spawns[id].add(e.nome);
         break;
@@ -135,6 +141,47 @@ for (const p of pioneiras) {
   if (p.retrato && !arquivos.has("ret_" + p.retrato)) erro(`Pioneira ${p.id}: retrato inexistente`);
 }
 
+// ------------------------------------------------------------- materiais e receitas
+for (const [id, m] of Object.entries(MATS)) {
+  if (!arquivos.has("mat_" + id)) erro(`Material ${id}: ícone mat_${id}.png não existe`);
+  checarTexto(m.nome, `material ${id}`);
+  checarTexto(m.desc, `material ${id}`);
+}
+for (const r of materiais.receitas) {
+  if (!MATS[r.produz]) erro(`Receita: produto desconhecido "${r.produz}"`);
+  for (const m of Object.keys(r.precisa)) if (!MATS[m]) erro(`Receita ${r.produz}: material desconhecido "${m}"`);
+}
+function checarCondicao(cond, onde) {
+  for (const t of String(cond || "").split(/\s+/)) {
+    const m = /^!?mat:(\w+)/.exec(t);
+    if (m && !MATS[m[1]]) erro(`${onde}: material desconhecido na condição "${t}"`);
+  }
+}
+// Quanto de cada material basico e preciso para montar uma lista de pecas
+function custoBase(pecas) {
+  const total = {};
+  const somar = (m, n) => {
+    const r = materiais.receitas.find((x) => x.produz === m);
+    if (!r) { total[m] = (total[m] || 0) + n; return; }
+    for (const [b, q] of Object.entries(r.precisa)) somar(b, q * Math.ceil(n / (r.qtd || 1)));
+  };
+  for (const [m, n] of Object.entries(pecas)) somar(m, n);
+  return total;
+}
+const disponivel = {};
+for (const [id, m] of Object.entries(mapas)) {
+  disponivel[id] = {};
+  for (const e of Object.values(m.legenda)) if (e.tipo === "coleta") {
+    const n = [...m.linhas.join("")].filter((ch) => m.legenda[ch] === e).length;
+    disponivel[id][e.mat] = (disponivel[id][e.mat] || 0) + n * (e.qtd || 1);
+  }
+}
+for (const m of Object.values(mapas)) {
+  for (const e of Object.values(m.legenda)) checarCondicao(e.se, `Mapa ${m.id}`);
+  for (const v of Array.isArray(m.ao_entrar) ? m.ao_entrar : []) checarCondicao(v.se, `Mapa ${m.id}`);
+  if (m.ao_coletar) refRoteiro(m.ao_coletar, `Mapa ${m.id} ao_coletar`);
+}
+
 // ------------------------------------------------------------- roteiros
 for (const [id, cmds] of Object.entries(roteiros)) {
   cmds.forEach((c, i) => {
@@ -174,11 +221,31 @@ for (const [id, cmds] of Object.entries(roteiros)) {
       case "tirar":
         if (!itens[a[0]]) erro(`${onde}: item inexistente "${a[0]}"`);
         break;
+      case "coletar":
+      case "gastar":
+        if (!MATS[a[0]]) erro(`${onde}: material inexistente "${a[0]}"`);
+        break;
       case "rodar":
         refRoteiro(a[0], onde);
         break;
       case "se": {
         const p = partesSe(resto);
+        checarCondicao(p.cond, onde);
+        // condicoes que pedem pecas: da para juntar os materiais no mapa que as usa?
+        const pecas = {};
+        for (const t of p.cond.split(/\s+/)) {
+          const mm = /^mat:(\w+)>=(\d+)$/.exec(t);
+          if (mm && MATS[mm[1]]?.peca) pecas[mm[1]] = +mm[2];
+        }
+        if (Object.keys(pecas).length) {
+          const precisa = custoBase(pecas);
+          const tot = {};
+          for (const d of Object.values(disponivel)) for (const [k, v] of Object.entries(d)) tot[k] = (tot[k] || 0) + v;
+          for (const [k, v] of Object.entries(precisa)) {
+            if ((tot[k] || 0) < v) erro(`${onde}: precisa de ${v} ${k} para as peças, mas os mapas só têm ${tot[k] || 0}`);
+          }
+          console.log(`Peças em ${id}: precisa ${JSON.stringify(precisa)} · disponível ${JSON.stringify(tot)}`);
+        }
         if (!p.sim) erro(`${onde}: "se" sem "=>"`);
         refRoteiro(p.sim, onde);
         if (p.nao) refRoteiro(p.nao, onde);
@@ -216,27 +283,38 @@ for (const id of Object.keys(roteiros)) if (!usados.has(id) && id !== "inicio") 
 for (const [id, m] of Object.entries(minis)) {
   m.niveis.forEach((n, k) => {
     const onde = `Minigame ${id} nível ${k + 1}`;
-    let nivel;
-    try {
-      nivel = montarNivel(n.linhas);
-    } catch (e) {
-      return erro(`${onde}: ${e.message}`);
+    const regra = !!n.vazamento;
+    const sementes = n.gerar ? 300 : 1;
+    let piorTurb = Infinity;
+    for (let s = 1; s <= sementes; s++) {
+      let nivel;
+      try {
+        nivel = n.gerar ? gerarNivel(n.gerar, s * 2654435761) : montarNivel(n);
+      } catch (e) {
+        return erro(`${onde}: ${e.message}`);
+      }
+      for (const c of nivel.cel) {
+        if ((c.tipo === "fonte" || c.tipo === "turbina") && c.conns.length !== 1) erro(`${onde}: ${c.tipo} em ${c.x},${c.y} tem ${c.conns.length} conexões (esperado 1)`);
+      }
+      const turb = nivel.cel.filter((c) => c.tipo === "turbina").length;
+      piorTurb = Math.min(piorTurb, turb);
+      if (n.gerar && turb !== n.gerar.turbinas) erro(`${onde} (semente ${s}): ${turb} turbinas, esperado ${n.gerar.turbinas}`);
+      if (!resolvido(nivel, regra)) {
+        erro(`${onde}${n.gerar ? ` (semente ${s})` : ""}: a solução não leva água a todas as turbinas${regra ? " sem vazamentos" : ""} (${vazamentos(nivel).length} vazamentos)`);
+        break;
+      }
+      embaralhar(nivel, regra, aleatorio(s));
+      if (resolvido(nivel, regra)) erro(`${onde}: o embaralhamento deixou o nível resolvido (semente ${s})`);
+      if (nivel.w > 12 || nivel.h > 5) erro(`${onde}: tabuleiro ${nivel.w}x${nivel.h} maior que 12x5`);
     }
-    for (const c of nivel.cel) {
-      if ((c.tipo === "fonte" || c.tipo === "turbina") && c.conns.length !== 1) erro(`${onde}: ${c.tipo} em ${c.x},${c.y} tem ${c.conns.length} conexões (esperado 1)`);
-    }
-    if (!resolvido(nivel)) erro(`${onde}: a solução desenhada não leva água a todas as turbinas`);
-    const alcance = fluxo(nivel).size;
-    embaralhar(nivel);
-    if (resolvido(nivel)) erro(`${onde}: o embaralhamento deixou o nível resolvido`);
+    if (n.gerar) console.log(`${onde}: ${sementes} tabuleiros gerados e conferidos`);
     if (n.fala) {
       const [quem, emo, texto] = n.fala.split("|");
       if (!pers[quem]) erro(`${onde}: personagem inexistente "${quem}"`);
       if (!EMOCOES.has(emo)) erro(`${onde}: emoção inválida "${emo}"`);
       checarTexto(texto, onde);
     }
-    if (nivel.w > 9 || nivel.h > 4) erro(`${onde}: tabuleiro ${nivel.w}x${nivel.h} maior que 9x4`);
-    void alcance;
+    void piorTurb;
   });
   checarTexto(m.titulo, `minigame ${id}`);
 }

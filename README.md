@@ -11,7 +11,8 @@ Roda em qualquer navegador (computador ou celular), sem instalar nada.
   - Cidade aberta: Praça Santos Andrade, prédio histórico da Universidade do Paraná, Colégio Estadual, Departamento de Águas, canteiro de obras, bondes e carros.
   - A cidade começa cinza (efeito do Esquecimento) e ganha cor conforme você ajuda Enedina.
   - Missões: recuperar o registro de formatura, buscar o teodolito, conquistar o apoio dos operários (com quiz de engenharia).
-  - Usina Capivari-Cachoeira: inspeção das galerias subterrâneas e o minigame de girar as tubulações (3 níveis).
+  - Usina Capivari-Cachoeira: inspeção das galerias subterrâneas, coleta de materiais (sucata de ferro, fio de cobre, borracha, parafusos), bancada de montagem para fabricar as peças que abrem a sala de comando.
+  - Minigame das tubulações com 5 níveis: vazamentos, pontas (tampões), peças travadas, medidor de pressão com tempo, dicas, e níveis 3 a 5 gerados por algoritmo (um tabuleiro novo a cada tentativa, sempre com solução).
   - Discurso final da Enedina, cerimônia do nome gravado no Dispositivo REDAME e página na Caderneta.
 - **Caderneta REDAME** com as 15 pioneiras (páginas reveladas conforme o resgate).
 - **Revisor de Épocas** para escolher épocas (as outras 14 aparecem como "em breve").
@@ -26,6 +27,7 @@ Roda em qualquer navegador (computador ou celular), sem instalar nada.
 | Correr, voltar | Shift ou X | B |
 | Menu (Caderneta, itens, som, salvar) | Esc | Menu |
 | Girar cano ao contrário (minigame) | Q | — |
+| Dica (minigame) | H | Botão "Dica" |
 
 ## Rodar no seu computador
 
@@ -55,6 +57,7 @@ Quase tudo é texto, em `dados/`:
 | `dados/personagens.json` | Nome, retrato e "voz" (tom dos bipes) de cada personagem. |
 | `dados/itens.json` | Nome e descrição dos itens. |
 | `dados/pioneiras.json` | As 15 pioneiras e o texto das páginas da Caderneta. |
+| `dados/materiais.json` | Materiais, peças e receitas da bancada de montagem. |
 | `dados/minigames/*.json` | Os níveis do minigame das tubulações. |
 
 Depois de editar, rode o validador. Ele aponta roteiro inexistente, personagem errado, letra que a fonte não tem, puzzle sem solução etc.:
@@ -84,6 +87,8 @@ Cada roteiro é uma lista de comandos:
 | `flag <nome>` / `desflag <nome>` | `flag conheceu_enedina` |
 | `somar <variável> <n>` / `definir <variável> <n>` | `somar apoio 1` |
 | `dar <item>` / `tirar <item>` | `dar teodolito` |
+| `coletar <material> [n]` / `gastar <material> [n]` | `gastar valvula 2` |
+| `bancada` | abre a bancada de montagem |
 | `objetivo <texto>` | `objetivo Encontre o Zé. Operários: {v:apoio}/3` |
 | `se <condição> => <roteiro> \| <senão>` | `se apoio>=3 item:plantas => pronta \| ainda_nao` |
 | `rodar <roteiro>` | `rodar objetivo_fase1` |
@@ -96,7 +101,8 @@ Cada roteiro é uma lista de comandos:
 | `som <efeito>`, `musica <faixa>`, `tremer <s>`, `flash`, `esperar <s>`, `fade sair\|entrar`, `aviso <texto>`, `titulo <texto>` | efeitos |
 
 Emoções dos retratos: `neutro`, `feliz`, `determinada`, `cansada`, `surpresa`, `triste`, `cetica`.
-No texto, `{nome}` vira o nome da protagonista e `{v:variavel}` vira o valor da variável.
+No texto, `{nome}` vira o nome da protagonista e `{v:variavel}` vira o valor da variável (`{v:mat:valvula}` mostra quantas válvulas você tem).
+Nas condições, `mat:ferro>=2` confere a quantidade de um material.
 
 Para uma escolha (quiz), use um objeto:
 
@@ -122,7 +128,22 @@ Cada caractere de `linhas` é um quadrado de 16×16 pixels:
 | `w` | madeira | `r` | trilho de bonde |
 | `t` | tapete | `z` | azulejo |
 
-Letras maiúsculas, números e outros símbolos são entidades definidas em `legenda`: `npc`, `obj`, `item`, `carro`, `spawn` (ponto de chegada), `portal`, `gatilho`, `inspecao` e `barreira`. O campo `se` define quando a entidade aparece. O campo `roteiro` pode ser um nome ou uma lista de variantes com condição.
+Letras maiúsculas, números e outros símbolos são entidades definidas em `legenda`: `npc`, `obj`, `item`, `coleta` (ponto de coleta de material, com `mat`, `qtd` e o sprite `obj`), `carro`, `spawn` (ponto de chegada), `portal`, `gatilho`, `inspecao` e `barreira`. No mapa, `ao_coletar` roda um roteiro a cada coleta (útil para atualizar o objetivo). O campo `se` define quando a entidade aparece. O campo `roteiro` pode ser um nome ou uma lista de variantes com condição.
+
+### Níveis do minigame das tubulações
+
+Cada nível em `dados/minigames/canos_fase01.json` pode ser desenhado à mão (`linhas`, já resolvido) ou gerado (`gerar`):
+
+```json
+{"vazamento": true, "tempo": 200, "gerar": {"w": 9, "h": 5, "turbinas": 3, "bloqueios": 4, "travadas": 3}}
+```
+
+- `vazamento`: todo cano com água precisa estar ligado dos dois lados.
+- `tempo`: segundos até a pressão estourar (sem `tempo`, não há pressão).
+- `gerar`: largura (até 12), altura (até 5), turbinas, rochas e peças travadas.
+- Nos níveis à mão, as pontas são `╵ ╶ ╷ ╴` e `travadas` lista as peças fixas: `[[x, y], ...]`.
+
+O validador gera 300 tabuleiros de cada nível e confere se todos têm solução.
 
 ### Arte
 

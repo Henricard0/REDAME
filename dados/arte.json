@@ -506,6 +506,72 @@
    "h": 24,
    "col": null,
    "quadros": 1
+  },
+  "sucata": {
+   "w": 16,
+   "h": 16,
+   "col": [
+    1,
+    0,
+    14,
+    7
+   ],
+   "quadros": 1
+  },
+  "bobina": {
+   "w": 16,
+   "h": 16,
+   "col": [
+    1,
+    0,
+    14,
+    7
+   ],
+   "quadros": 1
+  },
+  "pneus": {
+   "w": 16,
+   "h": 16,
+   "col": [
+    1,
+    0,
+    14,
+    7
+   ],
+   "quadros": 1
+  },
+  "caixa_parafusos": {
+   "w": 16,
+   "h": 16,
+   "col": [
+    0,
+    0,
+    16,
+    8
+   ],
+   "quadros": 1
+  },
+  "bancada": {
+   "w": 32,
+   "h": 24,
+   "col": [
+    0,
+    0,
+    32,
+    12
+   ],
+   "quadros": 1
+  },
+  "porta_comando": {
+   "w": 16,
+   "h": 32,
+   "col": [
+    0,
+    0,
+    16,
+    16
+   ],
+   "quadros": 1
   }
  },
  "itens": [
@@ -545,17 +611,28 @@
   "item_regua",
   "item_relatorio",
   "item_teodolito",
+  "mat_borracha",
+  "mat_cabo",
+  "mat_cobre",
+  "mat_ferro",
+  "mat_manometro",
+  "mat_parafuso",
+  "mat_valvula",
   "mini_canos",
+  "mini_trava",
   "obj_andaime",
   "obj_araucaria",
   "obj_arbusto",
   "obj_arquivo",
   "obj_arvore",
   "obj_banca",
+  "obj_bancada",
   "obj_banco",
+  "obj_bobina",
   "obj_cadeira",
   "obj_caixa_antiga",
   "obj_caixa_obra",
+  "obj_caixa_parafusos",
   "obj_caixas",
   "obj_cano_h",
   "obj_cano_v",
@@ -584,10 +661,13 @@
   "obj_painel",
   "obj_placa",
   "obj_placa_perigo",
+  "obj_pneus",
   "obj_ponto_bonde",
+  "obj_porta_comando",
   "obj_poste",
   "obj_quadro",
   "obj_revisor",
+  "obj_sucata",
   "obj_tijolos",
   "obj_turbina",
   "obj_ufpr",

@@ -207,7 +207,8 @@
     Escape: "menu",
     KeyP: "menu",
     Tab: "menu",
-    KeyQ: "girarEsq"
+    KeyQ: "girarEsq",
+    KeyH: "dica"
   };
   var Entrada = class {
     constructor(canvas) {
@@ -544,6 +545,7 @@
       this.nome = "";
       this.vars = {};
       this.itens = [];
+      this.mat = {};
       this.objetivo = "";
       this.mapa = null;
       this.x = 0;
@@ -553,7 +555,18 @@
       this.tempo = 0;
     }
     v(nome) {
+      if (nome.startsWith("mat:")) return this.mat[nome.slice(4)] || 0;
       return this.vars[nome] || 0;
+    }
+    qtd(mat) {
+      return this.mat[mat] || 0;
+    }
+    coletar(mat, n = 1) {
+      this.mat[mat] = this.qtd(mat) + n;
+    }
+    gastar(mat, n = 1) {
+      this.mat[mat] = Math.max(0, this.qtd(mat) - n);
+      if (!this.mat[mat]) delete this.mat[mat];
     }
     definir(nome, valor) {
       this.vars[nome] = valor;
@@ -572,6 +585,7 @@
     }
     // Condicao: termos separados por espaco, todos precisam valer.
     //   flag   !flag   item:x   !item:x   resgatada:x   var>=n  var<=n  var==n  var!=n  var>n  var<n
+    //   mat:ferro>=2 (quantidade de um material)
     condicao(texto) {
       if (!texto) return true;
       for (let termo of String(texto).trim().split(/\s+/)) {
@@ -600,6 +614,7 @@
         nome: this.nome,
         vars: this.vars,
         itens: this.itens,
+        mat: this.mat,
         objetivo: this.objetivo,
         mapa: this.mapa,
         x: this.x,
@@ -615,6 +630,7 @@
         nome: d.nome || "",
         vars: d.vars || {},
         itens: d.itens || [],
+        mat: d.mat || {},
         objetivo: d.objetivo || "",
         mapa: d.mapa,
         x: d.x,
@@ -718,7 +734,8 @@
       const [dx, dy] = def.desloc || [0, 0];
       this.x = cx * TILE + dx;
       this.base = (cy + 1) * TILE + dy;
-      if (tipo === "obj") {
+      if (tipo === "coleta") this.chave = `coletado:${mundo.def.id}:${cx},${cy}`;
+      if (tipo === "obj" || tipo === "coleta") {
         const meta = mundo.arte.objetos[def.obj];
         if (!meta) throw new Error(`Objeto desconhecido no mapa: ${def.obj}`);
         this.meta = meta;
@@ -737,6 +754,7 @@
       }
     }
     visivel() {
+      if (this.chave && this.mundo.estado.v(this.chave)) return false;
       return !this.def.se || this.mundo.estado.condicao(this.def.se);
     }
     caixaColisao() {
@@ -745,7 +763,7 @@
         const h = (this.def.alt || 1) * TILE;
         return { x: this.x, y: this.base - h, w, h };
       }
-      if (this.tipo === "obj") return this.col || null;
+      if (this.tipo === "obj" || this.tipo === "coleta") return this.col || null;
       if (this.tipo === "npc") return this.ator.caixa();
       if (this.tipo === "carro") return { x: this.x + 2, y: this.base - 8, w: 28, h: 8 };
       return null;
@@ -753,7 +771,7 @@
     // Area onde a protagonista pode interagir.
     caixaInteracao() {
       if (this.tipo === "npc") return { x: this.ator.x - 8, y: this.ator.y - 14, w: 16, h: 16 };
-      if (this.tipo === "obj") {
+      if (this.tipo === "obj" || this.tipo === "coleta") {
         if (this.col) return { x: this.col.x - 3, y: this.col.y - 3, w: this.col.w + 6, h: this.col.h + 6 };
         return { x: this.x, y: this.base - Math.min(this.meta.h, 24), w: this.meta.w, h: Math.min(this.meta.h, 24) };
       }
@@ -768,6 +786,7 @@
       if (!this.visivel()) return false;
       if (["npc", "item", "inspecao", "barreira"].includes(this.tipo)) return !!this.def.roteiro;
       if (this.tipo === "obj") return !!this.def.roteiro;
+      if (this.tipo === "coleta") return true;
       return false;
     }
     ordem() {
@@ -778,17 +797,18 @@
     }
     topo() {
       if (this.tipo === "npc") return { x: this.ator.x, y: this.ator.y - 30 };
-      if (this.tipo === "obj") return { x: this.x + this.meta.w / 2, y: this.base - this.meta.h - 6 };
+      if (this.tipo === "obj" || this.tipo === "coleta") return { x: this.x + this.meta.w / 2, y: this.base - this.meta.h - 6 };
       if (this.tipo === "item") return { x: this.x + 8, y: this.base - 22 };
       const w = (this.def.larg || 1) * TILE;
       const h = (this.def.alt || 1) * TILE;
       return { x: this.x + w / 2, y: this.base - h - 6 };
     }
     desenhar(d, t) {
-      if (this.tipo === "obj") {
+      if (this.tipo === "obj" || this.tipo === "coleta") {
         const m = this.meta;
         const q = m.quadros > 1 ? Math.floor(t * (this.def.fps || 4)) % m.quadros : 0;
         d.img("obj_" + this.def.obj, this.x, this.base - m.h, { sx: q * m.w, sw: m.w, sh: m.h, espelhar: this.def.espelhar });
+        if (this.tipo === "coleta" && Math.floor(t * 2 + this.cx) % 3 === 0) d.img("ui_brilho", this.x + m.w - 5, this.base - m.h - 1);
       } else if (this.tipo === "npc") {
         this.ator.desenhar(d);
       } else if (this.tipo === "item") {
@@ -1008,6 +1028,10 @@
       return melhor;
     }
     interagir(e) {
+      if (e.tipo === "coleta") {
+        this.jogo.coletar(e);
+        return;
+      }
       if (e.tipo === "npc") {
         e.ator.dir = OPOSTA[this.jogador.dir];
         e.ator.movendo = false;
@@ -1062,6 +1086,7 @@
         }
       }
       if (this.tremor > 0) this.tremor = Math.max(0, this.tremor - dt);
+      if (this.coletando) this.coletando.t += dt;
       this.camera();
     }
     atualizarRota(a, dt) {
@@ -1171,6 +1196,12 @@
       if (!this.jogo.esconderJogador) lista.push({ o: this.jogador.y, d: () => this.jogador.desenhar(dd) });
       lista.sort((a, b) => a.o - b.o);
       for (const it of lista) it.d();
+      if (this.coletando) {
+        const k = this.coletando;
+        const p = k.ent.topo();
+        dd.ret(p.x - 11, p.y - 2, 22, 5, "#14121e");
+        dd.ret(p.x - 10, p.y - 1, Math.round(20 * Math.min(1, k.t / k.dur)), 3, "#7fe3f0");
+      }
       if (mostrarAlvo && this.alvo) {
         const p = this.alvo.topo();
         const bob = Math.round(Math.sin(t * 6));
@@ -1209,7 +1240,7 @@
     }
     texto(s) {
       const e = this.jogo.estado;
-      return String(s).replace(/\{nome\}/g, e.nome || "Voc\xEA").replace(/\{v:(\w+)\}/g, (_, v) => String(e.v(v)));
+      return String(s).replace(/\{nome\}/g, e.nome || "Voc\xEA").replace(/\{v:([\w:]+)\}/g, (_, v) => String(e.v(v)));
     }
     async executar(id, ctx = {}) {
       const cmds = this.roteiros[id];
@@ -1278,6 +1309,19 @@
         }
         case "tirar":
           e.tirar(a[0]);
+          break;
+        case "coletar": {
+          const n = a[1] ? parseInt(a[1], 10) : 1;
+          e.coletar(a[0], n);
+          j.som.efeito("item");
+          j.ui.aviso(`+${n} ${j.rec.dados.materiais.materiais[a[0]]?.nome || a[0]}`);
+          break;
+        }
+        case "gastar":
+          e.gastar(a[0], a[1] ? parseInt(a[1], 10) : 1);
+          break;
+        case "bancada":
+          await j.abrirBancada();
           break;
         case "objetivo":
           e.objetivo = resto === "-" ? "" : this.texto(resto);
@@ -1573,7 +1617,13 @@
       this.brilhoObjetivo = 0;
     }
     aviso(texto) {
+      const ultimo = this.avisos[this.avisos.length - 1];
+      if (ultimo && ultimo.texto === texto) {
+        ultimo.t = Math.min(ultimo.t, 0.3);
+        return;
+      }
       this.avisos.push({ texto, t: 0 });
+      while (this.avisos.length > 2) this.avisos.shift();
     }
     banner(texto) {
       this.faixa = { texto, t: 0 };
@@ -1605,6 +1655,17 @@
         const n = e.itens.length;
         d.painel(LARG - 8 - n * 17, 3, n * 17 + 5, 24);
         e.itens.forEach((it, i) => d.img("item_" + it, LARG - 5 - (n - i) * 17, 7));
+      }
+      const mats = Object.entries(e.mat).filter(([, q]) => q > 0);
+      if (mostrarObjetivo && mats.length) {
+        const y = e.itens.length ? 29 : 3;
+        const w = mats.length * 28 + 6;
+        d.painel(LARG - 3 - w, y, w, 24);
+        mats.forEach(([m, q], i) => {
+          const x = LARG - w + i * 28 + 1;
+          d.img("mat_" + m, x, y + 4);
+          d.texto(String(q), x + 17, y + 12, COR.texto, { sombra: true });
+        });
       }
     }
     desenharAvisos(d) {
@@ -1787,8 +1848,18 @@
       super(jogo);
       this.sel = 0;
     }
+    entradas() {
+      const e = this.jogo.estado;
+      const dados = this.jogo.rec.dados;
+      const lista = e.itens.map((it) => ({ icone: "item_" + it, nome: dados.itens[it]?.nome || it, desc: dados.itens[it]?.desc || "", col: 0 }));
+      for (const [m, q] of Object.entries(e.mat)) {
+        const md = dados.materiais.materiais[m];
+        if (q > 0) lista.push({ icone: "mat_" + m, nome: `${md?.nome || m}  \xD7${q}`, desc: md?.desc || "", col: 1 });
+      }
+      return lista;
+    }
     atualizar(dt, ent) {
-      const n = this.jogo.estado.itens.length;
+      const n = this.entradas().length;
       if (n) {
         if (ent.apertou("cima")) this.sel = (this.sel + n - 1) % n;
         if (ent.apertou("baixo")) this.sel = (this.sel + 1) % n;
@@ -1797,22 +1868,126 @@
     }
     desenhar(d) {
       d.ret(0, 0, LARG, ALT, "rgba(10,8,20,0.6)");
-      d.painel(30, 18, 260, 144);
-      d.texto("ITENS", LARG / 2, 25, COR.titulo, { alinhar: "centro", sombra: true });
-      const itens = this.jogo.estado.itens;
-      const dados = this.jogo.rec.dados.itens;
-      if (!itens.length) {
-        d.texto("A mochila est\xE1 vazia.", LARG / 2, 80, COR.fraco, { alinhar: "centro" });
+      d.painel(14, 10, 292, 160);
+      const lista = this.entradas();
+      d.texto("ITENS", 86, 17, COR.titulo, { alinhar: "centro", sombra: true });
+      d.texto("MATERIAIS E PE\xC7AS", 232, 17, COR.titulo, { alinhar: "centro", sombra: true });
+      d.ret(159, 18, 1, 122, "#3b3366");
+      if (!lista.length) {
+        d.texto("A mochila est\xE1 vazia.", LARG / 2, 70, COR.fraco, { alinhar: "centro" });
         return;
       }
-      itens.forEach((it, i) => {
-        const y = 40 + i * 19;
-        if (i === this.sel) d.ret(38, y - 2, 244, 19, "rgba(127,227,240,0.15)");
-        d.img("item_" + it, 42, y);
-        d.texto(dados[it]?.nome || it, 62, y + 4, i === this.sel ? COR.destaque : COR.texto, { sombra: true });
+      const linha = [0, 0];
+      lista.forEach((it, i) => {
+        const x = it.col ? 164 : 22;
+        const y = 28 + linha[it.col] * 16;
+        linha[it.col]++;
+        if (i === this.sel) d.ret(x - 2, y - 1, 136, 16, "rgba(127,227,240,0.15)");
+        d.img(it.icone, x, y);
+        d.texto(it.nome, x + 19, y + 4, i === this.sel ? COR.destaque : COR.texto, { sombra: true });
       });
-      const desc = dados[itens[this.sel]]?.desc || "";
-      d.quebrar(desc, 240).slice(0, 3).forEach((l, k) => d.texto(l, 40, 128 + k * 9, COR.fraco));
+      const desc = lista[Math.min(this.sel, lista.length - 1)].desc;
+      d.ret(22, 142, 276, 1, "#3b3366");
+      d.quebrar(desc, 272).slice(0, 2).forEach((l, k) => d.texto(l, 24, 147 + k * 9, COR.fraco));
+    }
+  };
+  var Bancada = class extends Camada {
+    constructor(jogo) {
+      super(jogo);
+      const m = jogo.rec.dados.materiais;
+      this.mats = m.materiais;
+      this.receitas = m.receitas;
+      this.sel = 0;
+      this.brilho = 0;
+    }
+    pode(r) {
+      return Object.entries(r.precisa).every(([m, n]) => this.jogo.estado.qtd(m) >= n);
+    }
+    montar() {
+      const r = this.receitas[this.sel];
+      const nome = this.mats[r.produz]?.nome || r.produz;
+      if (!this.pode(r)) {
+        this.jogo.som.efeito("erro");
+        this.msg = { texto: "Faltam materiais para: " + nome, cor: COR.vermelho, t: 2.2 };
+        return;
+      }
+      const e = this.jogo.estado;
+      for (const [m, n] of Object.entries(r.precisa)) e.gastar(m, n);
+      e.coletar(r.produz, r.qtd || 1);
+      this.jogo.som.efeito("girar");
+      this.jogo.som.efeito("item");
+      this.brilho = 1;
+      this.msg = { texto: `Montado: ${nome}!`, cor: COR.verde, t: 2.2 };
+    }
+    atualizar(dt, ent) {
+      this.t += dt;
+      this.brilho = Math.max(0, this.brilho - dt * 1.5);
+      if (this.msg && (this.msg.t -= dt) <= 0) this.msg = null;
+      const n = this.receitas.length;
+      if (ent.apertou("cima")) {
+        this.sel = (this.sel + n - 1) % n;
+        this.jogo.som.efeito("cursor");
+      }
+      if (ent.apertou("baixo")) {
+        this.sel = (this.sel + 1) % n;
+        this.jogo.som.efeito("cursor");
+      }
+      for (const c of ent.cliques) {
+        const i = Math.floor((c.y - 28) / 22);
+        if (c.x >= 14 && c.x < 140 && i >= 0 && i < n) this.sel = i;
+        if (c.x >= 216 && c.x < 304 && c.y >= 150 && c.y < 168) this.montar();
+      }
+      if (ent.apertou("acao")) this.montar();
+      if (ent.apertou("voltar") || ent.apertou("menu")) {
+        this.jogo.som.efeito("voltar");
+        this.fechar();
+      }
+    }
+    desenhar(d, t) {
+      const e = this.jogo.estado;
+      d.ret(0, 0, LARG, ALT, "rgba(10,8,20,0.65)");
+      d.painel(8, 6, 304, 168);
+      d.texto("BANCADA DE MONTAGEM", LARG / 2, 12, COR.titulo, { alinhar: "centro", sombra: true });
+      d.ret(142, 24, 1, 120, "#3b3366");
+      this.receitas.forEach((r2, i) => {
+        const y = 28 + i * 22;
+        const sel = i === this.sel;
+        if (sel) d.ret(14, y - 2, 126, 21, "rgba(127,227,240,0.15)");
+        d.img("mat_" + r2.produz, 18, y);
+        d.texto(this.mats[r2.produz]?.nome || r2.produz, 38, y + 1, sel ? COR.destaque : COR.texto, { sombra: true });
+        d.texto(`Voc\xEA tem: ${e.qtd(r2.produz)}`, 38, y + 10, this.pode(r2) ? COR.verde : COR.fraco);
+      });
+      const base = Object.keys(this.mats).filter((m) => !this.mats[m].peca);
+      d.texto("Na mochila:", 16, 104, COR.fraco);
+      base.forEach((m, i) => {
+        const x = 16 + i % 2 * 62;
+        const y = 114 + Math.floor(i / 2) * 18;
+        d.img("mat_" + m, x, y);
+        d.texto(`\xD7${e.qtd(m)}`, x + 18, y + 5, e.qtd(m) ? COR.texto : COR.fraco);
+      });
+      const r = this.receitas[this.sel];
+      const md = this.mats[r.produz] || {};
+      const pulo = this.brilho > 0 ? -Math.round(Math.sin(this.brilho * Math.PI) * 3) : 0;
+      d.img("mat_" + r.produz, 150, 28 + pulo, { escala: 2 });
+      d.texto(md.nome || r.produz, 188, 30, COR.titulo, { sombra: true });
+      d.quebrar(md.desc || "", 116).slice(0, 3).forEach((l, k) => d.texto(l, 188, 41 + k * 9, COR.fraco));
+      d.texto("Precisa de:", 150, 74, COR.texto);
+      Object.entries(r.precisa).forEach(([m, n], k) => {
+        const y = 84 + k * 18;
+        const tem = e.qtd(m);
+        d.img("mat_" + m, 150, y);
+        d.texto(this.mats[m]?.nome || m, 170, y + 5, COR.texto);
+        d.texto(`${tem}/${n}`, 302, y + 5, tem >= n ? COR.verde : COR.vermelho, { alinhar: "direita" });
+      });
+      const ok = this.pode(r);
+      if (this.msg) d.texto(this.msg.texto, 16, 157, this.msg.cor, { sombra: true });
+      d.painel(216, 150, 88, 18, ok ? "ui_holograma" : "ui_painel");
+      d.texto(this.jogo.ent.usouToque ? "Montar" : "Montar (Espa\xE7o)", 260, 155, ok ? COR.destaque : COR.fraco, { alinhar: "centro" });
+      if (this.brilho > 0) {
+        d.ctx.globalAlpha = this.brilho * 0.5;
+        d.ret(146, 24, 160, 46, "#fff6c8");
+        d.ctx.globalAlpha = 1;
+      }
     }
   };
   var Caderneta = class extends Camada {
@@ -2064,7 +2239,7 @@
 
   // jogo/canos.js
   var VIZ = [[0, -1], [1, 0], [0, 1], [-1, 0]];
-  var BASE = { reto: [0, 2], curva: [0, 1], te: [0, 1, 2], cruz: [0, 1, 2, 3] };
+  var BASE = { reto: [0, 2], curva: [0, 1], te: [0, 1, 2], cruz: [0, 1, 2, 3], ponta: [0] };
   var SIMBOLOS = {
     "\u2502": [0, 2],
     "\u2500": [1, 3],
@@ -2076,12 +2251,50 @@
     "\u2524": [0, 2, 3],
     "\u252C": [1, 2, 3],
     "\u2534": [0, 1, 3],
-    "\u253C": [0, 1, 2, 3]
+    "\u253C": [0, 1, 2, 3],
+    "\u2575": [0],
+    "\u2576": [1],
+    "\u2577": [2],
+    "\u2574": [3]
   };
-  var INDICE = { reto: 0, curva: 1, te: 2, cruz: 3, fonte: 4, turbina: 5, base: 6, bloqueio: 7 };
+  var INDICE = { reto: 0, curva: 1, te: 2, cruz: 3, fonte: 4, turbina: 5, base: 6, bloqueio: 7, ponta: 8 };
   var girar = (lista, r) => lista.map((d) => (d + r) % 4).sort();
   var iguais = (a, b) => a.length === b.length && a.every((v, i) => v === b[i]);
-  function montarNivel(linhas) {
+  function aleatorio(semente) {
+    let s = semente >>> 0 || 1;
+    return () => {
+      s = s + 1831565813 >>> 0;
+      let t = s;
+      t = Math.imul(t ^ t >>> 15, t | 1);
+      t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function tipoPorConexoes(conns) {
+    const n = conns.length;
+    if (n === 1) return "ponta";
+    if (n === 4) return "cruz";
+    if (n === 3) return "te";
+    return conns[1] - conns[0] === 2 ? "reto" : "curva";
+  }
+  function encaixar(c, conns) {
+    c.tipo = tipoPorConexoes(conns);
+    for (let r = 0; r < 4; r++) if (iguais(girar(BASE[c.tipo], r), conns)) {
+      c.sol = r;
+      break;
+    }
+    c.rot = c.sol;
+    c.fixa = c.tipo === "cruz";
+  }
+  function orientarFixas(nivel) {
+    for (const c of nivel.cel) {
+      if (c.tipo !== "fonte" && c.tipo !== "turbina") continue;
+      const base = c.tipo === "fonte" ? 2 : 0;
+      c.rot = c.conns.length ? (c.conns[0] - base + 4) % 4 : 0;
+    }
+  }
+  function montarNivel(def) {
+    const linhas = Array.isArray(def) ? def : def.linhas;
     const grade = linhas.map((l) => [...l]);
     const h = grade.length;
     const w = Math.max(...grade.map((l) => l.length));
@@ -2090,17 +2303,8 @@
       for (let x = 0; x < w; x++) {
         const ch = grade[y][x] || ".";
         const c = { x, y, tipo: "base", rot: 0, sol: 0, fixa: true, conns: [] };
-        if (SIMBOLOS[ch]) {
-          const conns = [...SIMBOLOS[ch]].sort();
-          const n = conns.length;
-          c.tipo = n === 4 ? "cruz" : n === 3 ? "te" : conns[1] - conns[0] === 2 ? "reto" : "curva";
-          for (let r = 0; r < 4; r++) if (iguais(girar(BASE[c.tipo], r), conns)) {
-            c.sol = r;
-            break;
-          }
-          c.rot = c.sol;
-          c.fixa = c.tipo === "cruz";
-        } else if (ch === "A") c.tipo = "fonte";
+        if (SIMBOLOS[ch]) encaixar(c, [...SIMBOLOS[ch]].sort());
+        else if (ch === "A") c.tipo = "fonte";
         else if (ch === "T") c.tipo = "turbina";
         else if (ch === "#") c.tipo = "bloqueio";
         else if (ch !== "." && ch !== " ") throw new Error(`S\xEDmbolo desconhecido no n\xEDvel de canos: "${ch}"`);
@@ -2114,10 +2318,96 @@
         const v = celula(nivel, c.x + VIZ[d][0], c.y + VIZ[d][1]);
         if (v && BASE[v.tipo] && girar(BASE[v.tipo], v.sol).includes((d + 2) % 4)) c.conns.push(d);
       }
-      const base = c.tipo === "fonte" ? 2 : 0;
-      c.rot = c.conns.length ? (c.conns[0] - base + 4) % 4 : 0;
+    }
+    orientarFixas(nivel);
+    for (const [x, y] of Array.isArray(def) ? [] : def.travadas || []) {
+      const c = celula(nivel, x, y);
+      if (c && BASE[c.tipo]) c.fixa = c.travada = true;
     }
     return nivel;
+  }
+  function gerarNivel(o, semente) {
+    const r = aleatorio(semente);
+    const { w, h } = o;
+    const qtdTurbinas = o.turbinas || 2;
+    for (let tentativa = 0; tentativa < 400; tentativa++) {
+      const bloq = /* @__PURE__ */ new Set();
+      while (bloq.size < (o.bloqueios || 0)) bloq.add(Math.floor(r() * w * h));
+      const abertas = [];
+      for (let i = 0; i < w * h; i++) if (!bloq.has(i)) abertas.push(i);
+      const viz = (i) => {
+        const x = i % w;
+        const y = Math.floor(i / w);
+        const lista = [];
+        for (let d = 0; d < 4; d++) {
+          const nx = x + VIZ[d][0];
+          const ny = y + VIZ[d][1];
+          if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+          const j = ny * w + nx;
+          if (!bloq.has(j)) lista.push([d, j]);
+        }
+        return lista;
+      };
+      const conns = Array.from({ length: w * h }, () => []);
+      const inicio = abertas[Math.floor(r() * abertas.length)];
+      const na = /* @__PURE__ */ new Set([inicio]);
+      const borda = viz(inicio).map(([d, j]) => [inicio, d, j]);
+      while (borda.length) {
+        const k = Math.floor(r() * borda.length);
+        const [a, d, b] = borda[k];
+        borda[k] = borda[borda.length - 1];
+        borda.pop();
+        if (na.has(b)) continue;
+        conns[a].push(d);
+        conns[b].push((d + 2) % 4);
+        na.add(b);
+        for (const [d2, j] of viz(b)) if (!na.has(j)) borda.push([b, d2, j]);
+      }
+      if (na.size !== abertas.length) continue;
+      const folhas = abertas.filter((i) => conns[i].length === 1);
+      if (folhas.length < qtdTurbinas + 1) continue;
+      const esquerda = folhas.filter((i) => i % w < Math.ceil(w / 3));
+      if (!esquerda.length) continue;
+      const fonte = esquerda[Math.floor(r() * esquerda.length)];
+      const dist = /* @__PURE__ */ new Map([[fonte, 0]]);
+      const fila = [fonte];
+      while (fila.length) {
+        const a = fila.shift();
+        for (const d of conns[a]) {
+          const b = a + VIZ[d][0] + VIZ[d][1] * w;
+          if (!dist.has(b)) {
+            dist.set(b, dist.get(a) + 1);
+            fila.push(b);
+          }
+        }
+      }
+      const candidatas = folhas.filter((i) => i !== fonte).sort((a, b) => dist.get(b) - dist.get(a));
+      const metade = candidatas.slice(0, Math.max(qtdTurbinas, Math.ceil(candidatas.length * 0.6)));
+      const turbinas = /* @__PURE__ */ new Set();
+      while (turbinas.size < qtdTurbinas) turbinas.add(metade[Math.floor(r() * metade.length)]);
+      const cel = [];
+      for (let i = 0; i < w * h; i++) {
+        const c = { x: i % w, y: Math.floor(i / w), tipo: "base", rot: 0, sol: 0, fixa: true, conns: [] };
+        if (bloq.has(i)) c.tipo = "bloqueio";
+        else if (i === fonte) {
+          c.tipo = "fonte";
+          c.conns = [...conns[i]];
+        } else if (turbinas.has(i)) {
+          c.tipo = "turbina";
+          c.conns = [...conns[i]];
+        } else encaixar(c, [...conns[i]].sort());
+        cel.push(c);
+      }
+      const nivel = { w, h, cel, gerado: true };
+      orientarFixas(nivel);
+      const giraveis = cel.filter((c) => BASE[c.tipo] && !c.fixa && c.tipo !== "reto");
+      for (let k = 0; k < (o.travadas || 0) && giraveis.length; k++) {
+        const c = giraveis.splice(Math.floor(r() * giraveis.length), 1)[0];
+        c.fixa = c.travada = true;
+      }
+      return nivel;
+    }
+    throw new Error("N\xE3o consegui gerar um n\xEDvel de canos com essas regras");
   }
   function celula(n, x, y) {
     if (x < 0 || y < 0 || x >= n.w || y >= n.h) return null;
@@ -2149,17 +2439,31 @@
     }
     return dist;
   }
-  function resolvido(n, dist = fluxo(n)) {
-    const turb = n.cel.filter((c) => c.tipo === "turbina");
-    return turb.length > 0 && turb.every((c) => dist.has(c));
+  function vazamentos(n, dist = fluxo(n)) {
+    const lista = [];
+    for (const c of dist.keys()) {
+      for (const d of aberturas(c)) {
+        const v = celula(n, c.x + VIZ[d][0], c.y + VIZ[d][1]);
+        if (!v || !aberturas(v).includes((d + 2) % 4)) lista.push({ c, d });
+      }
+    }
+    return lista;
   }
-  function embaralhar(n, aleat = Math.random) {
+  function resolvido(n, regraVazamento = false, dist = fluxo(n)) {
+    const turb = n.cel.filter((c) => c.tipo === "turbina");
+    if (!turb.length || !turb.every((c) => dist.has(c))) return false;
+    return !regraVazamento || vazamentos(n, dist).length === 0;
+  }
+  function embaralhar(n, regraVazamento = false, aleat = Math.random) {
     const moveis = n.cel.filter((c) => BASE[c.tipo] && !c.fixa);
-    for (let tent = 0; tent < 50; tent++) {
+    for (let tent = 0; tent < 80; tent++) {
       for (const c of moveis) c.rot = Math.floor(aleat() * 4);
       const fora = moveis.filter((c) => !iguais(girar(BASE[c.tipo], c.rot), girar(BASE[c.tipo], c.sol))).length;
-      if (!resolvido(n) && fora >= Math.ceil(moveis.length * 0.5)) return;
+      if (!resolvido(n, regraVazamento) && fora >= Math.ceil(moveis.length * 0.6)) return;
     }
+  }
+  function criarNivel(nd, semente) {
+    return nd.gerar ? gerarNivel(nd.gerar, semente) : montarNivel(nd);
   }
   var MiniCanos = class extends Camada {
     constructor(jogo, def) {
@@ -2167,6 +2471,7 @@
       this.cobreTudo = true;
       this.def = def;
       this.k = -1;
+      this.gotas = [];
     }
     // chamado pelo jogo logo depois de empilhar esta camada
     iniciar() {
@@ -2178,23 +2483,31 @@
         this.fechar(true);
         return;
       }
+      this.falhas = 0;
+      this.montar();
       const nd = this.def.niveis[this.k];
-      this.nivel = montarNivel(nd.linhas);
-      embaralhar(this.nivel);
-      this.cx = 0;
-      this.cy = 0;
-      const primeira = this.nivel.cel.find((c) => BASE[c.tipo] && !c.fixa);
-      if (primeira) {
-        this.cx = primeira.x;
-        this.cy = primeira.y;
-      }
-      this.vitoria = 0;
-      this.molhado = /* @__PURE__ */ new Map();
-      this.recalcular(true);
       if (nd.fala) {
         const [quem, emo, texto] = nd.fala.split("|");
         this.jogo.empilhar(new Dialogo(this.jogo, quem, emo, texto.replace(/\{nome\}/g, this.jogo.estado.nome)));
       }
+    }
+    montar(novoTabuleiro = true) {
+      const nd = this.def.niveis[this.k];
+      if (novoTabuleiro || !this.nivel) this.nivel = criarNivel(nd, (Date.now() ^ this.k * 7919 ^ this.falhas * 104729) >>> 0);
+      this.regra = !!nd.vazamento;
+      this.tempo = nd.tempo || 0;
+      this.decorrido = 0;
+      this.giros = 0;
+      this.dicas = 0;
+      embaralhar(this.nivel, this.regra);
+      const primeira = this.nivel.cel.find((c) => BASE[c.tipo] && !c.fixa);
+      this.cx = primeira ? primeira.x : 0;
+      this.cy = primeira ? primeira.y : 0;
+      this.vitoria = 0;
+      this.estouro = 0;
+      this.molhado = /* @__PURE__ */ new Map();
+      this.vaz = [];
+      this.recalcular(true);
     }
     recalcular(silencioso) {
       const dist = fluxo(this.nivel);
@@ -2203,23 +2516,23 @@
       let turbinaNova = false;
       for (const [c, d] of dist) {
         const antes = this.molhado.get(c);
-        novo.set(c, antes !== void 0 ? antes : agora + d * 0.05);
+        novo.set(c, antes !== void 0 ? antes : agora + d * 0.04);
         if (antes === void 0 && c.tipo === "turbina") turbinaNova = true;
       }
       this.molhado = novo;
+      this.vaz = this.regra ? vazamentos(this.nivel, dist) : [];
       if (!silencioso && dist.size > 1) this.jogo.som.efeito("agua");
       if (turbinaNova && !silencioso) this.jogo.som.efeito("turbina");
-      if (resolvido(this.nivel, dist) && !this.vitoria) {
+      if (resolvido(this.nivel, this.regra, dist) && !this.vitoria) {
         this.vitoria = 1e-4;
         this.jogo.som.efeito("sucesso");
       }
     }
     geometria() {
-      const esc = 2;
-      const tam = 16 * esc;
+      const tam = this.jogo.rec.img.mini_canos.height / 2;
       const bx = Math.floor((LARG - this.nivel.w * tam) / 2);
-      const by = 26 + Math.floor((138 - this.nivel.h * tam) / 2);
-      return { esc, tam, bx, by };
+      const by = 36 + Math.floor((122 - this.nivel.h * tam) / 2);
+      return { tam, bx, by };
     }
     girarCelula(c, sentido) {
       if (!c || !BASE[c.tipo] || c.fixa) {
@@ -2228,16 +2541,64 @@
       }
       c.rot = (c.rot + sentido + 4) % 4;
       c.anim = -sentido;
+      this.giros++;
       this.jogo.som.efeito("girar");
       this.recalcular(false);
+    }
+    dica() {
+      const erradas = this.nivel.cel.filter((c2) => BASE[c2.tipo] && !c2.fixa && !iguais(girar(BASE[c2.tipo], c2.rot), girar(BASE[c2.tipo], c2.sol)));
+      if (!erradas.length) return;
+      const perto = erradas.filter((c2) => VIZ.some(([dx, dy]) => this.molhado.has(celula(this.nivel, c2.x + dx, c2.y + dy))));
+      const lista = perto.length ? perto : erradas;
+      const c = lista[Math.floor(Math.random() * lista.length)];
+      c.rot = c.sol;
+      c.anim = 1;
+      c.dicaT = this.t;
+      this.cx = c.x;
+      this.cy = c.y;
+      this.dicas++;
+      if (this.tempo) this.decorrido += this.tempo * 0.1;
+      this.jogo.som.efeito("confirmar");
+      this.recalcular(false);
+    }
+    pausar() {
+      const menu = new Menu(this.jogo, [
+        { texto: "Continuar", acao: (m) => m.fechar() },
+        { texto: "Recome\xE7ar n\xEDvel", acao: (m) => {
+          m.fechar();
+          this.montar(false);
+        } },
+        { texto: "Pular este desafio", acao: (m) => {
+          m.fechar();
+          this.vitoria = 1.6;
+        } }
+      ], { titulo: "Pausa", escurecer: 0.5 });
+      this.jogo.empilhar(menu);
     }
     atualizar(dt, ent) {
       this.t += dt;
       for (const c of this.nivel.cel) if (c.anim) c.anim = Math.sign(c.anim) * Math.max(0, Math.abs(c.anim) - dt * 9);
+      this.atualizarGotas(dt);
       if (this.vitoria) {
         this.vitoria += dt;
         if (this.vitoria > 2.2) this.proximo();
         return;
+      }
+      if (this.estouro) {
+        this.estouro += dt;
+        if (this.estouro > 2.2) {
+          this.falhas++;
+          this.montar(true);
+        }
+        return;
+      }
+      if (this.tempo) {
+        this.decorrido += dt;
+        if (this.decorrido >= this.tempo) {
+          this.estouro = 1e-4;
+          this.jogo.som.efeito("tremor");
+          return;
+        }
       }
       const n = this.nivel;
       if (ent.apertou("cima")) this.cy = (this.cy + n.h - 1) % n.h;
@@ -2246,8 +2607,13 @@
       if (ent.apertou("dir")) this.cx = (this.cx + 1) % n.w;
       if (ent.apertou("acao")) this.girarCelula(celula(n, this.cx, this.cy), 1);
       if (ent.apertou("girarEsq")) this.girarCelula(celula(n, this.cx, this.cy), -1);
+      if (ent.apertou("dica")) this.dica();
       const g = this.geometria();
       for (const cl of ent.cliques) {
+        if (cl.y < 34 && cl.x > LARG - 60) {
+          this.dica();
+          continue;
+        }
         const x = Math.floor((cl.x - g.bx) / g.tam);
         const y = Math.floor((cl.y - g.by) / g.tam);
         if (x >= 0 && y >= 0 && x < n.w && y < n.h) {
@@ -2256,70 +2622,105 @@
           this.girarCelula(celula(n, x, y), 1);
         }
       }
-      if (ent.apertou("menu") || ent.apertou("voltar")) {
-        const menu = new Menu(this.jogo, [
-          { texto: "Continuar tentando", acao: (m) => m.fechar() },
-          { texto: "Pular este desafio", acao: (m) => {
-            m.fechar();
-            this.vitoria = 1.6;
-          } }
-        ], { titulo: "Pausa", escurecer: 0.5 });
-        this.jogo.empilhar(menu);
+      if (ent.apertou("menu") || ent.apertou("voltar")) this.pausar();
+    }
+    atualizarGotas(dt) {
+      const g = this.nivel && this.geometria();
+      if (g && this.vaz.length && !this.vitoria) {
+        for (const { c, d } of this.vaz) {
+          if (Math.random() > dt * 14) continue;
+          const cx = g.bx + c.x * g.tam + g.tam / 2 + VIZ[d][0] * (g.tam / 2);
+          const cy = g.by + c.y * g.tam + g.tam / 2 + VIZ[d][1] * (g.tam / 2);
+          this.gotas.push({ x: cx, y: cy, vx: VIZ[d][0] * 30 + (Math.random() - 0.5) * 30, vy: VIZ[d][1] * 30 - 20 - Math.random() * 20, v: 0.6 });
+        }
       }
+      for (const p of this.gotas) {
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vy += 120 * dt;
+        p.v -= dt;
+      }
+      this.gotas = this.gotas.filter((p) => p.v > 0);
     }
     desenhar(d, t) {
       const c = d.ctx;
       d.ret(0, 0, LARG, ALT, "#151a26");
-      for (let x = 0; x < LARG; x += 16) d.ret(x, 0, 1, ALT, "#1b2130");
+      for (let x2 = 0; x2 < LARG; x2 += 16) d.ret(x2, 0, 1, ALT, "#1b2130");
       for (let y = 0; y < ALT; y += 16) d.ret(0, y, LARG, 1, "#1b2130");
-      d.ret(0, 0, LARG, 22, "#0e121c");
-      d.ret(0, 22, LARG, 1, COR.titulo);
-      d.texto(this.def.titulo, 8, 7, COR.titulo, { sombra: true });
-      d.texto(`N\xEDvel ${this.k + 1}/${this.def.niveis.length}`, LARG - 8, 7, COR.fraco, { alinhar: "direita" });
+      d.ret(0, 0, LARG, 33, "#0e121c");
+      d.ret(0, 33, LARG, 1, COR.titulo);
+      d.texto(this.def.titulo, 8, 4, COR.titulo, { sombra: true });
+      d.texto(`N\xEDvel ${this.k + 1}/${this.def.niveis.length}`, LARG - 8, 4, COR.fraco, { alinhar: "direita" });
+      let x = 8;
+      if (this.tempo) {
+        const p = Math.min(1, this.decorrido / this.tempo);
+        d.texto("PRESS\xC3O", x, 19, p > 0.8 && Math.floor(t * 6) % 2 === 0 ? COR.vermelho : COR.texto);
+        x += 38;
+        d.ret(x, 19, 82, 8, "#2a2f40");
+        const cor = p < 0.6 ? "#7fd36a" : p < 0.85 ? "#e8c04a" : "#e5675b";
+        d.ret(x + 1, 20, Math.round(80 * p), 6, cor);
+        d.moldura(x, 19, 82, 8, "#5a6280");
+        x += 90;
+      }
+      d.texto(`Giros: ${this.giros}`, x, 19, COR.fraco);
+      x += 46;
+      if (this.regra) d.texto(`Vazamentos: ${this.vaz.length}`, x, 19, this.vaz.length ? COR.vermelho : COR.verde);
+      d.painel(LARG - 52, 16, 46, 14, "ui_holograma");
+      d.texto("Dica (H)", LARG - 29, 19, COR.destaque, { alinhar: "centro" });
       const g = this.geometria();
       const n = this.nivel;
       const img = this.jogo.rec.img.mini_canos;
-      d.painel(g.bx - 6, g.by - 6, n.w * g.tam + 12, n.h * g.tam + 12);
+      const T = g.tam;
+      d.painel(g.bx - 6, g.by - 6, n.w * T + 12, n.h * T + 12);
       for (const cel of n.cel) {
-        const px = g.bx + cel.x * g.tam;
-        const py = g.by + cel.y * g.tam;
-        c.drawImage(img, INDICE.base * 16, 0, 16, 16, px, py, g.tam, g.tam);
+        const px = g.bx + cel.x * T;
+        const py = g.by + cel.y * T;
+        c.drawImage(img, INDICE.base * T, 0, T, T, px, py, T, T);
         if (cel.tipo === "base") continue;
         const m = this.molhado.get(cel);
         const cheio = m !== void 0 && t >= m ? 1 : 0;
         const ang = (cel.rot + (cel.anim || 0)) * Math.PI / 2;
         c.save();
-        c.translate(px + g.tam / 2, py + g.tam / 2);
+        c.translate(px + T / 2, py + T / 2);
         c.rotate(ang);
-        c.drawImage(img, INDICE[cel.tipo] * 16, cheio * 16, 16, 16, -g.tam / 2, -g.tam / 2, g.tam, g.tam);
+        c.drawImage(img, INDICE[cel.tipo] * T, cheio * T, T, T, -T / 2, -T / 2, T, T);
         c.restore();
+        if (cel.travada) d.img("mini_trava", px, py);
+        if (cel.dicaT !== void 0 && t - cel.dicaT < 1) d.moldura(px + 2, py + 2, T - 4, T - 4, COR.verde);
         if (cel.tipo === "turbina" && cheio) {
-          const cx = px + g.tam / 2;
-          const cy = py + g.tam / 2 + 2;
+          const cx = px + T / 2;
+          const cy = py + T / 2 + 1;
           c.strokeStyle = "#fff6c8";
           c.lineWidth = 2;
           for (let k = 0; k < 2; k++) {
             const a = t * 10 + k * Math.PI / 2;
             c.beginPath();
-            c.moveTo(Math.round(cx - Math.cos(a) * 6), Math.round(cy - Math.sin(a) * 6));
-            c.lineTo(Math.round(cx + Math.cos(a) * 6), Math.round(cy + Math.sin(a) * 6));
+            c.moveTo(Math.round(cx - Math.cos(a) * 5), Math.round(cy - Math.sin(a) * 5));
+            c.lineTo(Math.round(cx + Math.cos(a) * 5), Math.round(cy + Math.sin(a) * 5));
             c.stroke();
           }
         }
       }
-      if (!this.vitoria) {
+      for (const p of this.gotas) d.ret(p.x, p.y, 2, 2, `rgba(150,210,255,${Math.min(1, p.v * 2)})`);
+      if (!this.vitoria && !this.estouro) {
         const pisca = Math.floor(t * 4) % 2 === 0 ? COR.destaque : "#ffffff";
-        d.moldura(g.bx + this.cx * g.tam, g.by + this.cy * g.tam, g.tam, g.tam, pisca);
-        d.moldura(g.bx + this.cx * g.tam + 1, g.by + this.cy * g.tam + 1, g.tam - 2, g.tam - 2, pisca);
+        d.moldura(g.bx + this.cx * T, g.by + this.cy * T, T, T, pisca);
+        d.moldura(g.bx + this.cx * T + 1, g.by + this.cy * T + 1, T - 2, T - 2, pisca);
       }
       const toque = this.jogo.ent.usouToque;
-      const ajuda = toque ? "Toque num cano para gir\xE1-lo" : "Setas: mover   Espa\xE7o: girar   Q: girar ao contr\xE1rio   Esc: pausa";
+      const ajuda = toque ? "Toque num cano para girar   B: pausa" : "Setas: mover   Espa\xE7o: girar   Q: voltar   H: dica   Esc: pausa";
       d.texto(ajuda, LARG / 2, ALT - 11, COR.fraco, { alinhar: "centro" });
-      if (this.vitoria) {
-        const a = Math.min(1, this.vitoria * 3);
-        c.globalAlpha = a;
-        d.ret(0, 70, LARG, 30, "rgba(14,12,26,0.8)");
-        d.texto(this.def.vitoria || "TURBINAS GIRANDO!", LARG / 2, 78, COR.titulo, { alinhar: "centro", escala: 2, sombra: true });
+      if (this.vitoria || this.estouro) {
+        const v = this.vitoria || this.estouro;
+        c.globalAlpha = Math.min(1, v * 3);
+        d.ret(0, 70, LARG, 40, "rgba(14,12,26,0.85)");
+        if (this.vitoria) {
+          d.texto(this.def.vitoria || "TURBINAS GIRANDO!", LARG / 2, 76, COR.titulo, { alinhar: "centro", escala: 2, sombra: true });
+          d.texto(`${this.giros} giros${this.dicas ? ` \xB7 ${this.dicas} dica${this.dicas > 1 ? "s" : ""}` : ""}`, LARG / 2, 96, COR.fraco, { alinhar: "centro" });
+        } else {
+          d.texto("A PRESS\xC3O ESTOUROU!", LARG / 2, 76, COR.vermelho, { alinhar: "centro", escala: 2, sombra: true });
+          d.texto("As comportas fecharam. Um novo tabuleiro vai come\xE7ar.", LARG / 2, 96, COR.texto, { alinhar: "centro" });
+        }
         c.globalAlpha = 1;
       }
     }
@@ -2353,7 +2754,7 @@
     async carregar(progresso) {
       const r = this.rec;
       r.dados.config = await r.json("config");
-      await r.carregar(["arte", "fonte", "personagens", "itens", "pioneiras"], progresso);
+      await r.carregar(["arte", "fonte", "personagens", "itens", "pioneiras", "materiais"], progresso);
       r.dados.mapas = {};
       for (const m of r.dados.config.mapas) r.dados.mapas[m] = await r.json("mapas/" + m);
       r.dados.minigames = {};
@@ -2471,6 +2872,34 @@
       if (!this.estado.resgatadas.includes(id)) this.estado.resgatadas.push(id);
       this.salvar(false);
       if (faixa) this.som.tocarMusica(faixa);
+    }
+    abrirBancada() {
+      return this.empilhar(new Bancada(this));
+    }
+    // Coleta um material de um ponto do mapa (com uma barrinha de progresso).
+    async coletar(e) {
+      if (this.mundo.coletando) return;
+      this.ocupado++;
+      try {
+        const dur = 0.75;
+        this.mundo.coletando = { ent: e, t: 0, dur };
+        for (let k = 0; k < 3; k++) {
+          this.som.efeito("girar");
+          await this.esperar(dur / 3);
+        }
+        this.mundo.coletando = null;
+        this.estado.definir(e.chave, 1);
+        const qtd = e.def.qtd || 1;
+        const nome = this.rec.dados.materiais.materiais[e.def.mat]?.nome || e.def.mat;
+        this.estado.coletar(e.def.mat, qtd);
+        this.som.efeito("item");
+        this.hud.aviso(`+${qtd} ${nome}`);
+        if (e.def.roteiro) await this.rodarRoteiro(this.mundo.escolherRoteiro(e.def.roteiro));
+        if (this.mundo.def.ao_coletar) await this.rodarRoteiro(this.mundo.def.ao_coletar);
+      } finally {
+        this.mundo.coletando = null;
+        this.ocupado--;
+      }
     }
     abrirCaderneta(id) {
       return this.empilhar(new Caderneta(this, id));

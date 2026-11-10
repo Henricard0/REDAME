@@ -4,7 +4,7 @@ import { Som } from "./som.js";
 import { Estado } from "./estado.js";
 import { Mundo } from "./mundo.js";
 import { Roteirista } from "./roteiro.js";
-import { Dialogo, Escolha, Menu, Hud, Titulo, EntradaNome, Inventario, Caderneta, Gravacao, Seletor, FimDemo } from "./ui.js";
+import { Dialogo, Escolha, Menu, Hud, Titulo, EntradaNome, Inventario, Caderneta, Gravacao, Seletor, FimDemo, Bancada } from "./ui.js";
 import { MiniCanos } from "./canos.js";
 
 class Jogo {
@@ -35,7 +35,7 @@ class Jogo {
   async carregar(progresso) {
     const r = this.rec;
     r.dados.config = await r.json("config");
-    await r.carregar(["arte", "fonte", "personagens", "itens", "pioneiras"], progresso);
+    await r.carregar(["arte", "fonte", "personagens", "itens", "pioneiras", "materiais"], progresso);
     r.dados.mapas = {};
     for (const m of r.dados.config.mapas) r.dados.mapas[m] = await r.json("mapas/" + m);
     r.dados.minigames = {};
@@ -164,6 +164,36 @@ class Jogo {
     if (!this.estado.resgatadas.includes(id)) this.estado.resgatadas.push(id);
     this.salvar(false);
     if (faixa) this.som.tocarMusica(faixa);
+  }
+
+  abrirBancada() {
+    return this.empilhar(new Bancada(this));
+  }
+
+  // Coleta um material de um ponto do mapa (com uma barrinha de progresso).
+  async coletar(e) {
+    if (this.mundo.coletando) return;
+    this.ocupado++;
+    try {
+      const dur = 0.75;
+      this.mundo.coletando = { ent: e, t: 0, dur };
+      for (let k = 0; k < 3; k++) {
+        this.som.efeito("girar");
+        await this.esperar(dur / 3);
+      }
+      this.mundo.coletando = null;
+      this.estado.definir(e.chave, 1);
+      const qtd = e.def.qtd || 1;
+      const nome = this.rec.dados.materiais.materiais[e.def.mat]?.nome || e.def.mat;
+      this.estado.coletar(e.def.mat, qtd);
+      this.som.efeito("item");
+      this.hud.aviso(`+${qtd} ${nome}`);
+      if (e.def.roteiro) await this.rodarRoteiro(this.mundo.escolherRoteiro(e.def.roteiro));
+      if (this.mundo.def.ao_coletar) await this.rodarRoteiro(this.mundo.def.ao_coletar);
+    } finally {
+      this.mundo.coletando = null;
+      this.ocupado--;
+    }
   }
 
   abrirCaderneta(id) {

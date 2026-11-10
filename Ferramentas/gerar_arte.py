@@ -1421,52 +1421,150 @@ def gerar_ui():
 
 # ================================================================ MINIGAME: TUBULACOES
 def gerar_canos():
-    """Pecas 16x16. Conexoes no estado sem rotacao:
-    reto=N,S  curva=N,L  te=N,L,S  cruz=N,L,S,O  fonte=S  turbina=N"""
-    cores_cano = (c(150, 160, 172), c(108, 116, 128), c(186, 196, 206))
-    cores_agua = (c(70, 156, 236), c(44, 110, 190), c(150, 210, 255))
-    folha = Tela(16 * 8, 16 * 2)
-    pecas = ["reto", "curva", "te", "cruz", "fonte", "turbina", "base", "bloqueio"]
+    """Pecas 24x24. Conexoes no estado sem rotacao (N=cima, L=direita, S=baixo, O=esquerda):
+    reto=N,S  curva=N,L  te=N,L,S  cruz=N,L,S,O  fonte=S  turbina=N  ponta=N
+    Linha 0: seca. Linha 1: com agua."""
+    T = 24
+    cores_cano = (c(150, 160, 172), c(108, 116, 128), c(190, 200, 210))
+    cores_agua = (c(70, 156, 236), c(40, 104, 184), c(160, 216, 255))
+    pecas = ["reto", "curva", "te", "cruz", "fonte", "turbina", "base", "bloqueio", "ponta"]
+    folha = Tela(T * len(pecas), T * 2)
+    m0, m1 = 8, 16  # o cano ocupa as colunas/linhas 8..15
     for linha, (cor, cor_e, cor_c) in enumerate([cores_cano, cores_agua]):
         for k, nome in enumerate(pecas):
-            t = Tela(16, 16)
-            t.ret(0, 0, 16, 16, c(52, 58, 72)); t.moldura(0, 0, 16, 16, c(40, 44, 56))
-            for (x, y) in [(1, 1), (14, 1), (1, 14), (14, 14)]:
-                t.p(x, y, c(90, 96, 110))
+            t = Tela(T, T)
+            t.ret(0, 0, T, T, c(50, 56, 70)); t.moldura(0, 0, T, T, c(38, 42, 54))
+            for (x, y) in [(2, 2), (T - 3, 2), (2, T - 3), (T - 3, T - 3)]:
+                t.p(x, y, c(92, 98, 112))
 
             def braco(d):
                 if d == "N":
-                    t.ret(5, 0, 6, 9, cor); t.ret(5, 0, 6, 1, cor_e); t.ret(6, 0, 1, 9, cor_c)
+                    t.ret(m0, 0, 8, m1, cor); t.ret(m0 + 1, 0, 2, m1, cor_c); t.ret(m0 + 7, 0, 1, m1, cor_e)
+                    t.ret(m0 - 1, 1, 10, 2, cor_e)
                 if d == "S":
-                    t.ret(5, 7, 6, 9, cor); t.ret(6, 7, 1, 9, cor_c)
+                    t.ret(m0, m0, 8, T - m0, cor); t.ret(m0 + 1, m0, 2, T - m0, cor_c); t.ret(m0 + 7, m0, 1, T - m0, cor_e)
+                    t.ret(m0 - 1, T - 3, 10, 2, cor_e)
                 if d == "L":
-                    t.ret(7, 5, 9, 6, cor); t.ret(7, 6, 9, 1, cor_c)
+                    t.ret(m0, m0, T - m0, 8, cor); t.ret(m0, m0 + 1, T - m0, 2, cor_c); t.ret(m0, m0 + 7, T - m0, 1, cor_e)
+                    t.ret(T - 3, m0 - 1, 2, 10, cor_e)
                 if d == "O":
-                    t.ret(0, 5, 9, 6, cor); t.ret(0, 6, 9, 1, cor_c)
+                    t.ret(0, m0, m1, 8, cor); t.ret(0, m0 + 1, m1, 2, cor_c); t.ret(0, m0 + 7, m1, 1, cor_e)
+                    t.ret(1, m0 - 1, 2, 10, cor_e)
 
             conex = {"reto": "NS", "curva": "NL", "te": "NLS", "cruz": "NLSO", "fonte": "S", "turbina": "N",
-                     "base": "", "bloqueio": ""}[nome]
+                     "base": "", "bloqueio": "", "ponta": "N"}[nome]
             for d in conex:
                 braco(d)
             if conex:
-                t.ret(5, 5, 6, 6, cor); t.ret(6, 6, 2, 2, cor_c)
+                t.ret(m0, m0, 8, 8, cor); t.ret(m0 + 1, m0 + 1, 3, 3, cor_c)
             if nome == "fonte":
-                t.elipse(8, 7, 6, 6, c(60, 120, 200)); t.elipse(8, 7, 4, 4, c(100, 170, 240))
-                t.moldura(2, 1, 12, 12, c(150, 160, 172))
+                t.elipse(12, 11, 9, 9, c(150, 160, 172)); t.elipse(12, 11, 7, 7, c(56, 116, 196))
+                t.elipse(12, 11, 5, 5, c(96, 168, 240)); t.ret(9, 8, 3, 1, c(200, 230, 255))
             if nome == "turbina":
-                t.elipse(8, 9, 6.5, 6.5, c(196, 160, 60))
-                t.elipse(8, 9, 4, 4, c(30, 40, 50) if linha == 0 else c(250, 236, 140))
-                t.linha(5, 9, 11, 9, c(200, 210, 220)); t.linha(8, 6, 8, 12, c(200, 210, 220))
+                t.elipse(12, 13, 9, 9, c(196, 160, 60)); t.elipse(12, 13, 7, 7, c(150, 116, 40))
+                t.elipse(12, 13, 5, 5, c(30, 40, 50) if linha == 0 else c(250, 236, 140))
+            if nome == "ponta":
+                t.elipse(12, 12, 5.5, 5.5, c(196, 70, 60)); t.elipse(12, 12, 3, 3, c(150, 44, 40))
+                t.ret(11, 7, 2, 10, c(220, 120, 100)); t.ret(7, 11, 10, 2, c(220, 120, 100))
             if nome == "bloqueio":
-                t.ret(2, 2, 12, 12, c(96, 90, 96)); ruido(t, 2, 2, 12, 12, [c(80, 76, 82), c(110, 104, 110)], 0.3, 3)
-            folha.colar(t, k * 16, linha * 16)
+                t.ret(2, 2, T - 4, T - 4, c(96, 90, 96))
+                ruido(t, 2, 2, T - 4, T - 4, [c(80, 76, 82), c(112, 106, 112)], 0.35, 3)
+                t.linha(5, 6, 10, 10, c(70, 66, 72)); t.linha(14, 15, 19, 18, c(70, 66, 72))
+            folha.colar(t, k * T, linha * T)
     folha.salvar("mini_canos")
+    # sobreposicao de peca travada: parafusos nos cantos e um cadeado
+    t = Tela(T, T)
+    for (x, y) in [(1, 1), (T - 5, 1), (1, T - 5), (T - 5, T - 5)]:
+        t.ret(x, y, 4, 4, c(214, 140, 60)); t.ret(x + 1, y + 1, 2, 2, c(150, 90, 36))
+    t.ret(17, 14, 6, 5, c(230, 196, 80)); t.moldura(18, 11, 4, 4, c(230, 196, 80)); t.p(20, 16, c(80, 60, 20))
+    t.contorno()
+    t.salvar("mini_trava")
+
+
+# ================================================================ MATERIAIS
+def gerar_materiais():
+    icones = {}
+
+    def icone(nome):
+        t = Tela(16, 16)
+        icones[nome] = t
+        return t
+
+    t = icone("ferro")
+    t.ret(2, 8, 7, 4, c(120, 124, 132)); t.ret(2, 8, 7, 1, c(170, 174, 182))
+    t.ret(7, 4, 6, 3, c(140, 120, 110)); t.ret(7, 4, 6, 1, c(180, 150, 130))
+    t.ret(9, 10, 5, 4, c(100, 104, 112)); t.p(4, 10, c(170, 110, 70)); t.p(11, 5, c(170, 110, 70))
+    t = icone("cobre")
+    t.elipse(8, 8, 6, 6, c(196, 110, 60)); t.elipse(8, 8, 4, 4, c(150, 76, 40)); t.elipse(8, 8, 2, 2, c(90, 60, 40))
+    for k in range(3):
+        t.linha(3 + k * 3, 4, 3 + k * 3, 12, c(230, 150, 90))
+    t = icone("borracha")
+    t.elipse(8, 9, 6.5, 4.5, c(40, 40, 46)); t.elipse(8, 9, 3.5, 2, c(0, 0, 0, 0))
+    for j in range(16):
+        for i in range(16):
+            if ((i + 0.5 - 8) / 3.5) ** 2 + ((j + 0.5 - 9) / 2) ** 2 <= 1:
+                t.px[i, j] = T
+    t.ret(5, 5, 6, 1, c(80, 80, 90))
+    t = icone("parafuso")
+    for (x, y) in [(3, 3), (9, 6)]:
+        t.ret(x, y, 5, 2, c(190, 194, 200)); t.ret(x + 1, y + 2, 3, 6, c(150, 154, 162))
+        for k in range(3):
+            t.p(x + 1, y + 3 + k * 2, c(110, 114, 122))
+    t = icone("valvula")
+    t.ret(7, 9, 2, 6, c(120, 126, 136))
+    t.elipse(8, 7, 6, 6, c(200, 60, 50)); t.elipse(8, 7, 3.5, 3.5, c(140, 36, 30)); t.elipse(8, 7, 1.5, 1.5, c(220, 200, 90))
+    t.linha(3, 7, 13, 7, c(230, 100, 90)); t.linha(8, 2, 8, 12, c(230, 100, 90))
+    t = icone("cabo")
+    t.elipse(7, 8, 5.5, 5.5, c(60, 120, 70)); t.elipse(7, 8, 3, 3, c(40, 80, 50)); t.elipse(7, 8, 1.5, 1.5, c(196, 110, 60))
+    t.ret(11, 11, 4, 3, c(60, 60, 70)); t.ret(14, 12, 2, 1, c(196, 160, 60))
+    t = icone("manometro")
+    t.ret(7, 12, 2, 4, c(196, 160, 60))
+    t.elipse(8, 7, 6.5, 6.5, c(196, 160, 60)); t.elipse(8, 7, 5, 5, c(240, 238, 228))
+    t.linha(8, 7, 11, 4, c(200, 50, 40)); t.p(5, 4, c(60, 60, 60)); t.p(11, 10, c(60, 60, 60)); t.p(4, 8, c(60, 60, 60))
+    for nome, t in icones.items():
+        t.contorno()
+        t.salvar("mat_" + nome)
+
+    # pontos de coleta no mundo
+    t = objeto("sucata", 16, 16, [1, 0, 14, 7])
+    t.ret(1, 9, 14, 6, c(110, 114, 122)); t.ret(3, 6, 9, 4, c(140, 120, 110)); t.ret(5, 3, 5, 4, c(124, 128, 136))
+    t.ret(1, 9, 14, 1, c(160, 164, 172)); t.p(8, 7, c(176, 110, 70)); t.p(4, 12, c(176, 110, 70))
+    t.contorno(); t.salvar("obj_sucata")
+    t = objeto("bobina", 16, 16, [1, 0, 14, 7])
+    t.ret(2, 2, 12, 13, c(150, 110, 70)); t.ret(2, 2, 12, 2, c(120, 86, 54)); t.ret(2, 13, 12, 2, c(120, 86, 54))
+    for y in range(5, 13, 2):
+        t.ret(3, y, 10, 1, c(206, 120, 66)); t.ret(3, y + 1, 10, 1, c(176, 96, 52))
+    t.contorno(); t.salvar("obj_bobina")
+    t = objeto("pneus", 16, 16, [1, 0, 14, 7])
+    for (cx, cy) in [(8, 12), (8, 8), (8, 4)]:
+        t.elipse(cx, cy, 6.5, 3, c(44, 44, 50)); t.elipse(cx, cy, 3, 1.3, c(80, 80, 88))
+    t.contorno(); t.salvar("obj_pneus")
+    t = objeto("caixa_parafusos", 16, 16, [0, 0, 16, 8])
+    t.ret(1, 6, 14, 9, c(160, 116, 70)); t.ret(1, 6, 14, 2, c(184, 140, 90)); t.moldura(1, 6, 14, 9, c(120, 84, 48))
+    for (x, y) in [(3, 4), (6, 3), (9, 4), (12, 3), (5, 5), (10, 5)]:
+        t.ret(x, y, 2, 2, c(196, 200, 206))
+    t.contorno(); t.salvar("obj_caixa_parafusos")
+    t = objeto("bancada", 32, 24, [0, 0, 32, 12])
+    t.ret(0, 6, 32, 9, c(140, 96, 58)); t.ret(0, 6, 32, 2, c(170, 122, 78))
+    t.ret(2, 15, 3, 9, c(100, 66, 40)); t.ret(27, 15, 3, 9, c(100, 66, 40)); t.ret(2, 19, 28, 2, c(100, 66, 40))
+    t.ret(3, 1, 7, 6, c(90, 96, 110)); t.ret(5, 0, 3, 2, c(120, 126, 140))
+    t.linha(14, 4, 20, 2, c(150, 156, 166)); t.ret(19, 1, 3, 3, c(150, 156, 166))
+    t.ret(24, 3, 5, 3, c(200, 60, 50)); t.ret(25, 2, 3, 1, c(200, 60, 50))
+    t.contorno(); t.salvar("obj_bancada")
+    t = objeto("porta_comando", 16, 32, [0, 0, 16, 16])
+    t.ret(0, 4, 16, 28, c(96, 104, 116)); t.moldura(0, 4, 16, 28, c(60, 66, 76))
+    t.ret(2, 6, 12, 24, c(116, 124, 136))
+    for y in (8, 16, 24):
+        t.ret(2, y, 12, 1, c(80, 86, 98))
+    t.elipse(8, 18, 4, 4, c(200, 60, 50)); t.elipse(8, 18, 2, 2, c(130, 36, 30))
+    t.ret(3, 0, 10, 5, c(240, 200, 40)); t.linha(3, 0, 7, 4, c(40, 40, 40)); t.linha(8, 0, 12, 4, c(40, 40, 40))
+    t.contorno(); t.salvar("obj_porta_comando")
 
 
 # ================================================================ FONTE BITMAP
 def gerar_fonte():
     chars = [chr(i) for i in range(32, 127)]
-    chars += list("ÀÁÂÃÄÇÉÊÈÍÎÓÔÕÖÚÛÜàáâãäçéêèíîóôõöúûüñÑ°ºª«»—–…“”‘’•·")
+    chars += list("ÀÁÂÃÄÇÉÊÈÍÎÓÔÕÖÚÛÜàáâãäçéêèíîóôõöúûüñÑ°ºª«»—–…“”‘’•·×")
     f = ImageFont.truetype(FONTE_TTF, 8)
     ascent, descent = f.getmetrics()
     altura = ascent + descent + 1
@@ -1556,6 +1654,7 @@ def main():
     itens = gerar_itens()
     gerar_ui()
     gerar_canos()
+    gerar_materiais()
     gerar_fonte()
     arquivos = sorted(f[:-4] for f in os.listdir(SAIDA) if f.endswith(".png"))
     meta = {"tiles": indice, "tiles_colunas": 8, "objetos": OBJETOS, "itens": itens, "emocoes": EMOCOES,

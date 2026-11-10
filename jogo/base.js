@@ -219,6 +219,7 @@ const TECLAS = {
   KeyX: "voltar", Backspace: "voltar", ShiftLeft: "correr", ShiftRight: "correr",
   Escape: "menu", KeyP: "menu", Tab: "menu",
   KeyQ: "girarEsq",
+  KeyH: "dica",
 };
 
 export class Entrada {

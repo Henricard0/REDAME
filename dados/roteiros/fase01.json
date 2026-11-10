@@ -343,11 +343,13 @@
   "narra O Revisor salta no tempo. Na Serra do Mar, a usina está sendo escavada dentro da rocha.",
   "fala enedina_obra determinada Bem-vinda ao canteiro da Capivari-Cachoeira! A água desce do alto da serra por túneis e condutos até as turbinas.",
   "fala protagonista surpresa Uma usina inteira dentro da montanha...",
-  "fala enedina_obra neutro A casa de força fica escavada na rocha. Antes de ligar as turbinas, precisamos inspecionar as três galerias.",
-  "fala enedina_obra determinada Condutos forçados ao norte, casa de força ao sul e ventilação a nordeste. Espero você na sala de comando, no fim do túnel.",
-  "andar enedina 22 12 110",
+  "fala enedina_obra triste Mas temos um problema: a umidade estragou o mecanismo da porta da sala de comando. Sem ela, não chegamos ao painel.",
+  "fala enedina_obra determinada Vamos fabricar peças novas: duas válvulas de comporta, um cabo isolado e um manômetro.",
+  "fala enedina_obra neutro Junte sucata de ferro, fio de cobre, borracha e parafusos pelas galerias. A bancada de montagem fica na oficina, logo ao sul da entrada.",
+  "fala enedina_obra determinada E inspecione as três galerias: condutos ao norte, casa de força ao sul e ventilação a nordeste. Espero você na porta da sala de comando.",
+  "andar enedina 30 13 160",
   "flag usina_intro",
-  "objetivo Inspecione as galerias da usina ({v:inspecoes}/3)."
+  "rodar objetivo_usina"
  ],
  "insp_condutos": [
   "se insp_condutos => insp_condutos_feito | insp_condutos_novo"
@@ -390,15 +392,12 @@
  ],
  "inspecao_feita": [
   "somar inspecoes 1",
-  "somar memoria_usina 20",
-  "se inspecoes>=3 => inspecoes_completas | inspecoes_parcial"
- ],
- "inspecoes_parcial": [
-  "objetivo Inspecione as galerias da usina ({v:inspecoes}/3)."
+  "somar memoria_usina 15",
+  "se inspecoes>=3 => inspecoes_completas | objetivo_usina"
  ],
  "inspecoes_completas": [
   "aviso Inspeções completas!",
-  "objetivo Vá até a sala de comando, no fim do túnel principal, a leste."
+  "rodar objetivo_usina"
  ],
  "operario_conversa": [
   "fala operario neutro A casa de força fica bem no coração da montanha. Dá um frio na barriga trabalhar aqui embaixo."
@@ -407,14 +406,16 @@
   "fala operario feliz Turbina aprovada na inspeção! A engenheira vai gostar de saber."
  ],
  "porta_fechada": [
-  "fala operaria neutro A sala de comando só abre depois das três inspeções. Ordens da engenheira Enedina!",
-  "objetivo Inspecione as galerias da usina ({v:inspecoes}/3)."
+  "fala operaria neutro A porta da sala de comando emperrou com a umidade. Sem válvulas novas, um cabo e um manômetro, ela não abre.",
+  "fala operaria neutro A bancada de montagem fica na oficina, ao sul da entrada."
  ],
  "operaria_sala": [
   "fala operaria feliz A engenheira está esperando no painel. Quando ela dá uma ordem, ninguém discute!"
  ],
  "enedina_usina": [
-  "fala enedina_obra neutro Inspecione as três galerias: condutos ao norte, casa de força ao sul e ventilação a nordeste."
+  "fala enedina_obra neutro Precisamos de duas válvulas, um cabo isolado e um manômetro. Junte os materiais pelas galerias e monte as peças na bancada da oficina.",
+  "fala enedina_obra determinada E não esqueça das inspeções: condutos ao norte, casa de força ao sul e ventilação a nordeste.",
+  "rodar objetivo_usina"
  ],
  "enedina_sala_pronta": [
   "fala enedina_obra feliz Inspeções completas! Ótimo trabalho.",
@@ -477,5 +478,53 @@
  ],
  "mesa_projeto": [
   "narra Plantas espalhadas na mesa: túneis, condutos e a casa de força, tudo escavado na rocha da Serra do Mar."
+ ],
+ "objetivo_usina": [
+  "se porta_consertada inspecoes>=3 => obj_usina_painel | obj_usina_parcial"
+ ],
+ "obj_usina_parcial": [
+  "se porta_consertada => obj_usina_inspecoes | obj_usina_lista"
+ ],
+ "obj_usina_lista": [
+  "objetivo Inspeções: {v:inspecoes}/3 · Peças da porta: válvulas {v:mat:valvula}/2, cabo {v:mat:cabo}/1, manômetro {v:mat:manometro}/1"
+ ],
+ "obj_usina_inspecoes": [
+  "objetivo A porta está aberta! Termine as inspeções das galerias ({v:inspecoes}/3)."
+ ],
+ "obj_usina_painel": [
+  "objetivo Entre na sala de comando e use o painel para alinhar as tubulações."
+ ],
+ "usar_bancada": [
+  "bancada",
+  "rodar objetivo_usina"
+ ],
+ "porta_comando": [
+  "se mat:valvula>=2 mat:cabo>=1 mat:manometro>=1 => porta_instalar | porta_faltam"
+ ],
+ "porta_faltam": [
+  "narra A porta da sala de comando está emperrada. Uma plaqueta indica as peças que faltam: válvulas {v:mat:valvula}/2, cabo isolado {v:mat:cabo}/1, manômetro {v:mat:manometro}/1.",
+  "narra Monte as peças na bancada da oficina, ao sul da entrada da usina."
+ ],
+ "porta_instalar": [
+  "gastar valvula 2",
+  "gastar cabo 1",
+  "gastar manometro 1",
+  "som girar",
+  "esperar 0.3",
+  "som girar",
+  "esperar 0.3",
+  "som porta",
+  "tremer 0.4",
+  "flag porta_consertada",
+  "somar memoria_usina 20",
+  "narra Você encaixa as válvulas, liga o cabo e rosqueia o manômetro. Com um rangido, a porta da sala de comando se abre!",
+  "rodar objetivo_usina"
+ ],
+ "desmoronamento": [
+  "narra Pedras e terra de um desmoronamento antigo. Ainda bem que as galerias principais são reforçadas com concreto."
+ ],
+ "enedina_sala_espera": [
+  "fala enedina_obra neutro A porta abriu! Agora termine as inspeções das galerias. Depois a gente liga o painel.",
+  "rodar objetivo_usina"
  ]
 }

@@ -215,7 +215,14 @@ export class Hud {
   }
 
   aviso(texto) {
+    const ultimo = this.avisos[this.avisos.length - 1];
+    if (ultimo && ultimo.texto === texto) {
+      ultimo.t = Math.min(ultimo.t, 0.3);
+      return;
+    }
     this.avisos.push({ texto, t: 0 });
+    // no maximo dois avisos na tela: o mais antigo sai
+    while (this.avisos.length > 2) this.avisos.shift();
   }
 
   banner(texto) {
@@ -251,6 +258,17 @@ export class Hud {
       const n = e.itens.length;
       d.painel(LARG - 8 - n * 17, 3, n * 17 + 5, 24);
       e.itens.forEach((it, i) => d.img("item_" + it, LARG - 5 - (n - i) * 17, 7));
+    }
+    const mats = Object.entries(e.mat).filter(([, q]) => q > 0);
+    if (mostrarObjetivo && mats.length) {
+      const y = e.itens.length ? 29 : 3;
+      const w = mats.length * 28 + 6;
+      d.painel(LARG - 3 - w, y, w, 24);
+      mats.forEach(([m, q], i) => {
+        const x = LARG - w + i * 28 + 1;
+        d.img("mat_" + m, x, y + 4);
+        d.texto(String(q), x + 17, y + 12, COR.texto, { sombra: true });
+      });
     }
   }
 
@@ -450,32 +468,157 @@ export class Inventario extends Camada {
     super(jogo);
     this.sel = 0;
   }
+
+  entradas() {
+    const e = this.jogo.estado;
+    const dados = this.jogo.rec.dados;
+    const lista = e.itens.map((it) => ({ icone: "item_" + it, nome: dados.itens[it]?.nome || it, desc: dados.itens[it]?.desc || "", col: 0 }));
+    for (const [m, q] of Object.entries(e.mat)) {
+      const md = dados.materiais.materiais[m];
+      if (q > 0) lista.push({ icone: "mat_" + m, nome: `${md?.nome || m}  ×${q}`, desc: md?.desc || "", col: 1 });
+    }
+    return lista;
+  }
+
   atualizar(dt, ent) {
-    const n = this.jogo.estado.itens.length;
+    const n = this.entradas().length;
     if (n) {
       if (ent.apertou("cima")) this.sel = (this.sel + n - 1) % n;
       if (ent.apertou("baixo")) this.sel = (this.sel + 1) % n;
     }
     if (ent.apertou("voltar") || ent.apertou("menu") || ent.apertou("acao") || ent.cliques.length) this.fechar();
   }
+
   desenhar(d) {
     d.ret(0, 0, LARG, ALT, "rgba(10,8,20,0.6)");
-    d.painel(30, 18, 260, 144);
-    d.texto("ITENS", LARG / 2, 25, COR.titulo, { alinhar: "centro", sombra: true });
-    const itens = this.jogo.estado.itens;
-    const dados = this.jogo.rec.dados.itens;
-    if (!itens.length) {
-      d.texto("A mochila está vazia.", LARG / 2, 80, COR.fraco, { alinhar: "centro" });
+    d.painel(14, 10, 292, 160);
+    const lista = this.entradas();
+    d.texto("ITENS", 86, 17, COR.titulo, { alinhar: "centro", sombra: true });
+    d.texto("MATERIAIS E PEÇAS", 232, 17, COR.titulo, { alinhar: "centro", sombra: true });
+    d.ret(159, 18, 1, 122, "#3b3366");
+    if (!lista.length) {
+      d.texto("A mochila está vazia.", LARG / 2, 70, COR.fraco, { alinhar: "centro" });
       return;
     }
-    itens.forEach((it, i) => {
-      const y = 40 + i * 19;
-      if (i === this.sel) d.ret(38, y - 2, 244, 19, "rgba(127,227,240,0.15)");
-      d.img("item_" + it, 42, y);
-      d.texto(dados[it]?.nome || it, 62, y + 4, i === this.sel ? COR.destaque : COR.texto, { sombra: true });
+    const linha = [0, 0];
+    lista.forEach((it, i) => {
+      const x = it.col ? 164 : 22;
+      const y = 28 + linha[it.col] * 16;
+      linha[it.col]++;
+      if (i === this.sel) d.ret(x - 2, y - 1, 136, 16, "rgba(127,227,240,0.15)");
+      d.img(it.icone, x, y);
+      d.texto(it.nome, x + 19, y + 4, i === this.sel ? COR.destaque : COR.texto, { sombra: true });
     });
-    const desc = dados[itens[this.sel]]?.desc || "";
-    d.quebrar(desc, 240).slice(0, 3).forEach((l, k) => d.texto(l, 40, 128 + k * 9, COR.fraco));
+    const desc = lista[Math.min(this.sel, lista.length - 1)].desc;
+    d.ret(22, 142, 276, 1, "#3b3366");
+    d.quebrar(desc, 272).slice(0, 2).forEach((l, k) => d.texto(l, 24, 147 + k * 9, COR.fraco));
+  }
+}
+
+// ------------------------------------------------------------------ bancada de montagem
+export class Bancada extends Camada {
+  constructor(jogo) {
+    super(jogo);
+    const m = jogo.rec.dados.materiais;
+    this.mats = m.materiais;
+    this.receitas = m.receitas;
+    this.sel = 0;
+    this.brilho = 0;
+  }
+
+  pode(r) {
+    return Object.entries(r.precisa).every(([m, n]) => this.jogo.estado.qtd(m) >= n);
+  }
+
+  montar() {
+    const r = this.receitas[this.sel];
+    const nome = this.mats[r.produz]?.nome || r.produz;
+    if (!this.pode(r)) {
+      this.jogo.som.efeito("erro");
+      this.msg = { texto: "Faltam materiais para: " + nome, cor: COR.vermelho, t: 2.2 };
+      return;
+    }
+    const e = this.jogo.estado;
+    for (const [m, n] of Object.entries(r.precisa)) e.gastar(m, n);
+    e.coletar(r.produz, r.qtd || 1);
+    this.jogo.som.efeito("girar");
+    this.jogo.som.efeito("item");
+    this.brilho = 1;
+    this.msg = { texto: `Montado: ${nome}!`, cor: COR.verde, t: 2.2 };
+  }
+
+  atualizar(dt, ent) {
+    this.t += dt;
+    this.brilho = Math.max(0, this.brilho - dt * 1.5);
+    if (this.msg && (this.msg.t -= dt) <= 0) this.msg = null;
+    const n = this.receitas.length;
+    if (ent.apertou("cima")) {
+      this.sel = (this.sel + n - 1) % n;
+      this.jogo.som.efeito("cursor");
+    }
+    if (ent.apertou("baixo")) {
+      this.sel = (this.sel + 1) % n;
+      this.jogo.som.efeito("cursor");
+    }
+    for (const c of ent.cliques) {
+      const i = Math.floor((c.y - 28) / 22);
+      if (c.x >= 14 && c.x < 140 && i >= 0 && i < n) this.sel = i;
+      if (c.x >= 216 && c.x < 304 && c.y >= 150 && c.y < 168) this.montar();
+    }
+    if (ent.apertou("acao")) this.montar();
+    if (ent.apertou("voltar") || ent.apertou("menu")) {
+      this.jogo.som.efeito("voltar");
+      this.fechar();
+    }
+  }
+
+  desenhar(d, t) {
+    const e = this.jogo.estado;
+    d.ret(0, 0, LARG, ALT, "rgba(10,8,20,0.65)");
+    d.painel(8, 6, 304, 168);
+    d.texto("BANCADA DE MONTAGEM", LARG / 2, 12, COR.titulo, { alinhar: "centro", sombra: true });
+    d.ret(142, 24, 1, 120, "#3b3366");
+    this.receitas.forEach((r, i) => {
+      const y = 28 + i * 22;
+      const sel = i === this.sel;
+      if (sel) d.ret(14, y - 2, 126, 21, "rgba(127,227,240,0.15)");
+      d.img("mat_" + r.produz, 18, y);
+      d.texto(this.mats[r.produz]?.nome || r.produz, 38, y + 1, sel ? COR.destaque : COR.texto, { sombra: true });
+      d.texto(`Você tem: ${e.qtd(r.produz)}`, 38, y + 10, this.pode(r) ? COR.verde : COR.fraco);
+    });
+    // materiais basicos que voce carrega
+    const base = Object.keys(this.mats).filter((m) => !this.mats[m].peca);
+    d.texto("Na mochila:", 16, 104, COR.fraco);
+    base.forEach((m, i) => {
+      const x = 16 + (i % 2) * 62;
+      const y = 114 + Math.floor(i / 2) * 18;
+      d.img("mat_" + m, x, y);
+      d.texto(`×${e.qtd(m)}`, x + 18, y + 5, e.qtd(m) ? COR.texto : COR.fraco);
+    });
+    // receita selecionada
+    const r = this.receitas[this.sel];
+    const md = this.mats[r.produz] || {};
+    const pulo = this.brilho > 0 ? -Math.round(Math.sin(this.brilho * Math.PI) * 3) : 0;
+    d.img("mat_" + r.produz, 150, 28 + pulo, { escala: 2 });
+    d.texto(md.nome || r.produz, 188, 30, COR.titulo, { sombra: true });
+    d.quebrar(md.desc || "", 116).slice(0, 3).forEach((l, k) => d.texto(l, 188, 41 + k * 9, COR.fraco));
+    d.texto("Precisa de:", 150, 74, COR.texto);
+    Object.entries(r.precisa).forEach(([m, n], k) => {
+      const y = 84 + k * 18;
+      const tem = e.qtd(m);
+      d.img("mat_" + m, 150, y);
+      d.texto(this.mats[m]?.nome || m, 170, y + 5, COR.texto);
+      d.texto(`${tem}/${n}`, 302, y + 5, tem >= n ? COR.verde : COR.vermelho, { alinhar: "direita" });
+    });
+    const ok = this.pode(r);
+    if (this.msg) d.texto(this.msg.texto, 16, 157, this.msg.cor, { sombra: true });
+    d.painel(216, 150, 88, 18, ok ? "ui_holograma" : "ui_painel");
+    d.texto(this.jogo.ent.usouToque ? "Montar" : "Montar (Espaço)", 260, 155, ok ? COR.destaque : COR.fraco, { alinhar: "centro" });
+    if (this.brilho > 0) {
+      d.ctx.globalAlpha = this.brilho * 0.5;
+      d.ret(146, 24, 160, 46, "#fff6c8");
+      d.ctx.globalAlpha = 1;
+    }
   }
 }
 

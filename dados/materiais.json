@@ -1,0 +1,63 @@
+{
+ "materiais": {
+  "ferro": {
+   "nome": "Sucata de ferro",
+   "desc": "Pedaços de ferro que sobraram da obra. Moldados e cortados, viram peças novas."
+  },
+  "cobre": {
+   "nome": "Fio de cobre",
+   "desc": "O cobre conduz eletricidade muito bem. Por isso está em quase todo fio elétrico."
+  },
+  "borracha": {
+   "nome": "Borracha de vedação",
+   "desc": "Impede a água de vazar nas juntas dos canos e isola os fios elétricos."
+  },
+  "parafuso": {
+   "nome": "Parafusos",
+   "desc": "Prendem as peças com firmeza. Uma usina tem milhares deles."
+  },
+  "valvula": {
+   "nome": "Válvula de comporta",
+   "peca": true,
+   "desc": "Abre e fecha a passagem de água nos condutos."
+  },
+  "cabo": {
+   "nome": "Cabo isolado",
+   "peca": true,
+   "desc": "Fio de cobre coberto de borracha: leva energia sem dar choque."
+  },
+  "manometro": {
+   "nome": "Manômetro",
+   "peca": true,
+   "desc": "Mede a pressão da água dentro dos canos."
+  }
+ },
+ "receitas": [
+  {
+   "produz": "valvula",
+   "qtd": 1,
+   "precisa": {
+    "ferro": 2,
+    "borracha": 1,
+    "parafuso": 2
+   }
+  },
+  {
+   "produz": "cabo",
+   "qtd": 1,
+   "precisa": {
+    "cobre": 3,
+    "borracha": 1
+   }
+  },
+  {
+   "produz": "manometro",
+   "qtd": 1,
+   "precisa": {
+    "ferro": 1,
+    "cobre": 1,
+    "parafuso": 1
+   }
+  }
+ ]
+}

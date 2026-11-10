@@ -12,22 +12,49 @@
    ]
   },
   {
-   "fala": "enedina_obra|neutro|Agora são duas turbinas. Uma junção em T divide a água em dois caminhos.",
+   "fala": "enedina_obra|neutro|Agora, nada de vazamento! Todo cano com água precisa estar ligado dos dois lados. Use as pontas vermelhas para fechar os caminhos.",
+   "vazamento": true,
    "linhas": [
-    "A─┬──┐..",
-    ".#│┌┐│#.",
-    "─.│└┘└─T",
-    "T─┘.#..."
+    "A─┬─┐..",
+    "╷#│.└─T",
+    "└─┘.##."
    ]
   },
   {
-   "fala": "enedina_obra|determinada|Última etapa: três turbinas! A conexão em cruz manda água para todos os lados. Vamos, {nome}!",
-   "linhas": [
-    "T─┐#┬─┌─T",
-    "A─┼─┐.│#.",
-    "┐#│.└─┘┌┐",
-    "..└──T.└┘"
-   ]
+   "fala": "enedina_obra|determinada|A pressão está subindo! Feche o circuito antes que o medidor encha. Se apertar, peça uma dica.",
+   "vazamento": true,
+   "tempo": 120,
+   "gerar": {
+    "w": 7,
+    "h": 4,
+    "turbinas": 2,
+    "bloqueios": 2,
+    "travadas": 0
+   }
+  },
+  {
+   "fala": "enedina_obra|neutro|Algumas válvulas enferrujaram e não giram mais: estão travadas, com cadeado. Trabalhe em volta delas.",
+   "vazamento": true,
+   "tempo": 200,
+   "gerar": {
+    "w": 9,
+    "h": 5,
+    "turbinas": 3,
+    "bloqueios": 4,
+    "travadas": 3
+   }
+  },
+  {
+   "fala": "enedina_obra|determinada|O circuito principal! Quatro turbinas e nenhum vazamento. Vamos, {nome}!",
+   "vazamento": true,
+   "tempo": 290,
+   "gerar": {
+    "w": 12,
+    "h": 5,
+    "turbinas": 4,
+    "bloqueios": 6,
+    "travadas": 5
+   }
   }
  ]
 }

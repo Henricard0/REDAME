@@ -78,7 +78,8 @@ export class Ent {
     const [dx, dy] = def.desloc || [0, 0];
     this.x = cx * TILE + dx;
     this.base = (cy + 1) * TILE + dy;
-    if (tipo === "obj") {
+    if (tipo === "coleta") this.chave = `coletado:${mundo.def.id}:${cx},${cy}`;
+    if (tipo === "obj" || tipo === "coleta") {
       const meta = mundo.arte.objetos[def.obj];
       if (!meta) throw new Error(`Objeto desconhecido no mapa: ${def.obj}`);
       this.meta = meta;
@@ -98,6 +99,7 @@ export class Ent {
   }
 
   visivel() {
+    if (this.chave && this.mundo.estado.v(this.chave)) return false;
     return !this.def.se || this.mundo.estado.condicao(this.def.se);
   }
 
@@ -107,7 +109,7 @@ export class Ent {
       const h = (this.def.alt || 1) * TILE;
       return { x: this.x, y: this.base - h, w, h };
     }
-    if (this.tipo === "obj") return this.col || null;
+    if (this.tipo === "obj" || this.tipo === "coleta") return this.col || null;
     if (this.tipo === "npc") return this.ator.caixa();
     if (this.tipo === "carro") return { x: this.x + 2, y: this.base - 8, w: 28, h: 8 };
     return null;
@@ -116,7 +118,7 @@ export class Ent {
   // Area onde a protagonista pode interagir.
   caixaInteracao() {
     if (this.tipo === "npc") return { x: this.ator.x - 8, y: this.ator.y - 14, w: 16, h: 16 };
-    if (this.tipo === "obj") {
+    if (this.tipo === "obj" || this.tipo === "coleta") {
       if (this.col) return { x: this.col.x - 3, y: this.col.y - 3, w: this.col.w + 6, h: this.col.h + 6 };
       return { x: this.x, y: this.base - Math.min(this.meta.h, 24), w: this.meta.w, h: Math.min(this.meta.h, 24) };
     }
@@ -132,6 +134,7 @@ export class Ent {
     if (!this.visivel()) return false;
     if (["npc", "item", "inspecao", "barreira"].includes(this.tipo)) return !!this.def.roteiro;
     if (this.tipo === "obj") return !!this.def.roteiro;
+    if (this.tipo === "coleta") return true;
     return false;
   }
 
@@ -144,7 +147,7 @@ export class Ent {
 
   topo() {
     if (this.tipo === "npc") return { x: this.ator.x, y: this.ator.y - 30 };
-    if (this.tipo === "obj") return { x: this.x + this.meta.w / 2, y: this.base - this.meta.h - 6 };
+    if (this.tipo === "obj" || this.tipo === "coleta") return { x: this.x + this.meta.w / 2, y: this.base - this.meta.h - 6 };
     if (this.tipo === "item") return { x: this.x + 8, y: this.base - 22 };
     const w = (this.def.larg || 1) * TILE;
     const h = (this.def.alt || 1) * TILE;
@@ -152,10 +155,11 @@ export class Ent {
   }
 
   desenhar(d, t) {
-    if (this.tipo === "obj") {
+    if (this.tipo === "obj" || this.tipo === "coleta") {
       const m = this.meta;
       const q = m.quadros > 1 ? Math.floor(t * (this.def.fps || 4)) % m.quadros : 0;
       d.img("obj_" + this.def.obj, this.x, this.base - m.h, { sx: q * m.w, sw: m.w, sh: m.h, espelhar: this.def.espelhar });
+      if (this.tipo === "coleta" && Math.floor(t * 2 + this.cx) % 3 === 0) d.img("ui_brilho", this.x + m.w - 5, this.base - m.h - 1);
     } else if (this.tipo === "npc") {
       this.ator.desenhar(d);
     } else if (this.tipo === "item") {
@@ -392,6 +396,10 @@ export class Mundo {
   }
 
   interagir(e) {
+    if (e.tipo === "coleta") {
+      this.jogo.coletar(e);
+      return;
+    }
     if (e.tipo === "npc") {
       e.ator.dir = OPOSTA[this.jogador.dir];
       e.ator.movendo = false;
@@ -449,6 +457,7 @@ export class Mundo {
       }
     }
     if (this.tremor > 0) this.tremor = Math.max(0, this.tremor - dt);
+    if (this.coletando) this.coletando.t += dt;
     this.camera();
     void t;
   }
@@ -565,6 +574,12 @@ export class Mundo {
     if (!this.jogo.esconderJogador) lista.push({ o: this.jogador.y, d: () => this.jogador.desenhar(dd) });
     lista.sort((a, b) => a.o - b.o);
     for (const it of lista) it.d();
+    if (this.coletando) {
+      const k = this.coletando;
+      const p = k.ent.topo();
+      dd.ret(p.x - 11, p.y - 2, 22, 5, "#14121e");
+      dd.ret(p.x - 10, p.y - 1, Math.round(20 * Math.min(1, k.t / k.dur)), 3, "#7fe3f0");
+    }
     if (mostrarAlvo && this.alvo) {
       const p = this.alvo.topo();
       const bob = Math.round(Math.sin(t * 6));

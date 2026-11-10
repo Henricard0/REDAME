@@ -4,6 +4,7 @@
 //   "fala enedina determinada Vamos ligar essa usina!"
 //   "narra O vento frio de Curitiba sopra pela praça."
 //   "flag conheceu_enedina"        "somar apoio 1"        "dar marmita"
+//   "coletar ferro 2"              "gastar valvula 2"     "bancada"
 //   "objetivo Encontre a marmita do Zé"
 //   "se apoio>=3 item:plantas => pronta_para_usina | ainda_nao"
 //   "ir usina entrada"             "minigame canos_fase01"   "gravar enedina"
@@ -20,6 +21,9 @@ export const COMANDOS = {
   definir: { min: 2 },
   dar: { min: 1 },
   tirar: { min: 1 },
+  coletar: { min: 1 },
+  gastar: { min: 1 },
+  bancada: { min: 0 },
   objetivo: { min: 1 },
   rodar: { min: 1 },
   se: { min: 3 },
@@ -69,7 +73,7 @@ export class Roteirista {
     const e = this.jogo.estado;
     return String(s)
       .replace(/\{nome\}/g, e.nome || "Você")
-      .replace(/\{v:(\w+)\}/g, (_, v) => String(e.v(v)));
+      .replace(/\{v:([\w:]+)\}/g, (_, v) => String(e.v(v)));
   }
 
   async executar(id, ctx = {}) {
@@ -136,6 +140,19 @@ export class Roteirista {
       }
       case "tirar":
         e.tirar(a[0]);
+        break;
+      case "coletar": {
+        const n = a[1] ? parseInt(a[1], 10) : 1;
+        e.coletar(a[0], n);
+        j.som.efeito("item");
+        j.ui.aviso(`+${n} ${j.rec.dados.materiais.materiais[a[0]]?.nome || a[0]}`);
+        break;
+      }
+      case "gastar":
+        e.gastar(a[0], a[1] ? parseInt(a[1], 10) : 1);
+        break;
+      case "bancada":
+        await j.abrirBancada();
         break;
       case "objetivo":
         e.objetivo = resto === "-" ? "" : this.texto(resto);
